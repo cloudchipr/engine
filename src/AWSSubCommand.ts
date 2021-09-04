@@ -1,4 +1,4 @@
-import { SubCommandInterface } from './SubCommandInterface';
+import { SubCommandInterface } from "./SubCommandInterface";
 
 export class AWSSubCommand implements SubCommandInterface {
   static readonly ALL_SUBCOMMAND = "all";
@@ -8,15 +8,15 @@ export class AWSSubCommand implements SubCommandInterface {
   private readonly subCommand: string;
 
   private constructor(subCommand: string) {
-    this.subCommand = subCommand
+    this.subCommand = subCommand;
   }
 
   public getValue(): string {
-    return this.subCommand
+    return this.subCommand;
   }
 
   static all(): AWSSubCommand {
-    return new AWSSubCommand(this.ALL_SUBCOMMAND)
+    return new AWSSubCommand(this.ALL_SUBCOMMAND);
   }
 
   static ec2(): AWSSubCommand {

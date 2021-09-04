@@ -5,7 +5,12 @@ export class Ebs {
   readonly availabilityZone: string;
   readonly creationTime: string;
 
-  constructor(id: string, size: number, availabilityZone: string, creationTime: string) {
+  constructor(
+    id: string,
+    size: number,
+    availabilityZone: string,
+    creationTime: string
+  ) {
     this.id = id;
     this.size = size;
     this.availabilityZone = availabilityZone;

@@ -1,9 +1,8 @@
-import {FilterInterface } from './FilterInterface';
-import { ANDFilter } from './filters/ANDFilter';
+import { FilterInterface } from "./FilterInterface";
 
 export class Parameter {
-  private _force: boolean = false
-  private _filters: FilterInterface[] = [new ANDFilter()];
+  private _force: boolean = false;
+  private _filters: FilterInterface[] = [];
 
   set force(force: boolean) {
     this._force = force;
@@ -14,16 +13,16 @@ export class Parameter {
   }
 
   get filters() {
-    return this._filters
+    return this._filters;
   }
 
-  addFilter(filter: FilterInterface):  Parameter {
-    this._filters.push(filter)
+  addFilter(filter: FilterInterface): Parameter {
+    this._filters.push(filter);
     return this;
   }
 
-  orFilter(filter: FilterInterface):  Parameter {
-    this._filters.push(filter)
+  orFilter(filter: FilterInterface): Parameter {
+    this._filters.push(filter);
     return this;
   }
 }

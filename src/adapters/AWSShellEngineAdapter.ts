@@ -1,17 +1,17 @@
-import { EngineInterface } from './EngineInterface';
-import { Configuration } from '../Configuration';
-import { GarbageItemInterface } from '../responses/garbage-item-interface';
-import { execSync } from 'child_process';
-import yaml from 'js-yaml';
-import * as fs from 'fs';
-import * as policies from '../policy.json';
-import { FindGarbageResponse } from '../responses/find-garbage-response';
-import { FindGarbageDetailsResponse } from '../responses/find-garbage-details-response';
-import { Ebs } from '../domain/types/ebs';
-import { EbsGarbageItem } from '../responses/ebs-garbage-item';
-import { DetachedVolumesResponse } from '../responses/detached-volumes-response';
-import { EngineResponse } from '../EngineResponse';
-import { EngineRequest } from '../EngineRequest';
+import { EngineInterface } from "./EngineInterface";
+import { Configuration } from "../Configuration";
+import { GarbageItemInterface } from "../responses/garbage-item-interface";
+import { execSync } from "child_process";
+import yaml from "js-yaml";
+import * as fs from "fs";
+import * as policies from "../policy.json";
+import { FindGarbageResponse } from "../responses/find-garbage-response";
+import { FindGarbageDetailsResponse } from "../responses/find-garbage-details-response";
+import { Ebs } from "../domain/types/ebs";
+import { EbsGarbageItem } from "../responses/ebs-garbage-item";
+import { DetachedVolumesResponse } from "../responses/detached-volumes-response";
+import { EngineResponse } from "../EngineResponse";
+import { EngineRequest } from "../EngineRequest";
 
 export class AWSShellEngineAdapter implements EngineInterface {
   private readonly custodian: string;
@@ -21,7 +21,6 @@ export class AWSShellEngineAdapter implements EngineInterface {
   }
 
   execute(request: EngineRequest): EngineResponse {
-
     const command = request.command.getValue();
     const subCommand = request.subCommand.getValue();
 
@@ -35,13 +34,13 @@ export class AWSShellEngineAdapter implements EngineInterface {
     return new EngineResponse();
   }
 
-  private cleanEbs():EngineResponse {
+  private cleanEbs(): EngineResponse {
     return new EngineResponse();
   }
 
   private validateRequest(name: string) {
-    if (typeof (this as any)[name]  !== 'function') {
-        throw Error("Invalid AWS subcommand provided: " + name)
+    if (typeof (this as any)[name] !== "function") {
+      throw Error("Invalid AWS subcommand provided: " + name);
     }
   }
 

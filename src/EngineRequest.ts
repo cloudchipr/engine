@@ -1,7 +1,7 @@
-import { Configuration } from './Configuration';
-import { Command } from './Command';
-import { SubCommandInterface } from './SubCommandInterface';
-import { Parameter } from './Parameter';
+import { Configuration } from "./Configuration";
+import { Command } from "./Command";
+import { SubCommandInterface } from "./SubCommandInterface";
+import { Parameter } from "./Parameter";
 
 export class EngineRequest {
   constructor(
@@ -16,14 +16,14 @@ export class EngineRequest {
   }
 
   get command(): Command {
-    return this._command
+    return this._command;
   }
 
   get subCommand(): SubCommandInterface {
-    return this._subCommand
+    return this._subCommand;
   }
 
   get parameter(): Parameter {
-    return this._parameter
+    return this._parameter;
   }
 }

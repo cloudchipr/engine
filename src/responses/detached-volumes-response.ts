@@ -1,4 +1,4 @@
-import { Ebs } from '../domain/types/ebs';
+import { Ebs } from "../domain/types/ebs";
 
 export class DetachedVolumesResponse {
   readonly items: Ebs[];

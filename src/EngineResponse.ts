@@ -1,3 +1,1 @@
-export class EngineResponse {
-
-}
+export class EngineResponse {}

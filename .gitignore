@@ -105,3 +105,6 @@ dist
 
 # webstorm
 .idea/
+
+# build
+lib/

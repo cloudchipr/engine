@@ -1,7 +1,7 @@
 export class Command {
   static readonly COLLECT_COMMAND = "collect";
   static readonly CLEAN_COMMAND = "clean";
-  static readonly NUKE_COMMAND = "noke";
+  static readonly NUKE_COMMAND = "nuke";
 
   readonly command: string;
 
@@ -10,15 +10,15 @@ export class Command {
   }
 
   private constructor(command: string) {
-    this.command = command
+    this.command = command;
   }
 
   static collect(): Command {
-    return new Command(this.COLLECT_COMMAND)
+    return new Command(this.COLLECT_COMMAND);
   }
 
   static clean(): Command {
-    return new Command(this.CLEAN_COMMAND)
+    return new Command(this.CLEAN_COMMAND);
   }
 
   static nuke(): Command {
