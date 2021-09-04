@@ -101,6 +101,24 @@ export class FilterBuilder {
     return this;
   }
 
+  load(filters: any): FilterBuilder {
+    const f = filters.filters[0];
+
+    for (const filter of f.and) {
+      this.addToList(
+          new FilterExpression(
+              this.builder,
+              filter.resource,
+              (Operators as any)[filter.op],
+              filter.value ?? null,
+              filter.since ?? null
+          )
+      );
+    }
+
+    return this
+  }
+
   toList(): FilterList {
     return this.filters;
   }

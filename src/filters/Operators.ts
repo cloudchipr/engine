@@ -5,8 +5,8 @@ export enum Operators {
   GreaterThanEqualTo = "gte",
   LessThan = "lt",
   LessThanEqualTo = "lte",
-  IsEmpty = "isempty",
-  IsNotEmpty = "isnotempty",
+  IsEmpty = "isEmpty",
+  IsNotEmpty = "isNotEmpty",
   In = "in",
-  NotIn = "notin",
+  NotIn = "notIn",
 }

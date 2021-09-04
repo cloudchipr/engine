@@ -40,6 +40,12 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     switch (expression.resource) {
       case "volume-age":
         return C7nFilterBuilder.buildVolumeAge(expression);
+      case "cpu":
+        return C7nFilterBuilder.buildCpu(expression);
+      case "network-in":
+        return C7nFilterBuilder.buildNetworkIn(expression);
+      case "network-out":
+        return C7nFilterBuilder.buildNetworkOut(expression);
       default:
         return {
           key: expression.resource,
@@ -55,6 +61,39 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       key: "CreateTime",
       op: expression.operator,
       value_type: "age",
+      value: expression.value,
+    };
+  }
+
+  private static buildCpu(expression: FilterExpression): object {
+    return {
+      type: "metrics",
+      name: "CPUUtilization",
+      statistics: "Average",
+      period: expression.since,
+      op: expression.operator,
+      value: expression.value,
+    };
+  }
+
+  private static buildNetworkIn(expression: FilterExpression): object {
+    return {
+      type: "metrics",
+      name: "NetworkIn",
+      statistics: "Average",
+      period: expression.since,
+      op: expression.operator,
+      value: expression.value,
+    };
+  }
+
+  private static buildNetworkOut(expression: FilterExpression): object {
+    return {
+      type: "metrics",
+      name: "NetworkIn",
+      statistics: "Average",
+      period: expression.since,
+      op: expression.operator,
       value: expression.value,
     };
   }
