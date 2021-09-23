@@ -5,12 +5,12 @@ export class Command {
 
   readonly command: string;
 
-  getValue(): string {
-    return this.command;
-  }
-
   private constructor(command: string) {
     this.command = command;
+  }
+
+  getValue(): string {
+    return this.command;
   }
 
   static collect(): Command {

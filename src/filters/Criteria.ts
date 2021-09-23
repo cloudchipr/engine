@@ -5,8 +5,8 @@ import { FilterBuilderInterface } from "../FilterBuilderInterface";
 export class Criteria implements FilterInterface {
   public filters: FilterList;
 
-  constructor(builder: FilterBuilderInterface) {
-    this.filters = new FilterList(builder);
+  constructor() {
+    this.filters = new FilterList();
   }
 
   public and(filter: Criteria): void {
@@ -17,7 +17,7 @@ export class Criteria implements FilterInterface {
     this.filters.or(filter.filters);
   }
 
-  public build(): object {
-    return this.filters.build();
+  public build(builder: FilterBuilderInterface): object {
+    return this.filters.build(builder);
   }
 }

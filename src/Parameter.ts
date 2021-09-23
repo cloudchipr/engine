@@ -1,28 +1,11 @@
 import { FilterInterface } from "./FilterInterface";
 
 export class Parameter {
-  private _force: boolean = false;
-  private _filters: FilterInterface[] = [];
+  private readonly force: boolean;
+  private readonly filter: FilterInterface;
 
-  set force(force: boolean) {
-    this._force = force;
-  }
-
-  isForce(): boolean {
-    return this._force;
-  }
-
-  get filters() {
-    return this._filters;
-  }
-
-  addFilter(filter: FilterInterface): Parameter {
-    this._filters.push(filter);
-    return this;
-  }
-
-  orFilter(filter: FilterInterface): Parameter {
-    this._filters.push(filter);
-    return this;
+  constructor(filter: FilterInterface, force: boolean) {
+    this.force = force;
+    this.filter = filter;
   }
 }

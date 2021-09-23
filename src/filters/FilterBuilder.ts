@@ -1,17 +1,14 @@
 import { FilterList } from "./FilterList";
 import { FilterExpression } from "./FilterExpression";
 import { Operators } from "./Operators";
-import { FilterBuilderInterface } from "../FilterBuilderInterface";
 
 export class FilterBuilder {
   private readonly filters: FilterList;
-  private readonly builder: FilterBuilderInterface;
   private connector: string = "and";
   private resourceName: string = "";
 
-  constructor(builder: FilterBuilderInterface) {
-    this.filters = new FilterList(builder);
-    this.builder = builder;
+  constructor() {
+    this.filters = new FilterList();
   }
 
   resource(resource: string): FilterBuilder {
@@ -21,7 +18,7 @@ export class FilterBuilder {
 
   isEmpty(): FilterBuilder {
     this.addToList(
-      new FilterExpression(this.builder, this.resourceName, Operators.IsEmpty)
+      new FilterExpression(this.resourceName, Operators.IsEmpty)
     );
     return this;
   }
@@ -29,7 +26,6 @@ export class FilterBuilder {
   equal(value: string, since?: string): FilterBuilder {
     this.addToList(
       new FilterExpression(
-        this.builder,
         this.resourceName,
         Operators.Equal,
         value,
@@ -42,7 +38,6 @@ export class FilterBuilder {
   greaterThan(value: string, since?: string): FilterBuilder {
     this.addToList(
       new FilterExpression(
-        this.builder,
         this.resourceName,
         Operators.GreaterThan,
         value,
@@ -55,7 +50,6 @@ export class FilterBuilder {
   greaterThanOrEqualTo(value: string, since?: string): FilterBuilder {
     this.addToList(
       new FilterExpression(
-        this.builder,
         this.resourceName,
         Operators.GreaterThanEqualTo,
         value,
@@ -68,7 +62,6 @@ export class FilterBuilder {
   lessThan(value: string, since?: string): FilterBuilder {
     this.addToList(
       new FilterExpression(
-        this.builder,
         this.resourceName,
         Operators.LessThan,
         value,
@@ -81,7 +74,6 @@ export class FilterBuilder {
   lessThanOrEqualTo(value: string, since?: string): FilterBuilder {
     this.addToList(
       new FilterExpression(
-        this.builder,
         this.resourceName,
         Operators.LessThanEqualTo,
         value,
@@ -107,7 +99,6 @@ export class FilterBuilder {
     for (const filter of f.and) {
       this.addToList(
           new FilterExpression(
-              this.builder,
               filter.resource,
               (Operators as any)[filter.op],
               filter.value ?? null,

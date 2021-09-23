@@ -16,7 +16,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         filterResponse.and = [];
       }
 
-      filterResponse.and.push(filter.build());
+      filterResponse.and.push(filter.build(this));
     }
 
     for (const filter of filterList.orList) {
@@ -24,7 +24,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         filterResponse.or = [];
       }
 
-      filterResponse.or.push(filter.build());
+      filterResponse.or.push(filter.build(this));
     }
 
     return filterResponse;

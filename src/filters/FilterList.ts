@@ -3,22 +3,17 @@ import { FilterInterface } from "../FilterInterface";
 import { FilterBuilderInterface } from "../FilterBuilderInterface";
 
 export class FilterList implements FilterInterface {
-  private readonly builder: FilterBuilderInterface;
   private readonly _andList: (FilterExpression | FilterList)[] = [];
   private readonly _orList: (FilterExpression | FilterList)[] = [];
 
-  constructor(builder: FilterBuilderInterface) {
-    this.builder = builder;
-  }
-
   public and(filter: FilterExpression | FilterList) {
-    if (filter !== undefined && filter !== null && filter.build() !== {}) {
+    if (filter !== undefined && filter !== null) {
       this._andList.push(filter);
     }
   }
 
   public or(filter: FilterExpression | FilterList) {
-    if (filter !== undefined && filter !== null && filter.build() !== {}) {
+    if (filter !== undefined && filter !== null) {
       this._orList.push(filter);
     }
   }
@@ -31,7 +26,7 @@ export class FilterList implements FilterInterface {
     return this._orList;
   }
 
-  public build(): object {
-    return this.builder.buildFilter(this);
+  public build(builder: FilterBuilderInterface): object {
+    return builder.buildFilter(this);
   }
 }
