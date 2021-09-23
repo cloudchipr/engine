@@ -1,11 +1,19 @@
 import { FilterInterface } from "./FilterInterface";
 
 export class Parameter {
-  private readonly force: boolean;
-  private readonly filter: FilterInterface;
+  private readonly _force: boolean;
+  private readonly _filter: FilterInterface;
 
   constructor(filter: FilterInterface, force: boolean) {
-    this.force = force;
-    this.filter = filter;
+    this._force = force;
+    this._filter = filter;
+  }
+
+  get force(): boolean {
+    return this._force;
+  }
+
+  get filter(): FilterInterface {
+    return this._filter;
   }
 }
