@@ -17,20 +17,13 @@ export class FilterBuilder {
   }
 
   isEmpty(): FilterBuilder {
-    this.addToList(
-      new FilterExpression(this.resourceName, Operators.IsEmpty)
-    );
+    this.addToList(new FilterExpression(this.resourceName, Operators.IsEmpty));
     return this;
   }
 
   equal(value: string, since?: string): FilterBuilder {
     this.addToList(
-      new FilterExpression(
-        this.resourceName,
-        Operators.Equal,
-        value,
-        since
-      )
+      new FilterExpression(this.resourceName, Operators.Equal, value, since)
     );
     return this;
   }
@@ -61,12 +54,7 @@ export class FilterBuilder {
 
   lessThan(value: string, since?: string): FilterBuilder {
     this.addToList(
-      new FilterExpression(
-        this.resourceName,
-        Operators.LessThan,
-        value,
-        since
-      )
+      new FilterExpression(this.resourceName, Operators.LessThan, value, since)
     );
     return this;
   }
@@ -98,16 +86,16 @@ export class FilterBuilder {
 
     for (const filter of f.and) {
       this.addToList(
-          new FilterExpression(
-              filter.resource,
-              (Operators as any)[filter.op],
-              filter.value ?? null,
-              filter.since ?? null
-          )
+        new FilterExpression(
+          filter.resource,
+          (Operators as any)[filter.op],
+          filter.value ?? null,
+          filter.since ?? null
+        )
       );
     }
 
-    return this
+    return this;
   }
 
   toList(): FilterList {

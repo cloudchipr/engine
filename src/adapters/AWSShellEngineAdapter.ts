@@ -8,7 +8,7 @@ import { Ebs } from "../domain/types/ebs";
 import { DetachedVolumesResponse } from "../responses/detached-volumes-response";
 import { EngineResponse } from "../EngineResponse";
 import { EngineRequest } from "../EngineRequest";
-import {C7nFilterBuilder} from "../filters/C7nFilterBuilder";
+import { C7nFilterBuilder } from "../filters/C7nFilterBuilder";
 
 export class AWSShellEngineAdapter implements EngineInterface {
   private readonly custodian: string;
@@ -28,13 +28,19 @@ export class AWSShellEngineAdapter implements EngineInterface {
   }
 
   private collectEbs(request: EngineRequest): EngineResponse {
-    const policyName = 'ebs-collect-unattached';
+    const policyName = "ebs-collect-unattached";
     const policy: any = Object.assign({}, policies[policyName]);
 
-    policy.policies[0].filters = [request.parameter.filter.build(new C7nFilterBuilder())]
+    policy.policies[0].filters = [
+      request.parameter.filter.build(new C7nFilterBuilder()),
+    ];
 
     // execute custodian command
-    const responseJson = this.executeCustodianCommand(request.configuration, policy, policyName);
+    const responseJson = this.executeCustodianCommand(
+      request.configuration,
+      policy,
+      policyName
+    );
 
     // remove temp files and folders
     AWSShellEngineAdapter.removeTempFoldersAndFiles(policyName);
@@ -60,12 +66,16 @@ export class AWSShellEngineAdapter implements EngineInterface {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  executeCustodianCommand(config: Configuration, policy: any, policyName: string) {
-    fs.writeFileSync('./temp.yaml', yaml.dump(policy), 'utf8');
+  executeCustodianCommand(
+    config: Configuration,
+    policy: any,
+    policyName: string
+  ) {
+    fs.writeFileSync("./temp.yaml", yaml.dump(policy), "utf8");
     try {
       execSync(
         `AWS_DEFAULT_REGION=${config.region} AWS_ACCESS_KEY_ID=${config.accessKeyId} AWS_SECRET_ACCESS_KEY=${config.secretAccessKey} ${this.custodian} run --output-dir=.  temp.yaml`,
-        { stdio: 'pipe' },
+        { stdio: "pipe" }
       );
     } catch (e) {
       throw new Error(e.message);
@@ -75,7 +85,7 @@ export class AWSShellEngineAdapter implements EngineInterface {
     if (!fs.existsSync(resourcesPath)) {
       throw new Error(`./${policyName}/resources.json file does not exist.`);
     }
-    const data = JSON.parse(fs.readFileSync(resourcesPath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(resourcesPath, "utf8"));
 
     // remove temp files and folders
     AWSShellEngineAdapter.removeTempFoldersAndFiles(policyName);
@@ -92,18 +102,25 @@ export class AWSShellEngineAdapter implements EngineInterface {
     }
   }
 
-  private generateDetachedVolumesResponse(responseJson: any): DetachedVolumesResponse {
+  private generateDetachedVolumesResponse(
+    responseJson: any
+  ): DetachedVolumesResponse {
     return new DetachedVolumesResponse(
       responseJson.map(
-        (ebsResponseItemJson: { VolumeId: string; Size: number; AvailabilityZone: string; CreateTime: string }) => {
+        (ebsResponseItemJson: {
+          VolumeId: string;
+          Size: number;
+          AvailabilityZone: string;
+          CreateTime: string;
+        }) => {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
             ebsResponseItemJson.Size,
             ebsResponseItemJson.AvailabilityZone,
-            ebsResponseItemJson.CreateTime,
+            ebsResponseItemJson.CreateTime
           );
-        },
-      ),
+        }
+      )
     );
   }
 }
