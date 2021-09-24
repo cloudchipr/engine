@@ -1,4 +1,4 @@
-import { FilterInterface } from "./FilterInterface";
+import { FilterInterface } from "./filter-Interface";
 
 export class Parameter {
   private readonly _force: boolean;

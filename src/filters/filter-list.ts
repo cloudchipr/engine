@@ -1,6 +1,6 @@
-import { FilterExpression } from "./FilterExpression";
-import { FilterInterface } from "../FilterInterface";
-import { FilterBuilderInterface } from "../FilterBuilderInterface";
+import { FilterExpression } from "./filter-expression";
+import { FilterInterface } from "../filter-Interface";
+import { FIlterBuilderInterface } from "../fIlter-builder-interface";
 
 export class FilterList implements FilterInterface {
   private readonly _andList: (FilterExpression | FilterList)[] = [];
@@ -26,7 +26,7 @@ export class FilterList implements FilterInterface {
     return this._orList;
   }
 
-  public build(builder: FilterBuilderInterface): object {
+  public build(builder: FIlterBuilderInterface): object {
     return builder.buildFilter(this);
   }
 }

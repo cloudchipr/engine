@@ -1,14 +1,14 @@
-import { EngineInterface } from "./EngineInterface";
-import { Configuration } from "../Configuration";
+import { EngineInterface } from "./engine-interface";
+import { Configuration } from "../configuration";
 import { execSync } from "child_process";
 import yaml from "js-yaml";
 import * as fs from "fs";
 import * as policies from "../policy.json";
 import { Ebs } from "../domain/types/ebs";
 import { DetachedVolumesResponse } from "../responses/detached-volumes-response";
-import { EngineResponse } from "../EngineResponse";
-import { EngineRequest } from "../EngineRequest";
-import { C7nFilterBuilder } from "../filters/C7nFilterBuilder";
+import { EngineResponse } from "../engine-response";
+import { EngineRequest } from "../engine-request";
+import { C7nFilterBuilder } from "../filters/c7n-filter-builder";
 
 export class AWSShellEngineAdapter implements EngineInterface {
   private readonly custodian: string;

@@ -1,9 +1,9 @@
-import { FilterBuilderInterface } from "../FilterBuilderInterface";
-import { FilterList } from "./FilterList";
-import { FilterExpression } from "./FilterExpression";
-import { Operators } from "./Operators";
+import { FIlterBuilderInterface } from "../fIlter-builder-interface";
+import { FilterList } from "./filter-list";
+import { FilterExpression } from "./filter-expression";
+import { Operators } from "./operators";
 
-export class C7nFilterBuilder implements FilterBuilderInterface {
+export class C7nFilterBuilder implements FIlterBuilderInterface {
   validate(expression: FilterExpression): boolean {
     return true;
   }

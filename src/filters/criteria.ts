@@ -1,6 +1,6 @@
-import { FilterInterface } from "../FilterInterface";
-import { FilterList } from "./FilterList";
-import { FilterBuilderInterface } from "../FilterBuilderInterface";
+import { FilterInterface } from "../filter-Interface";
+import { FilterList } from "./filter-list";
+import { FIlterBuilderInterface } from "../fIlter-builder-interface";
 
 export class Criteria implements FilterInterface {
   public filters: FilterList;
@@ -17,7 +17,7 @@ export class Criteria implements FilterInterface {
     this.filters.or(filter.filters);
   }
 
-  public build(builder: FilterBuilderInterface): object {
+  public build(builder: FIlterBuilderInterface): object {
     return this.filters.build(builder);
   }
 }
