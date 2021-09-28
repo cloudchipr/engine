@@ -1,7 +1,7 @@
 export class Configuration {
   readonly accessKeyId: string;
   readonly secretAccessKey: string;
-  region: string = 'us-west-1';
+  region: string = "us-west-1";
 
   // ....list all options
 

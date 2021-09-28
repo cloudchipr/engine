@@ -1,4 +1,4 @@
-import { GarbageItemInterface } from './garbage-item-interface';
+import { GarbageItemInterface } from "./garbage-item-interface";
 
 export class FindGarbageDetailsResponse {
   readonly items: GarbageItemInterface[];

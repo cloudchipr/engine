@@ -1,13 +1,13 @@
-import { GarbageItemInterface } from './garbage-item-interface';
-import { ResourceType } from '../domain/resource-type';
-import { Ebs } from '../domain/types/ebs';
+import { GarbageItemInterface } from "./garbage-item-interface";
+import { ResourceType } from "../domain/resource-type";
+import { Ebs } from "../domain/types/aws/ebs";
 
 export class EbsGarbageItem implements GarbageItemInterface {
   readonly name: string;
   readonly type: ResourceType = ResourceType.EBS;
-  readonly size: number;
+  readonly size?: number;
 
-  private constructor(name: string, size: number) {
+  private constructor(name: string, size?: number) {
     this.name = name;
     this.size = size;
   }
@@ -25,6 +25,6 @@ export class EbsGarbageItem implements GarbageItemInterface {
   }
 
   getPrice(): number {
-    return 4.104 * this.size;
+    return 8;
   }
 }
