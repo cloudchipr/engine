@@ -4,20 +4,21 @@ import { execSync } from "child_process";
 import yaml from "js-yaml";
 import * as fs from "fs";
 import * as policies from "../policy.json";
-import { Ebs } from "../domain/types/ebs";
-import { DetachedVolumesResponse } from "../responses/detached-volumes-response";
+import { Ebs } from "../domain/types/aws/ebs";
+import { EbsResponse } from "../responses/ebs-response";
 import { EngineResponse } from "../engine-response";
 import { EngineRequest } from "../engine-request";
 import { C7nFilterBuilder } from "../filters/c7n-filter-builder";
+import {C7nExecutor} from "../c7n-executor";
 
 export class AWSShellEngineAdapter implements EngineInterface {
-  private readonly custodian: string;
+  private readonly custodianExecutor: C7nExecutor;
 
   constructor(custodian: string) {
-    this.custodian = custodian;
+    this.custodianExecutor = new C7nExecutor(custodian);
   }
 
-  execute(request: EngineRequest): EngineResponse {
+  execute<Type>(request: EngineRequest): Type {
     const command = request.command.getValue();
     const subCommand = request.subCommand.getValue();
 
@@ -28,7 +29,7 @@ export class AWSShellEngineAdapter implements EngineInterface {
   }
 
   private collectEbs(request: EngineRequest): EngineResponse {
-    const policyName = "ebs-collect-unattached";
+    const policyName = "ebs-collect";
     const policy: any = Object.assign({}, policies[policyName]);
 
     policy.policies[0].filters = [
@@ -36,16 +37,13 @@ export class AWSShellEngineAdapter implements EngineInterface {
     ];
 
     // execute custodian command
-    const responseJson = this.executeCustodianCommand(
+    const responseJson = this.custodianExecutor.execute(
       request.configuration,
       policy,
       policyName
     );
 
-    // remove temp files and folders
-    AWSShellEngineAdapter.removeTempFoldersAndFiles(policyName);
-
-    return new EngineResponse();
+    return this.generateEbsResponse(responseJson)
   }
 
   private cleanEbs(request: EngineRequest): EngineResponse {
@@ -66,58 +64,24 @@ export class AWSShellEngineAdapter implements EngineInterface {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  executeCustodianCommand(
-    config: Configuration,
-    policy: any,
-    policyName: string
-  ) {
-    fs.writeFileSync("./temp.yaml", yaml.dump(policy), "utf8");
-    try {
-      execSync(
-        `AWS_DEFAULT_REGION=${config.region} AWS_ACCESS_KEY_ID=${config.accessKeyId} AWS_SECRET_ACCESS_KEY=${config.secretAccessKey} ${this.custodian} run --output-dir=.  temp.yaml`,
-        { stdio: "pipe" }
-      );
-    } catch (e) {
-      throw new Error(e.message);
-    }
-
-    const resourcesPath = `./${policyName}/resources.json`;
-    if (!fs.existsSync(resourcesPath)) {
-      throw new Error(`./${policyName}/resources.json file does not exist.`);
-    }
-    const data = JSON.parse(fs.readFileSync(resourcesPath, "utf8"));
-
-    // remove temp files and folders
-    AWSShellEngineAdapter.removeTempFoldersAndFiles(policyName);
-
-    return data;
-  }
-
-  private static removeTempFoldersAndFiles(policyName: string): void {
-    if (!fs.existsSync(`./${policyName}`)) {
-      execSync(`rm -r ./${policyName}`);
-    }
-    if (!fs.existsSync(`./temp.yaml`)) {
-      execSync(`rm ./temp.yaml`);
-    }
-  }
-
-  private generateDetachedVolumesResponse(
+  private generateEbsResponse(
     responseJson: any
-  ): DetachedVolumesResponse {
-    return new DetachedVolumesResponse(
+  ): EbsResponse {
+    return new EbsResponse(
       responseJson.map(
         (ebsResponseItemJson: {
           VolumeId: string;
           Size: number;
-          AvailabilityZone: string;
           CreateTime: string;
+          Price: string;
+          NameTag: string;
         }) => {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
             ebsResponseItemJson.Size,
-            ebsResponseItemJson.AvailabilityZone,
-            ebsResponseItemJson.CreateTime
+            ebsResponseItemJson.CreateTime,
+            ebsResponseItemJson.CreateTime,
+            ebsResponseItemJson.CreateTime,
           );
         }
       )

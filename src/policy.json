@@ -1,17 +1,10 @@
 {
-  "ebs-collect-unattached": {
+  "ebs-collect": {
     "policies": [
       {
-        "name": "ebs-collect-unattached",
+        "name": "ebs-collect",
         "resource": "ebs",
-        "filters": [
-          {
-            "Attachments": []
-          },
-          {
-            "State": "available"
-          }
-        ]
+        "filters": []
       }
     ]
   },
