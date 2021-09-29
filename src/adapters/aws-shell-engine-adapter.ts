@@ -79,7 +79,7 @@ export class AWSShellEngineAdapter implements EngineInterface {
             ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.CreateTime,
             ebsResponseItemJson.CreateTime,
-            ebsResponseItemJson.Tags.find(tagObject => tagObject.Key === 'NAME')?.Value
+            ebsResponseItemJson.Tags.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value
           );
         }
       )
