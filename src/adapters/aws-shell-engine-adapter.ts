@@ -1,8 +1,4 @@
 import { EngineInterface } from "./engine-interface";
-import { Configuration } from "../configuration";
-import { execSync } from "child_process";
-import yaml from "js-yaml";
-import * as fs from "fs";
 import * as policies from "../policy.json";
 import { Ebs } from "../domain/types/aws/ebs";
 import { EbsResponse } from "../responses/ebs-response";
@@ -72,16 +68,18 @@ export class AWSShellEngineAdapter implements EngineInterface {
         (ebsResponseItemJson: {
           VolumeId: string;
           Size: number;
+          VolumeType: string;
           CreateTime: string;
           Price: string;
-          NameTag: string;
+          Tags: any[];
         }) => {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
             ebsResponseItemJson.Size,
+            ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.CreateTime,
             ebsResponseItemJson.CreateTime,
-            ebsResponseItemJson.CreateTime,
+            ebsResponseItemJson.Tags.find(tagObject => tagObject.Key === 'NAME')?.Value
           );
         }
       )
