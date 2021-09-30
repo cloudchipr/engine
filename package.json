@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -30,7 +30,6 @@
     "@typescript-eslint/eslint-plugin": "^4.32.0",
     "@typescript-eslint/parser": "^4.32.0",
     "eslint": "^7.32.0",
-    "eslint-config-google": "^0.14.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-node": "^11.1.0",

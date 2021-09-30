@@ -1,6 +1,6 @@
 import { Configuration } from './configuration'
 import { Command } from './command'
-import { SubCommandInterface } from './sub-commandInterface'
+import { SubCommandInterface } from './sub-command-interface'
 import { Parameter } from './parameter'
 
 export class EngineRequest {
