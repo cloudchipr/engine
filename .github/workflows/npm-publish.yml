@@ -1,4 +1,4 @@
-name: "🚀 publish"
+name: "🚀 npm-publish"
 
 on:
   push:
@@ -7,13 +7,24 @@ on:
 
 jobs:
   npm-publish:
-    name: 🚀 publish
+    name: 🚀 npm-publish
     runs-on: ubuntu-latest
     steps:
-      - name: 📚 checkout
+      - name: 📚 Checkout
         uses: actions/checkout@v2
-      - name: 🚀 publish if version has been updated
-        uses: pascalgn/npm-publish-action@1.3.8
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🟢 Install Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: 🛠 Install dependencies
+        run: npm install
+
+      - name: 🛠 Build the code
+        run: npm run build
+
+      - name: 🚀 Publish to npm
+        run: npm publish --access public
+        with:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
