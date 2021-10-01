@@ -1,19 +1,19 @@
-export * from './configuration'
-export * from './parameter'
-export * from './engine-request'
-export * from './engine-response'
+export * from '@root/configuration'
+export * from '@root/parameter'
+export * from '@root/engine-request'
+export * from '@root/engine-response'
 
-export * from './filters/filter-builder'
-export * from './filters/criteria'
-export * from './filters/c7n-filter-builder'
+export * from '@root/filters/filter-builder'
+export * from '@root/filters/criteria'
+export * from '@root/filters/c7n-filter-builder'
 
-export * from './adapters/aws-shell-engine-adapter'
-export * from './adapters/engine-interface'
+export * from '@root/adapters/aws-shell-engine-adapter'
+export * from '@root/adapters/engine-interface'
 
-export * from './domain/types/aws/ebs'
+export * from '@root/domain/types/aws/ebs'
 
-export * from './responses/ebs-response'
+export * from '@root/responses/ebs-response'
 
-export * from './command'
-export * from './sub-command-interface'
-export * from './aws-sub-command'
+export * from '@root/command'
+export * from '@root/sub-command-interface'
+export * from '@root/aws-sub-command'

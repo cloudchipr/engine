@@ -1,4 +1,4 @@
-import { Configuration } from './configuration'
+import { Configuration } from '@root/configuration'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import { execSync } from 'child_process'

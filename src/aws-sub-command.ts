@@ -1,4 +1,4 @@
-import { SubCommandInterface } from './sub-command-interface'
+import { SubCommandInterface } from '@root/sub-command-interface'
 
 export class AwsSubCommand implements SubCommandInterface {
   static readonly ALL_SUBCOMMAND = 'all';

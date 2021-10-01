@@ -1,7 +1,7 @@
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
-import { FilterList } from './filter-list'
-import { FilterExpression } from './filter-expression'
-import { Operators } from './operators'
+import { FIlterBuilderInterface } from '@root/fIlter-builder-interface'
+import { FilterList } from '@root/filters/filter-list'
+import { FilterExpression } from '@root/filters/filter-expression'
+import { Operators } from '@root/filters/operators'
 
 export class C7nFilterBuilder implements FIlterBuilderInterface {
   validate (expression: FilterExpression): boolean {

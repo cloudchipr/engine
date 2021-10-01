@@ -1,4 +1,4 @@
-import { Ebs } from '../domain/types/aws/ebs'
+import { Ebs } from '@root/domain/types/aws/ebs'
 
 export class EbsResponse {
   readonly items: Ebs[];

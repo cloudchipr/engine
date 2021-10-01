@@ -1,5 +1,5 @@
-import { EngineResponse } from '../engine-response'
-import { EngineRequest } from '../engine-request'
+import { EngineResponse } from '@root/engine-response'
+import { EngineRequest } from '@root/engine-request'
 
 export interface EngineInterface {
   execute(request: EngineRequest): EngineResponse;
