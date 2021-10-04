@@ -2,7 +2,7 @@
   "name": "@cloudchipr/cloudchipr-engine",
   "version": "0.0.4",
   "description": "Cloudchipr engine",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
