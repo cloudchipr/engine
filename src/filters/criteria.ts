@@ -1,6 +1,6 @@
-import { FilterInterface } from '../filter-Interface'
-import { FilterList } from './filter-list'
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
+import { FilterInterface } from '@root/filter-Interface'
+import { FilterList } from '@root/filters/filter-list'
+import { FIlterBuilderInterface } from '@root/fIlter-builder-interface'
 
 export class Criteria implements FilterInterface {
   public filters: FilterList;

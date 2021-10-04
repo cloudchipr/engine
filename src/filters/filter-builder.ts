@@ -1,6 +1,6 @@
-import { FilterList } from './filter-list'
-import { FilterExpression } from './filter-expression'
-import { Operators } from './operators'
+import { FilterList } from '@root/filters/filter-list'
+import { FilterExpression } from '@root/filters/filter-expression'
+import { Operators } from '@root/filters/operators'
 
 export class FilterBuilder {
   private readonly filters: FilterList;

@@ -1,6 +1,6 @@
-import { FilterExpression } from './filter-expression'
-import { FilterInterface } from '../filter-Interface'
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
+import { FilterExpression } from '@root/filters/filter-expression'
+import { FilterInterface } from '@root/filter-Interface'
+import { FIlterBuilderInterface } from '@root/fIlter-builder-interface'
 
 export class FilterList implements FilterInterface {
   private readonly _andList: (FilterExpression | FilterList)[] = [];

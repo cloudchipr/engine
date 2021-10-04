@@ -1,6 +1,6 @@
-import { Operators } from './operators'
-import { FilterInterface } from '../filter-Interface'
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
+import { Operators } from '@root/filters/operators'
+import { FilterInterface } from '@root/filter-Interface'
+import { FIlterBuilderInterface } from '@root/fIlter-builder-interface'
 
 export class FilterExpression implements FilterInterface {
   public resource: string;

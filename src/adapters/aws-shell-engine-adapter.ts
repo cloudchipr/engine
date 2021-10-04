@@ -1,11 +1,11 @@
-import { EngineInterface } from './engine-interface'
-import * as policies from '../policy.json'
-import { Ebs } from '../domain/types/aws/ebs'
-import { EbsResponse } from '../responses/ebs-response'
-import { EngineResponse } from '../engine-response'
-import { EngineRequest } from '../engine-request'
-import { C7nFilterBuilder } from '../filters/c7n-filter-builder'
-import { C7nExecutor } from '../c7n-executor'
+import { EngineInterface } from '@root/adapters/engine-interface'
+import * as policies from '@root/policy.json'
+import { Ebs } from '@root/domain/types/aws/ebs'
+import { EbsResponse } from '@root/responses/ebs-response'
+import { EngineResponse } from '@root/engine-response'
+import { EngineRequest } from '@root/engine-request'
+import { C7nFilterBuilder } from '@root/filters/c7n-filter-builder'
+import { C7nExecutor } from '@root/c7n-executor'
 
 export class AWSShellEngineAdapter implements EngineInterface {
   private readonly custodianExecutor: C7nExecutor;

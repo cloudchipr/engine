@@ -1,5 +1,5 @@
-import { FilterExpression } from './filters/filter-expression'
-import { FilterList } from './filters/filter-list'
+import { FilterExpression } from '@root/filters/filter-expression'
+import { FilterList } from '@root/filters/filter-list'
 
 export interface FIlterBuilderInterface {
   buildFilter(filter: FilterList): object;
