@@ -1,3 +1,5 @@
+import 'module-alias/register'
+
 export * from '@root/configuration'
 export * from '@root/parameter'
 export * from '@root/engine-request'
