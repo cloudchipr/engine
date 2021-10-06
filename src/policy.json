@@ -26,5 +26,14 @@
         ]
       }
     ]
+  },
+  "ec2-collect": {
+    "policies": [
+      {
+        "name": "ec2-collect",
+        "resource": "ec2",
+        "filters": []
+      }
+    ]
   }
 }

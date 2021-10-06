@@ -46,6 +46,8 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
         return C7nFilterBuilder.buildNetworkIn(expression)
       case 'network-out':
         return C7nFilterBuilder.buildNetworkOut(expression)
+      case 'launch-time':
+        return C7nFilterBuilder.buildLaunchTime(expression)
       default:
         return {
           key: expression.resource,
@@ -95,6 +97,14 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       period: expression.since,
       op: expression.operator,
       value: expression.value
+    }
+  }
+
+  private static buildLaunchTime (expression: FilterExpression): object {
+    return {
+      type: 'instance-age',
+      op: expression.operator,
+      days: expression.value
     }
   }
 }
