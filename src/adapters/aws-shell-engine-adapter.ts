@@ -47,9 +47,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     const policyName = 'ebs-clean'
     const policy: any = Object.assign({}, policies[policyName])
 
-      policy.policies[0].filters = [
-          request.parameter.filter.build(new C7nFilterBuilder())
-      ]
+    policy.policies[0].filters = [
+      request.parameter.filter.build(new C7nFilterBuilder())
+    ]
 
     // execute custodian command
     const responseJson = this.custodianExecutor.execute(
