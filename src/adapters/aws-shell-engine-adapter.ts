@@ -43,13 +43,45 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     return this.generateEbsResponse(responseJson)
   }
 
+  private cleanEbs (request: EngineRequest): EngineResponse {
+    const policyName = 'ebs-clean'
+    const policy: any = Object.assign({}, policies[policyName])
+
+      policy.policies[0].filters = [
+          request.parameter.filter.build(new C7nFilterBuilder())
+      ]
+
+    // execute custodian command
+    const responseJson = this.custodianExecutor.execute(
+      request.configuration,
+      policy,
+      policyName
+    )
+
+    return this.generateEbsResponse(responseJson)
+  }
+
   private collectEc2 (request: EngineRequest): EngineResponse {
     const policyName = 'ec2-collect'
     const policy: any = Object.assign({}, policies[policyName])
 
-    policy.policies[0].filters = [
-      request.parameter.filter.build(new C7nFilterBuilder())
-    ]
+    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
+
+    // execute custodian command
+    const responseJson = this.custodianExecutor.execute(
+      request.configuration,
+      policy,
+      policyName
+    )
+
+    return this.generateEc2Response(responseJson)
+  }
+
+  private cleanEc2 (request: EngineRequest): EngineResponse {
+    const policyName = 'ec2-clean'
+    const policy: any = Object.assign({}, policies[policyName])
+
+    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
 
     // execute custodian command
     const responseJson = this.custodianExecutor.execute(
@@ -94,7 +126,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.CreateTime,
             'not implemented',
-            ebsResponseItemJson.Tags.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value
+            ebsResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value
           )
         }
       )
@@ -107,7 +139,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     return new Response<Type>(
       responseJson.map(
         (ec2ResponseItemJson: {
-          ImageId: string;
+          InstanceId: string;
           InstanceType: string;
           Cpu: string;
           NetworkIn: string;
@@ -117,14 +149,14 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           Tags: any[];
         }) => {
           return new Ec2(
-            ec2ResponseItemJson.ImageId,
+            ec2ResponseItemJson.InstanceId,
             ec2ResponseItemJson.InstanceType,
             ec2ResponseItemJson.Cpu ?? 'not implemented',
             ec2ResponseItemJson.NetworkIn ?? 'not implemented',
             ec2ResponseItemJson.NetworkOut ?? 'not implemented',
             ec2ResponseItemJson.LaunchTime,
             'not implemented',
-            ec2ResponseItemJson.Tags.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
+            ec2ResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
           )
         }
       )
