@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -23,11 +23,13 @@
   "homepage": "https://github.com/cloudchipr/cloudchipr-engine#readme",
   "dependencies": {
     "fs": "0.0.1-security",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.3",
     "@types/node": "^16.9.6",
+    "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "^4.32.0",
     "@typescript-eslint/parser": "^4.32.0",
     "eslint": "^7.32.0",

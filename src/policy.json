@@ -8,21 +8,14 @@
       }
     ]
   },
-  "delete-unattached-volumes": {
+  "ebs-clean": {
     "policies": [
       {
-        "name": "delete-unattached-volumes",
+        "name": "ebs-clean",
         "resource": "ebs",
-        "filters": [
-          {
-            "Attachments": []
-          },
-          {
-            "State": "available"
-          }
-        ],
+        "filters": [],
         "actions": [
-            "delete"
+          "delete"
         ]
       }
     ]
@@ -32,7 +25,26 @@
       {
         "name": "ec2-collect",
         "resource": "ec2",
-        "filters": []
+        "filters": [
+          {
+            "State.Name": "running"
+          }
+        ]
+      }
+    ]
+  },
+  "ec2-clean": {
+    "policies": [
+      {
+        "name": "ec2-clean",
+        "resource": "ec2",
+        "filters": [],
+        "actions": [
+          {
+            "type": "terminate",
+            "force": true
+          }
+        ]
       }
     ]
   }
