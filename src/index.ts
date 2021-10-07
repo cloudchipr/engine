@@ -11,8 +11,9 @@ export * from './adapters/aws-shell-engine-adapter'
 export * from './adapters/engine-interface'
 
 export * from './domain/types/aws/ebs'
+export * from './domain/types/aws/ec2'
 
-export * from './responses/ebs-response'
+export * from './responses/response'
 
 export * from './command'
 export * from './sub-command-interface'
