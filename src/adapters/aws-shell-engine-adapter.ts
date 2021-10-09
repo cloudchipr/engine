@@ -185,21 +185,22 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     responseJson: any
   ): Response<Type> {
     return new Response<Type>(
-      responseJson.map(
-        (elbResponseItemJson: {
-          DNSName: string;
-          CreatedTime: string;
-          Price: string;
-          Tags: any[];
-        }) => {
-          return new Elb(
-            elbResponseItemJson.DNSName,
-            DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
-            'not implemented',
-            elbResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
-          )
-        }
-      )
+      responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+        .map(
+          (elbResponseItemJson: {
+            DNSName: string;
+            CreatedTime: string;
+            Price: string;
+            Tags: any[];
+          }) => {
+            return new Elb(
+              elbResponseItemJson.DNSName,
+              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              'not implemented',
+              elbResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
+            )
+          }
+        )
     )
   }
 }
