@@ -3,15 +3,15 @@ export class Ebs {
   readonly id: string;
   readonly size: number;
   readonly type: string;
-  readonly CreateTime?: string;
+  readonly age?: string;
   readonly price?: string;
   readonly nameTag?: string;
 
-  constructor (id: string, size: number, type: string, createTime?: string, price?: string, nameTag?: string) {
+  constructor (id: string, size: number, type: string, age?: string, price?: string, nameTag?: string) {
     this.id = id
     this.size = size
     this.type = type
-    this.CreateTime = createTime
+    this.age = age
     this.price = price
     this.nameTag = nameTag
   }

@@ -7,6 +7,8 @@ import { C7nFilterBuilder } from '../filters/c7n-filter-builder'
 import { C7nExecutor } from '../c7n-executor'
 import { Response } from '../responses/response'
 import { Ec2 } from '../domain/types/aws/ec2'
+import { Elb } from '../domain/types/aws/elb'
+import { DateTimeHelper } from '../helpers/date-time-helper'
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
   private readonly custodianExecutor: C7nExecutor;
@@ -93,6 +95,22 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     return this.generateEc2Response(responseJson)
   }
 
+  private collectElb (request: EngineRequest): EngineResponse {
+    const policyName = 'elb-collect'
+    const policy: any = Object.assign({}, policies[policyName])
+
+    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
+
+    // execute custodian command
+    const responseJson = this.custodianExecutor.execute(
+      request.configuration,
+      policy,
+      policyName
+    )
+
+    return this.generateElbResponse(responseJson)
+  }
+
   private validateRequest (name: string) {
     if (typeof (this as any)[name] !== 'function') {
       throw Error('Invalid AWS subcommand provided: ' + name)
@@ -124,7 +142,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.VolumeId,
             ebsResponseItemJson.Size,
             ebsResponseItemJson.VolumeType,
-            ebsResponseItemJson.CreateTime,
+            DateTimeHelper.getAge(ebsResponseItemJson.CreateTime),
             'not implemented',
             ebsResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value
           )
@@ -157,6 +175,28 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.LaunchTime,
             'not implemented',
             ec2ResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
+          )
+        }
+      )
+    )
+  }
+
+  private generateElbResponse (
+    responseJson: any
+  ): Response<Type> {
+    return new Response<Type>(
+      responseJson.map(
+        (elbResponseItemJson: {
+          DNSName: string;
+          CreatedTime: string;
+          Price: string;
+          Tags: any[];
+        }) => {
+          return new Elb(
+            elbResponseItemJson.DNSName,
+            DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+            'not implemented',
+            elbResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
           )
         }
       )
