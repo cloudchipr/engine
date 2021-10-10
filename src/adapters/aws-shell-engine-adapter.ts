@@ -9,6 +9,7 @@ import { Response } from '../responses/response'
 import { Ec2 } from '../domain/types/aws/ec2'
 import { Elb } from '../domain/types/aws/elb'
 import { DateTimeHelper } from '../helpers/date-time-helper'
+import { TagsHelper } from '../helpers/tags-helper'
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
   private readonly custodianExecutor: C7nExecutor;
@@ -144,7 +145,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.VolumeType,
             DateTimeHelper.getAge(ebsResponseItemJson.CreateTime),
             'not implemented',
-            ebsResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value
+            TagsHelper.showNameTagValue(ebsResponseItemJson.Tags)
           )
         }
       )
@@ -174,7 +175,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.NetworkOut ?? 'not implemented',
             ec2ResponseItemJson.LaunchTime,
             'not implemented',
-            ec2ResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
+            TagsHelper.showNameTagValue(ec2ResponseItemJson.Tags)
           )
         }
       )
@@ -197,7 +198,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               elbResponseItemJson.DNSName,
               DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
               'not implemented',
-              elbResponseItemJson.Tags?.find(tagObject => ['NAME', 'Name', 'name'].includes(tagObject.Key))?.Value ?? ''
+              TagsHelper.showNameTagValue(elbResponseItemJson.Tags)
             )
           }
         )
