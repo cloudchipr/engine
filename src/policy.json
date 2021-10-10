@@ -47,5 +47,14 @@
         ]
       }
     ]
+  },
+  "elb-collect": {
+    "policies": [
+      {
+        "name": "elb-collect",
+        "resource": "elb",
+        "filters": []
+      }
+    ]
   }
 }
