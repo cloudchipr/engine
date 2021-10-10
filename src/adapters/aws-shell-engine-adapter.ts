@@ -145,7 +145,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.VolumeType,
             DateTimeHelper.getAge(ebsResponseItemJson.CreateTime),
             'not implemented',
-            TagsHelper.showNameTagValue(ebsResponseItemJson.Tags)
+            TagsHelper.getNameTagValue(ebsResponseItemJson.Tags)
           )
         }
       )
@@ -175,7 +175,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.NetworkOut ?? 'not implemented',
             ec2ResponseItemJson.LaunchTime,
             'not implemented',
-            TagsHelper.showNameTagValue(ec2ResponseItemJson.Tags)
+            TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
           )
         }
       )
@@ -198,7 +198,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               elbResponseItemJson.DNSName,
               DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
               'not implemented',
-              TagsHelper.showNameTagValue(elbResponseItemJson.Tags)
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
             )
           }
         )
