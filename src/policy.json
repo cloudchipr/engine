@@ -56,5 +56,23 @@
         "filters": []
       }
     ]
+  },
+  "nlb-collect": {
+    "policies": [
+      {
+        "name": "nlb-collect",
+        "resource": "nlb",
+        "filters": []
+      }
+    ]
+  },
+  "alb-collect": {
+    "policies": [
+      {
+        "name": "alb-collect",
+        "resource": "alb",
+        "filters": []
+      }
+    ]
   }
 }
