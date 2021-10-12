@@ -61,7 +61,7 @@
     "policies": [
       {
         "name": "nlb-collect",
-        "resource": "nlb",
+        "resource": "app-elb",
         "filters": []
       }
     ]
@@ -70,7 +70,7 @@
     "policies": [
       {
         "name": "alb-collect",
-        "resource": "alb",
+        "resource": "app-elb",
         "filters": []
       }
     ]

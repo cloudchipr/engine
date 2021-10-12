@@ -49,7 +49,9 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       case 'launch-time':
         return C7nFilterBuilder.buildLaunchTime(expression)
       case 'instance-ids':
-        return C7nFilterBuilder.buildInstanceIds(expression)
+        return C7nFilterBuilder.buildInstanceId(expression)
+      case 'dns-name':
+        return C7nFilterBuilder.buildDnsName(expression)
       default:
         return {
           key: expression.resource,
@@ -110,10 +112,19 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
     }
   }
 
-  private static buildInstanceIds (expression: FilterExpression): object {
+  private static buildInstanceId (expression: FilterExpression): object {
     return {
       type: 'value',
       key: 'InstanceId',
+      op: expression.operator,
+      value: expression.value
+    }
+  }
+
+  private static buildDnsName (expression: FilterExpression): object {
+    return {
+      type: 'value',
+      key: 'DNSName',
       op: expression.operator,
       value: expression.value
     }
