@@ -29,87 +29,47 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
   }
 
   private collectEbs (request: EngineRequest): EngineResponse {
-    const policyName = 'ebs-collect'
-    const policy: any = Object.assign({}, policies[policyName])
-
-    policy.policies[0].filters = [
-      request.parameter.filter.build(new C7nFilterBuilder())
-    ]
-
-    // execute custodian command
-    const responseJson = this.custodianExecutor.execute(
-      request.configuration,
-      policy,
-      policyName
-    )
-
-    return this.generateEbsResponse(responseJson)
+    return this.generateEbsResponse(this.collect(request, 'ebs-collect'))
   }
 
   private cleanEbs (request: EngineRequest): EngineResponse {
-    const policyName = 'ebs-clean'
-    const policy: any = Object.assign({}, policies[policyName])
-
-    policy.policies[0].filters = [
-      request.parameter.filter.build(new C7nFilterBuilder())
-    ]
-
-    // execute custodian command
-    const responseJson = this.custodianExecutor.execute(
-      request.configuration,
-      policy,
-      policyName
-    )
-
-    return this.generateEbsResponse(responseJson)
+    return this.generateEbsResponse(this.collect(request, 'ebs-clean'))
   }
 
   private collectEc2 (request: EngineRequest): EngineResponse {
-    const policyName = 'ec2-collect'
-    const policy: any = Object.assign({}, policies[policyName])
-
-    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
-
-    // execute custodian command
-    const responseJson = this.custodianExecutor.execute(
-      request.configuration,
-      policy,
-      policyName
-    )
-
-    return this.generateEc2Response(responseJson)
+    return this.generateEc2Response(this.collect(request, 'ec2-collect'))
   }
 
   private cleanEc2 (request: EngineRequest): EngineResponse {
-    const policyName = 'ec2-clean'
-    const policy: any = Object.assign({}, policies[policyName])
-
-    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
-
-    // execute custodian command
-    const responseJson = this.custodianExecutor.execute(
-      request.configuration,
-      policy,
-      policyName
-    )
-
-    return this.generateEc2Response(responseJson)
+    return this.generateEc2Response(this.collect(request, 'ec2-clean'))
   }
 
   private collectElb (request: EngineRequest): EngineResponse {
-    const policyName = 'elb-collect'
-    const policy: any = Object.assign({}, policies[policyName])
+    return this.generateElbResponse(this.collect(request, 'elb-collect'))
+  }
 
+  private collectNlb (request: EngineRequest): EngineResponse {
+    return this.generateElbResponse(this.collect(request, 'nlb-collect'))
+  }
+
+  private collectAlb (request: EngineRequest): EngineResponse {
+    return this.generateElbResponse(this.collect(request, 'alb-collect'))
+  }
+
+  private collect (request: EngineRequest, policyName: string): any {
+    if (!(policyName in policies)) {
+      throw new Error(`Invalid policy name provided: ${policyName}`)
+    }
+    // @ts-ignore
+    const policy: any = Object.assign({}, policies[policyName])
     policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
 
-    // execute custodian command
-    const responseJson = this.custodianExecutor.execute(
+    // execute custodian command and return response
+    return this.custodianExecutor.execute(
       request.configuration,
       policy,
       policyName
     )
-
-    return this.generateElbResponse(responseJson)
   }
 
   private validateRequest (name: string) {

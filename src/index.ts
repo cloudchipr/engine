@@ -13,6 +13,8 @@ export * from './adapters/engine-interface'
 export * from './domain/types/aws/ebs'
 export * from './domain/types/aws/ec2'
 export * from './domain/types/aws/elb'
+export * from './domain/types/aws/nlb'
+export * from './domain/types/aws/alb'
 
 export * from './responses/response'
 
