@@ -57,6 +57,18 @@
       }
     ]
   },
+  "elb-clean": {
+    "policies": [
+      {
+        "name": "elb-clean",
+        "resource": "elb",
+        "filters": [],
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
   "nlb-collect": {
     "policies": [
       {
@@ -66,12 +78,36 @@
       }
     ]
   },
+  "nlb-clean": {
+    "policies": [
+      {
+        "name": "nlb-clean",
+        "resource": "app-elb",
+        "filters": [],
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
   "alb-collect": {
     "policies": [
       {
         "name": "alb-collect",
         "resource": "app-elb",
         "filters": []
+      }
+    ]
+  },
+  "alb-clean": {
+    "policies": [
+      {
+        "name": "alb-clean",
+        "resource": "app-elb",
+        "filters": [],
+        "actions": [
+          "delete"
+        ]
       }
     ]
   }
