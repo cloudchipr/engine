@@ -6,6 +6,7 @@ export enum Operators {
   LessThan = 'lt',
   LessThanEqualTo = 'le',
   IsEmpty = 'isEmpty',
+  IsAbsent = 'isAbsent',
   IsNotEmpty = 'isNotEmpty',
   In = 'in',
   NotIn = 'notIn',

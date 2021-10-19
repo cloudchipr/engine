@@ -110,5 +110,28 @@
         ]
       }
     ]
+  },
+  "eip-collect": {
+    "policies": [
+      {
+        "name": "eip-collect",
+        "resource": "network-addr",
+        "filters": []
+      }
+    ]
+  },
+  "eip-clean": {
+    "policies": [
+      {
+        "name": "eip-clean",
+        "resource": "network-addr",
+        "filters": [],
+        "actions": [
+          {
+            "type": "release"
+          }
+        ]
+      }
+    ]
   }
 }

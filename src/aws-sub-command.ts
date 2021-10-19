@@ -7,6 +7,7 @@ export class AwsSubCommand implements SubCommandInterface {
   static readonly ELB_SUBCOMMAND = 'elb';
   static readonly NLB_SUBCOMMAND = 'nlb';
   static readonly ALB_SUBCOMMAND = 'alb';
+  static readonly EIP_SUBCOMMAND = 'eip';
 
   private readonly subCommand: string;
 
@@ -40,5 +41,9 @@ export class AwsSubCommand implements SubCommandInterface {
 
   static alb (): AwsSubCommand {
     return new AwsSubCommand(this.ALB_SUBCOMMAND)
+  }
+
+  static eip (): AwsSubCommand {
+    return new AwsSubCommand(this.EIP_SUBCOMMAND)
   }
 }

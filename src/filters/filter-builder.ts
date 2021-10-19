@@ -21,6 +21,11 @@ export class FilterBuilder {
     return this
   }
 
+  isAbsent (): FilterBuilder {
+    this.addToList(new FilterExpression(this.resourceName, Operators.IsAbsent))
+    return this
+  }
+
   equal (value: string, since?: string): FilterBuilder {
     this.addToList(
       new FilterExpression(this.resourceName, Operators.Equal, value, since)
