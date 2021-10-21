@@ -7,6 +7,7 @@ import { C7nExecutor } from '../c7n-executor'
 import { Response } from '../responses/response'
 import { Ec2 } from '../domain/types/aws/ec2'
 import { Elb } from '../domain/types/aws/elb'
+import { Eip } from '../domain/types/aws/eip'
 import { DateTimeHelper } from '../helpers/date-time-helper'
 import { TagsHelper } from '../helpers/tags-helper'
 
@@ -179,6 +180,27 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
               'not implemented',
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+            )
+          }
+        )
+    )
+  }
+
+  private generateEipResponse (
+    responseJson: any
+  ): Response<Type> {
+    return new Response<Type>(
+      responseJson
+        .map(
+          (eipResponseItemJson: {
+            PublicIp: string;
+            Price: string;
+            Tags: any[];
+          }) => {
+            return new Eip(
+              eipResponseItemJson.PublicIp,
+              'not implemented',
+              TagsHelper.getNameTagValue(eipResponseItemJson.Tags)
             )
           }
         )

@@ -35,6 +35,8 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       return {
         [expression.resource]: []
       }
+    } else if (expression.operator === Operators.IsAbsent) {
+      return C7nFilterBuilder.buildAbsent(expression)
     }
 
     switch (expression.resource) {
@@ -127,6 +129,14 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       key: 'DNSName',
       op: expression.operator,
       value: expression.value
+    }
+  }
+
+  private static buildAbsent (expression: FilterExpression): object {
+    return {
+      type: 'value',
+      key: expression.resource,
+      value: 'absent'
     }
   }
 }
