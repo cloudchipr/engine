@@ -133,5 +133,29 @@
         ]
       }
     ]
+  },
+  "rds-collect": {
+    "policies": [
+      {
+        "name": "rds-collect",
+        "resource": "rds",
+        "filters": []
+      }
+    ]
+  },
+  "rds-clean": {
+    "policies": [
+      {
+        "name": "rds-clean",
+        "resource": "rds",
+        "filters": [],
+        "actions": [
+          {
+            "type": "delete",
+            "skip-snapshot": true
+          }
+        ]
+      }
+    ]
   }
 }

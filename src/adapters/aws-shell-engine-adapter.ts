@@ -10,6 +10,8 @@ import { Elb } from '../domain/types/aws/elb'
 import { Eip } from '../domain/types/aws/eip'
 import { DateTimeHelper } from '../helpers/date-time-helper'
 import { TagsHelper } from '../helpers/tags-helper'
+import { Rds } from '../domain/types/aws/rds'
+import { MetricsHelper } from '../helpers/metrics-helper'
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
   private readonly custodianExecutor: C7nExecutor;
@@ -30,7 +32,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
     // @ts-ignore
     const policy: any = Object.assign({}, policies[policyName])
-    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder()))
+    policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder(request.subCommand)))
 
     // execute custodian command and return response
     const response = this.custodianExecutor.execute(
@@ -201,6 +203,35 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               eipResponseItemJson.PublicIp,
               'not implemented',
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags)
+            )
+          }
+        )
+    )
+  }
+
+  private generateRdsResponse (
+    responseJson: any
+  ): Response<Type> {
+    return new Response<Type>(
+      responseJson.sort((a: any, b: any) => (a.InstanceCreateTime > b.InstanceCreateTime) ? 1 : ((b.InstanceCreateTime > a.InstanceCreateTime) ? -1 : 0))
+        .map(
+          (rdsResponseItemJson: {
+            DBInstanceIdentifier: string;
+            DBInstanceClass: string;
+            Engine: string;
+            InstanceCreateTime: string;
+            'c7n.metrics': any;
+            Price: string;
+            Tags: any[];
+          }) => {
+            return new Rds(
+              rdsResponseItemJson.DBInstanceIdentifier,
+              rdsResponseItemJson.DBInstanceClass,
+              MetricsHelper.getDatabaseConnections(rdsResponseItemJson),
+              rdsResponseItemJson.Engine,
+              DateTimeHelper.getAge(rdsResponseItemJson.InstanceCreateTime),
+              'not-implemented',
+              TagsHelper.getNameTagValue(rdsResponseItemJson.Tags)
             )
           }
         )
