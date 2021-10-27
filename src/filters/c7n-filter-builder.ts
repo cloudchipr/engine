@@ -2,8 +2,16 @@ import { FIlterBuilderInterface } from '../fIlter-builder-interface'
 import { FilterList } from './filter-list'
 import { FilterExpression } from './filter-expression'
 import { Operators } from './operators'
+import { SubCommandInterface } from '../sub-command-interface'
+import { AwsSubCommand } from '../aws-sub-command'
 
 export class C7nFilterBuilder implements FIlterBuilderInterface {
+  private readonly subCommand: SubCommandInterface;
+
+  constructor (subCommand: SubCommandInterface) {
+    this.subCommand = subCommand
+  }
+
   validate (expression: FilterExpression): boolean {
     return expression !== undefined || true
   }
@@ -49,11 +57,13 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       case 'network-out':
         return C7nFilterBuilder.buildNetworkOut(expression)
       case 'launch-time':
-        return C7nFilterBuilder.buildLaunchTime(expression)
+        return this.buildLaunchTime(expression)
       case 'instance-ids':
         return C7nFilterBuilder.buildInstanceId(expression)
       case 'dns-name':
         return C7nFilterBuilder.buildDnsName(expression)
+      case 'database-connections':
+        return C7nFilterBuilder.buildDatabaseConnections(expression)
       default:
         return {
           key: expression.resource,
@@ -106,12 +116,20 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
     }
   }
 
-  private static buildLaunchTime (expression: FilterExpression): object {
-    return {
-      type: 'instance-age',
-      op: expression.operator,
-      days: expression.value
-    }
+  private buildLaunchTime (expression: FilterExpression): object {
+    return this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND
+      ? {
+          type: 'value',
+          value_type: 'age',
+          key: 'InstanceCreateTime',
+          value: expression.value,
+          op: expression.operator
+        }
+      : {
+          type: 'instance-age',
+          op: expression.operator,
+          days: expression.value
+        }
   }
 
   private static buildInstanceId (expression: FilterExpression): object {
@@ -137,6 +155,16 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       type: 'value',
       key: expression.resource,
       value: 'absent'
+    }
+  }
+
+  private static buildDatabaseConnections (expression: FilterExpression): object {
+    return {
+      type: 'metrics',
+      name: 'DatabaseConnections',
+      days: expression.since,
+      value: expression.value,
+      op: expression.operator
     }
   }
 }

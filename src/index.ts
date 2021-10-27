@@ -16,6 +16,7 @@ export * from './domain/types/aws/elb'
 export * from './domain/types/aws/nlb'
 export * from './domain/types/aws/alb'
 export * from './domain/types/aws/eip'
+export * from './domain/types/aws/rds'
 
 export * from './responses/response'
 
