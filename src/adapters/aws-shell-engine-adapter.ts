@@ -107,9 +107,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           return new Ec2(
             ec2ResponseItemJson.InstanceId,
             ec2ResponseItemJson.InstanceType,
-            ec2ResponseItemJson.Cpu ?? 'not implemented',
-            ec2ResponseItemJson.NetworkIn ?? 'not implemented',
-            ec2ResponseItemJson.NetworkOut ?? 'not implemented',
+            MetricsHelper.getCpuUtilization(ec2ResponseItemJson),
+            MetricsHelper.getNetworkIn(ec2ResponseItemJson),
+            MetricsHelper.getNetworkOut(ec2ResponseItemJson),
             ec2ResponseItemJson.LaunchTime,
             'not implemented',
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
