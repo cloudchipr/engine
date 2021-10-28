@@ -16,7 +16,7 @@ export class MetricsHelper {
   }
 
   private static getMetricAverage (object: any, key: string) {
-    let sum = object?.['c7n.metrics']?.[key]?.reduce(function (prev: Metric, current: Metric) {
+    const sum = object?.['c7n.metrics']?.[key]?.reduce(function (prev: Metric, current: Metric) {
       return prev.Average + current.Average
     })
 
@@ -28,8 +28,8 @@ class Metric {
   public Average: number;
   public Unit: string;
 
-  constructor(Average: number, Unit: string) {
-    this.Average = Average;
-    this.Unit = Unit;
+  constructor (Average: number, Unit: string) {
+    this.Average = Average
+    this.Unit = Unit
   }
 }

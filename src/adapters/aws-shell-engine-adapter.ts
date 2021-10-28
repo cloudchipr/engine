@@ -108,8 +108,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.InstanceId,
             ec2ResponseItemJson.InstanceType,
             MetricsHelper.getCpuUtilization(ec2ResponseItemJson),
-              MetricsHelper.getNetworkIn(ec2ResponseItemJson),
-              MetricsHelper.getNetworkOut(ec2ResponseItemJson),
+            MetricsHelper.getNetworkIn(ec2ResponseItemJson),
+            MetricsHelper.getNetworkOut(ec2ResponseItemJson),
             ec2ResponseItemJson.LaunchTime,
             'not implemented',
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
