@@ -12,6 +12,7 @@ import { DateTimeHelper } from '../helpers/date-time-helper'
 import { TagsHelper } from '../helpers/tags-helper'
 import { Rds } from '../domain/types/aws/rds'
 import { MetricsHelper } from '../helpers/metrics-helper'
+import { StringHelper } from '../helpers/string-hepler'
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
   private readonly custodianExecutor: C7nExecutor;
@@ -56,11 +57,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
   }
 
   private static getResponseMethodName (subCommand: string): string {
-    return `generate${AWSShellEngineAdapter.capitalizeFirstLetter(subCommand)}Response`
-  }
-
-  private static capitalizeFirstLetter (str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1)
+    return `generate${StringHelper.capitalizeFirstLetter(subCommand)}Response`
   }
 
   private generateEbsResponse (

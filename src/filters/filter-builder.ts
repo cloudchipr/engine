@@ -1,14 +1,18 @@
 import { FilterList } from './filter-list'
 import { FilterExpression } from './filter-expression'
 import { Operators } from './operators'
+import { Filters } from './filters'
+import { FilterValidator } from './filter-validator'
 
 export class FilterBuilder {
   private readonly filters: FilterList;
+  private readonly filterValidator: FilterValidator;
   private connector: string = 'and';
   private resourceName: string = '';
 
   constructor () {
     this.filters = new FilterList()
+    this.filterValidator = new FilterValidator()
   }
 
   resource (resource: string): FilterBuilder {
@@ -86,10 +90,9 @@ export class FilterBuilder {
     return this
   }
 
-  load (filters: any): FilterBuilder {
-    const f = filters.filters[0]
-
-    for (const filter of f.and) {
+  load (filters: Filters): FilterBuilder {
+    this.filterValidator.validate(filters)
+    for (const filter of filters.and) {
       this.addToList(
         new FilterExpression(
           filter.resource,

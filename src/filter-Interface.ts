@@ -1,5 +1,5 @@
-import { FIlterBuilderInterface } from './fIlter-builder-interface'
+import { FilterBuilderInterface } from './filter-builder-interface'
 
 export interface FilterInterface {
-  build(builder: FIlterBuilderInterface): object;
+  build(builder: FilterBuilderInterface): object;
 }
