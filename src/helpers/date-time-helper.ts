@@ -1,8 +1,5 @@
 export class DateTimeHelper {
-  static getAge (datetime?: string): string {
-    if (!datetime) {
-      return ''
-    }
+  static getAge (datetime: string): string {
     const now = new Date()
     const date = new Date(datetime)
     const diffTime = Math.abs(now.valueOf() - date.valueOf())

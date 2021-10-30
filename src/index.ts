@@ -7,7 +7,7 @@ export * from './filters/filter-builder'
 export * from './filters/criteria'
 export * from './filters/c7n-filter-builder'
 
-export * from './adapters/aws-shell-engine-adapter'
+export * from './adapters/aws/aws-shell-engine-adapter'
 export * from './adapters/engine-interface'
 
 export * from './domain/types/aws/ebs'
@@ -17,6 +17,7 @@ export * from './domain/types/aws/nlb'
 export * from './domain/types/aws/alb'
 export * from './domain/types/aws/eip'
 export * from './domain/types/aws/rds'
+export * from './domain/types/provider-resource'
 
 export * from './responses/response'
 
