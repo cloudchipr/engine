@@ -3,8 +3,7 @@
     "policies": [
       {
         "name": "ebs-collect",
-        "resource": "ebs",
-        "filters": []
+        "resource": "ebs"
       }
     ]
   },
@@ -13,7 +12,6 @@
       {
         "name": "ebs-clean",
         "resource": "ebs",
-        "filters": [],
         "actions": [
           "delete"
         ]
@@ -38,7 +36,6 @@
       {
         "name": "ec2-clean",
         "resource": "ec2",
-        "filters": [],
         "actions": [
           {
             "type": "terminate",
@@ -52,8 +49,7 @@
     "policies": [
       {
         "name": "elb-collect",
-        "resource": "elb",
-        "filters": []
+        "resource": "elb"
       }
     ]
   },
@@ -62,7 +58,6 @@
       {
         "name": "elb-clean",
         "resource": "elb",
-        "filters": [],
         "actions": [
           "delete"
         ]
@@ -73,8 +68,7 @@
     "policies": [
       {
         "name": "nlb-collect",
-        "resource": "app-elb",
-        "filters": []
+        "resource": "app-elb"
       }
     ]
   },
@@ -83,7 +77,6 @@
       {
         "name": "nlb-clean",
         "resource": "app-elb",
-        "filters": [],
         "actions": [
           "delete"
         ]
@@ -94,8 +87,7 @@
     "policies": [
       {
         "name": "alb-collect",
-        "resource": "app-elb",
-        "filters": []
+        "resource": "app-elb"
       }
     ]
   },
@@ -104,7 +96,6 @@
       {
         "name": "alb-clean",
         "resource": "app-elb",
-        "filters": [],
         "actions": [
           "delete"
         ]
@@ -115,8 +106,7 @@
     "policies": [
       {
         "name": "eip-collect",
-        "resource": "network-addr",
-        "filters": []
+        "resource": "network-addr"
       }
     ]
   },
@@ -125,7 +115,6 @@
       {
         "name": "eip-clean",
         "resource": "network-addr",
-        "filters": [],
         "actions": [
           {
             "type": "release"
@@ -138,8 +127,7 @@
     "policies": [
       {
         "name": "rds-collect",
-        "resource": "rds",
-        "filters": []
+        "resource": "rds"
       }
     ]
   },
@@ -148,7 +136,6 @@
       {
         "name": "rds-clean",
         "resource": "rds",
-        "filters": [],
         "actions": [
           {
             "type": "delete",

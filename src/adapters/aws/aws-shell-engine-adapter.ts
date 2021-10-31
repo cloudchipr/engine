@@ -36,7 +36,11 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       // @ts-ignore
       const policy: any = Object.assign({}, policies[policyName])
-      policy.policies[0].filters.push(request.parameter.filter.build(new C7nFilterBuilder(request.subCommand)))
+      const filters: object = request.parameter.filter.build(new C7nFilterBuilder(request.subCommand))
+
+      if (Object.keys(filters).length) {
+        policy.policies[0].filters.push(filters)
+      }
 
       // execute custodian command and return response
       const response = this.custodianExecutor.execute(
