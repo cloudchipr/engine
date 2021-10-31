@@ -1,19 +1,20 @@
-export class Rds {
-  readonly dbId: string;
-  readonly instanceType: string;
-  readonly averageConnections: number;
-  readonly dbType: string;
-  readonly age?: string;
-  readonly price?: string;
-  readonly nameTag?: string;
+import ProviderResource from '../provider-resource'
 
-  constructor (dbId: string, instanceType: string, averageConnections: number, dbType: string, age: string, price: string, nameTag: string) {
-    this.dbId = dbId
-    this.instanceType = instanceType
-    this.averageConnections = averageConnections
-    this.dbType = dbType
-    this.age = age
-    this.price = price
-    this.nameTag = nameTag
+export class Rds extends ProviderResource {
+  constructor (
+    readonly id: string,
+    readonly instanceType: string,
+    readonly storageType: string,
+    readonly averageConnections: number,
+    readonly dbType: string,
+    readonly age: string,
+    readonly availabilityZone: string,
+    readonly nameTag?: string
+  ) {
+    super()
+  }
+
+  getRegion (): string {
+    return this.availabilityZone.slice(0, -1)
   }
 }

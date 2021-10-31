@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/cloudchipr/cloudchipr-engine#readme",
   "dependencies": {
+    "@aws-sdk/client-ec2": "^3.39.0",
+    "@aws-sdk/client-pricing": "^3.39.0",
     "fs": "0.0.1-security",
     "js-yaml": "^4.1.0",
     "uuid": "^8.3.1"

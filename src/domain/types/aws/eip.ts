@@ -1,11 +1,9 @@
-export class Eip {
-  readonly ip: string;
-  readonly price?: string;
-  readonly nameTag?: string;
+import ProviderResource from '../provider-resource'
 
-  constructor (ip: string, price?: string, nameTag?: string) {
-    this.ip = ip
-    this.price = price
-    this.nameTag = nameTag
-  }
+export class Eip extends ProviderResource {
+  constructor (
+    readonly ip: string,
+    readonly region: string,
+    readonly nameTag?: string
+  ) { super() }
 }

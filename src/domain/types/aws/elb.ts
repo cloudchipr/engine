@@ -1,13 +1,11 @@
-export class Elb {
-    readonly dnsName: string;
-    readonly age?: string;
-    readonly price?: string;
-    readonly nameTag?: string;
+import ProviderResource from '../provider-resource'
 
-    constructor (dnsName: string, age?: string, price?: string, nameTag?: string) {
-      this.dnsName = dnsName
-      this.age = age
-      this.price = price
-      this.nameTag = nameTag
-    }
+export class Elb extends ProviderResource {
+  constructor (
+        readonly dnsName: string,
+        readonly age?: string,
+        readonly nameTag?: string
+  ) {
+    super()
+  }
 }
