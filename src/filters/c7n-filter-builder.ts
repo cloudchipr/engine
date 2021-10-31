@@ -1,11 +1,12 @@
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
+import { FilterBuilderInterface } from '../filter-builder-interface'
 import { FilterList } from './filter-list'
 import { FilterExpression } from './filter-expression'
 import { Operators } from './operators'
 import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
+import { StringHelper } from '../helpers/string-hepler'
 
-export class C7nFilterBuilder implements FIlterBuilderInterface {
+export class C7nFilterBuilder implements FilterBuilderInterface {
   private readonly subCommand: SubCommandInterface;
 
   constructor (subCommand: SubCommandInterface) {
@@ -40,9 +41,7 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
 
   buildFilterExpression (expression: FilterExpression): object {
     if (expression.operator === Operators.IsEmpty) {
-      return {
-        [expression.resource]: []
-      }
+      return C7nFilterBuilder.buildEmpty(expression)
     } else if (expression.operator === Operators.IsAbsent) {
       return C7nFilterBuilder.buildAbsent(expression)
     }
@@ -68,7 +67,7 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
         return {
           key: expression.resource,
           op: expression.operator,
-          value: expression.value
+          value: Number(expression.value)
         }
     }
   }
@@ -79,7 +78,7 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       key: 'CreateTime',
       op: expression.operator,
       value_type: 'age',
-      value: expression.value
+      value: Number(expression.value)
     }
   }
 
@@ -89,9 +88,9 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       name: 'CPUUtilization',
       statistics: 'Average',
       period: 86400,
-      days: expression.since,
+      days: Number(expression.since),
       op: expression.operator,
-      value: expression.value
+      value: Number(expression.value)
     }
   }
 
@@ -101,9 +100,9 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       name: 'NetworkIn',
       statistics: 'Average',
       period: 86400,
-      days: expression.since,
+      days: Number(expression.since),
       op: expression.operator,
-      value: expression.value
+      value: Number(expression.value)
     }
   }
 
@@ -113,9 +112,9 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       name: 'NetworkOut',
       statistics: 'Average',
       period: 86400,
-      days: expression.since,
+      days: Number(expression.since),
       op: expression.operator,
-      value: expression.value
+      value: Number(expression.value)
     }
   }
 
@@ -125,13 +124,13 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
           type: 'value',
           value_type: 'age',
           key: 'InstanceCreateTime',
-          value: expression.value,
+          value: Number(expression.value),
           op: expression.operator
         }
       : {
           type: 'instance-age',
           op: expression.operator,
-          days: expression.value
+          days: Number(expression.value)
         }
   }
 
@@ -140,7 +139,7 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       type: 'value',
       key: 'InstanceId',
       op: expression.operator,
-      value: expression.value
+      value: Number(expression.value)
     }
   }
 
@@ -149,7 +148,7 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
       type: 'value',
       key: 'DNSName',
       op: expression.operator,
-      value: expression.value
+      value: Number(expression.value)
     }
   }
 
@@ -161,12 +160,18 @@ export class C7nFilterBuilder implements FIlterBuilderInterface {
     }
   }
 
+  private static buildEmpty (expression: FilterExpression): object {
+    return {
+      [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+    }
+  }
+
   private static buildDatabaseConnections (expression: FilterExpression): object {
     return {
       type: 'metrics',
       name: 'DatabaseConnections',
-      days: expression.since,
-      value: expression.value,
+      days: Number(expression.since),
+      value: Number(expression.value),
       op: expression.operator
     }
   }

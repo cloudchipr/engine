@@ -1,6 +1,6 @@
 import { Operators } from './operators'
 import { FilterInterface } from '../filter-Interface'
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
+import { FilterBuilderInterface } from '../filter-builder-interface'
 
 export class FilterExpression implements FilterInterface {
   public resource: string;
@@ -20,7 +20,7 @@ export class FilterExpression implements FilterInterface {
     this.since = since
   }
 
-  public build (builder: FIlterBuilderInterface): object {
+  public build (builder: FilterBuilderInterface): object {
     return builder.buildFilterExpression(this)
   }
 }

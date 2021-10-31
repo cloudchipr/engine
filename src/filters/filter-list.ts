@@ -1,6 +1,6 @@
 import { FilterExpression } from './filter-expression'
 import { FilterInterface } from '../filter-Interface'
-import { FIlterBuilderInterface } from '../fIlter-builder-interface'
+import { FilterBuilderInterface } from '../filter-builder-interface'
 
 export class FilterList implements FilterInterface {
   private readonly _andList: (FilterExpression | FilterList)[] = [];
@@ -26,7 +26,7 @@ export class FilterList implements FilterInterface {
     return this._orList
   }
 
-  public build (builder: FIlterBuilderInterface): object {
+  public build (builder: FilterBuilderInterface): object {
     return builder.buildFilter(this)
   }
 }

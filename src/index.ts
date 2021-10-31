@@ -6,6 +6,7 @@ export * from './engine-response'
 export * from './filters/filter-builder'
 export * from './filters/criteria'
 export * from './filters/c7n-filter-builder'
+export * from './filter-interface'
 
 export * from './adapters/aws/aws-shell-engine-adapter'
 export * from './adapters/engine-interface'
