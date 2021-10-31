@@ -1,4 +1,4 @@
-import ProviderResource from '../provider-resource'
+import { ProviderResource } from '../provider-resource'
 
 export class Eip extends ProviderResource {
   constructor (

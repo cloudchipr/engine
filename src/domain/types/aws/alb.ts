@@ -1,4 +1,4 @@
-import ProviderResource from '../provider-resource'
+import { ProviderResource } from '../provider-resource'
 
 export class Alb extends ProviderResource {
   constructor (
