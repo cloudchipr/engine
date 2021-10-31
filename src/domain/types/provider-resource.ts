@@ -1,4 +1,4 @@
-export default abstract class ProviderResource {
+export abstract class ProviderResource {
     protected _pricePerHour?: number;
     protected _pricePerMonthGB?: number;
     protected _pricePerMonth?: number;
