@@ -1,5 +1,4 @@
-// Elastic Block Store
-import ProviderResource from '../provider-resource'
+import { ProviderResource } from '../provider-resource'
 
 export class Ebs extends ProviderResource {
   constructor (

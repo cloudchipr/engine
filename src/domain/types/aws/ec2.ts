@@ -1,4 +1,4 @@
-import ProviderResource from '../provider-resource'
+import { ProviderResource } from '../provider-resource'
 
 // Elastic Compute Cloud
 export class Ec2 extends ProviderResource {
