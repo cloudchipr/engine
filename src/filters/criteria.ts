@@ -1,4 +1,4 @@
-import { FilterInterface } from '../filter-Interface'
+import { FilterInterface } from '../filter-interface'
 import { FilterList } from './filter-list'
 import { FilterBuilderInterface } from '../filter-builder-interface'
 

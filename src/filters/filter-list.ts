@@ -1,5 +1,5 @@
 import { FilterExpression } from './filter-expression'
-import { FilterInterface } from '../filter-Interface'
+import { FilterInterface } from '../filter-interface'
 import { FilterBuilderInterface } from '../filter-builder-interface'
 
 export class FilterList implements FilterInterface {

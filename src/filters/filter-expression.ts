@@ -1,5 +1,5 @@
 import { Operators } from './operators'
-import { FilterInterface } from '../filter-Interface'
+import { FilterInterface } from '../filter-interface'
 import { FilterBuilderInterface } from '../filter-builder-interface'
 
 export class FilterExpression implements FilterInterface {
