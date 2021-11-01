@@ -70,16 +70,16 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       responseJson.map(
         (ebsResponseItemJson: {
           VolumeId: string;
-          Size: number;
           VolumeType: string;
+          Size: number;
           CreateTime: string;
           Price: string;
           Tags: any[];
         }) => {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
-            ebsResponseItemJson.Size,
             ebsResponseItemJson.VolumeType,
+            ebsResponseItemJson.Size,
             DateTimeHelper.getAge(ebsResponseItemJson.CreateTime),
             'not implemented',
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags)
@@ -100,8 +100,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           Cpu: string;
           NetworkIn: string;
           NetworkOut: string;
-          LaunchTime: string;
           Price: string;
+          LaunchTime: string;
           Tags: any[];
         }) => {
           return new Ec2(
@@ -110,8 +110,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.Cpu ?? 'not implemented',
             ec2ResponseItemJson.NetworkIn ?? 'not implemented',
             ec2ResponseItemJson.NetworkOut ?? 'not implemented',
-            ec2ResponseItemJson.LaunchTime,
             'not implemented',
+            DateTimeHelper.getAge(ec2ResponseItemJson.LaunchTime),
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
           )
         }
@@ -228,9 +228,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.DBInstanceIdentifier,
               rdsResponseItemJson.DBInstanceClass,
               MetricsHelper.getDatabaseConnections(rdsResponseItemJson),
-              rdsResponseItemJson.Engine,
-              DateTimeHelper.getAge(rdsResponseItemJson.InstanceCreateTime),
               'not-implemented',
+              rdsResponseItemJson.Engine,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags)
             )
           }

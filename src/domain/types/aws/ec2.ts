@@ -1,22 +1,22 @@
 // Elastic Compute Cloud
 export class Ec2 {
-  readonly id: string;
-  readonly type: string;
+  readonly instanceId: string;
+  readonly instanceType: string;
   readonly cpu: string;
-  readonly networkIn: string;
-  readonly networkOut: string;
-  readonly LaunchTime?: string;
-  readonly price?: string;
+  readonly netIn: string;
+  readonly netOut: string;
+  readonly pricePerMonth?: string;
+  readonly age?: string;
   readonly nameTag?: string;
 
-  constructor (id: string, type: string, cpu: string, networkIn: string, networkOut: string, LaunchTime: string, price: string, nameTag: string) {
-    this.id = id
-    this.type = type
+  constructor (instanceId: string, instanceType: string, cpu: string, netIn: string, netOut: string, pricePerMonth?: string, age?: string, nameTag?: string) {
+    this.instanceId = instanceId
+    this.instanceType = instanceType
     this.cpu = cpu
-    this.networkIn = networkIn
-    this.networkOut = networkOut
-    this.LaunchTime = LaunchTime
-    this.price = price
+    this.netIn = netIn
+    this.netOut = netOut
+    this.pricePerMonth = pricePerMonth
+    this.age = age
     this.nameTag = nameTag
   }
 }

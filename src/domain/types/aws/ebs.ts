@@ -1,18 +1,18 @@
 // Elastic Block Store
 export class Ebs {
-  readonly id: string;
+  readonly instanceId: string;
+  readonly instanceType: string;
   readonly size: number;
-  readonly type: string;
   readonly age?: string;
-  readonly price?: string;
+  readonly pricePerMonth?: string;
   readonly nameTag?: string;
 
-  constructor (id: string, size: number, type: string, age?: string, price?: string, nameTag?: string) {
-    this.id = id
+  constructor (instanceId: string, instanceType: string, size: number, age?: string, pricePerMonth?: string, nameTag?: string) {
+    this.instanceId = instanceId
+    this.instanceType = instanceType
     this.size = size
-    this.type = type
     this.age = age
-    this.price = price
+    this.pricePerMonth = pricePerMonth
     this.nameTag = nameTag
   }
 }

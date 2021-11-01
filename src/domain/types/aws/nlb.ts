@@ -1,13 +1,13 @@
 export class Nlb {
   readonly dnsName: string;
   readonly age?: string;
-  readonly price?: string;
+  readonly pricePerMonth?: string;
   readonly nameTag?: string;
 
-  constructor (dnsName: string, age?: string, price?: string, nameTag?: string) {
+  constructor (dnsName: string, age?: string, pricePerMonth?: string, nameTag?: string) {
     this.dnsName = dnsName
     this.age = age
-    this.price = price
+    this.pricePerMonth = pricePerMonth
     this.nameTag = nameTag
   }
 }
