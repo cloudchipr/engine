@@ -36,9 +36,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       // @ts-ignore
       const policy: any = Object.assign({}, policies[policyName])
-      const filters: object = request.parameter.filter.build(new C7nFilterBuilder(request.subCommand))
+      const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
 
-      if (Object.keys(filters).length) {
+      if (filters && Object.keys(filters).length) {
         if (typeof policy.policies[0].filters === 'undefined') {
           policy.policies[0].filters = []
         }
