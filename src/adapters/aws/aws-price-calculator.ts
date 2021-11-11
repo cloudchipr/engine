@@ -55,6 +55,7 @@ export default class AwsPriceCalculator {
     if (!rdsItems.length) {
       return
     }
+
     const filters: {
       [region: string]: {
         [volumeType: string]: {
@@ -99,6 +100,7 @@ export default class AwsPriceCalculator {
     if (!ebsItems.length) {
       return
     }
+
     const filters: {
       [region: string]: {
         [volumeType: string]: {
