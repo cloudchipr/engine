@@ -8,7 +8,7 @@ export default class AwsEc2Client {
     private client: EC2Client;
 
     constructor (region: string, accessKeyId: string, secretAccessKey: string) {
-      this.client = new EC2Client({ region: 'eu-central-1', credentials: { accessKeyId, secretAccessKey } })
+      this.client = new EC2Client({ region: region, credentials: { accessKeyId, secretAccessKey } })
     }
 
     // @todo make explicit response

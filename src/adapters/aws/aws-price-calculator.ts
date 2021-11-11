@@ -180,8 +180,8 @@ export default class AwsPriceCalculator {
   }
 
   async putEc2Prices (ec2Items: Ec2[]): Promise<void> {
-    const imagesIds = ec2Items.map(p => p.imageId)
-    let imagesData = await this.ec2Client.describeImages(imagesIds)
+    const uniqueImageIds = Array.from(new Set(ec2Items.map(p => p.imageId)))
+    let imagesData = await this.ec2Client.describeImages(uniqueImageIds)
     imagesData = imagesData.Images
 
     const imageMap = new Map<string, { Platform: string, UsageOperation: string} >()

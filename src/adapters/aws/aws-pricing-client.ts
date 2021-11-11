@@ -8,7 +8,7 @@ export default class AwsPricingClient {
     private client: Pricing;
 
     constructor (region: string, accessKeyId: string, secretAccessKey: string) {
-      this.client = new AWS.Pricing({ region: 'us-east-1', credentials: { accessKeyId, secretAccessKey } })
+      this.client = new AWS.Pricing({ region: region, credentials: { accessKeyId, secretAccessKey } })
     }
 
     // @todo handle region detection
