@@ -52,6 +52,9 @@ export default class AwsPriceCalculator {
   }
 
   async putRdsPrices (rdsItems: Rds[]): Promise<void> {
+    if (!rdsItems.length) {
+      return
+    }
     const filters: {
       [region: string]: {
         [volumeType: string]: {
@@ -83,8 +86,8 @@ export default class AwsPriceCalculator {
         const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
         const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
 
-        const ebsItems = filters[regionKey][volumeTypeKey].rdsItems
-        ebsItems.forEach(rds => {
+        const rdsItems = filters[regionKey][volumeTypeKey].rdsItems
+        rdsItems.forEach(rds => {
           rds.pricePerMonthGB = pricePerUnit.USD
           return rds
         })
@@ -93,6 +96,9 @@ export default class AwsPriceCalculator {
   }
 
   async putEbsPrices (ebsItems: Ebs[]): Promise<void> {
+    if (!ebsItems.length) {
+      return
+    }
     const filters: {
       [region: string]: {
         [volumeType: string]: {
@@ -134,6 +140,10 @@ export default class AwsPriceCalculator {
   }
 
   async putEipPrices (eipItems: Eip[]): Promise<void> {
+    if (!eipItems.length) {
+      return
+    }
+
     const filters: {
       [region: string]: {
         filter: {}[],
@@ -180,6 +190,10 @@ export default class AwsPriceCalculator {
   }
 
   async putEc2Prices (ec2Items: Ec2[]): Promise<void> {
+    if (!ec2Items.length) {
+      return
+    }
+
     const uniqueImageIds = Array.from(new Set(ec2Items.map(p => p.imageId)))
     let imagesData = await this.ec2Client.describeImages(uniqueImageIds)
     imagesData = imagesData.Images
