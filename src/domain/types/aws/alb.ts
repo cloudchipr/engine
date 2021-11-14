@@ -1,11 +1,4 @@
-import { ProviderResource } from '../provider-resource'
+import { Elb } from './elb'
 
-export class Alb extends ProviderResource {
-  constructor (
-    readonly dnsName: string,
-    readonly age?: string,
-    readonly nameTag?: string
-  ) {
-    super()
-  }
+export class Alb extends Elb {
 }

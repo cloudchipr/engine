@@ -8,9 +8,11 @@ import { Response } from '../../responses/response'
 import { Ec2 } from '../../domain/types/aws/ec2'
 import { Elb } from '../../domain/types/aws/elb'
 import { Eip } from '../../domain/types/aws/eip'
+import { Alb } from '../../domain/types/aws/alb'
+import { Nlb } from '../../domain/types/aws/nlb'
+import { Rds } from '../../domain/types/aws/rds'
 import { DateTimeHelper } from '../../helpers/date-time-helper'
 import { TagsHelper } from '../../helpers/tags-helper'
-import { Rds } from '../../domain/types/aws/rds'
 import { MetricsHelper } from '../../helpers/metrics-helper'
 import AwsPriceCalculator from './aws-price-calculator'
 import { Configuration } from '../../configuration'
@@ -137,70 +139,70 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       return new Response<Type>(ec2Items)
     }
 
-    private generateElbResponse (
+    private async generateElbResponse (
       responseJson: any
-    ): Response<Type> {
-      return new Response<Type>(
-        responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
-          .map(
-            (elbResponseItemJson: {
-                        DNSName: string;
-                        CreatedTime: string;
-                        Price: string;
-                        Tags: any[];
-                    }) => {
-              return new Elb(
-                elbResponseItemJson.DNSName,
-                DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
-                TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
-              )
-            }
-          )
-      )
+    ): Promise<Response<Type>> {
+      const elbItems = responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+        .map(
+          (elbResponseItemJson: {
+                    DNSName: string;
+                    CreatedTime: string;
+                    Tags: any[];
+                }) => {
+            return new Elb(
+              elbResponseItemJson.DNSName,
+              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+            )
+          }
+        )
+
+      await this.awsPriceCalculator.putElbPrices(elbItems)
+      return new Response<Type>(elbItems)
     }
 
-    private generateNlbResponse (
+    private async generateNlbResponse (
       responseJson: any
-    ): Response<Type> {
-      return new Response<Type>(
-        responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
-          .map(
-            (elbResponseItemJson: {
-                        DNSName: string;
-                        CreatedTime: string;
-                        Price: string;
-                        Tags: any[];
-                    }) => {
-              return new Elb(
-                elbResponseItemJson.DNSName,
-                DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
-                TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
-              )
-            }
-          )
-      )
+    ): Promise<Response<Type>> {
+      const nlbItems = responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+        .map(
+          (elbResponseItemJson: {
+                    DNSName: string;
+                    CreatedTime: string;
+                    Tags: any[];
+                }) => {
+            return new Nlb(
+              elbResponseItemJson.DNSName,
+              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+            )
+          }
+        )
+
+      await this.awsPriceCalculator.putElbPrices(nlbItems)
+      return new Response<Type>(nlbItems)
     }
 
-    private generateAlbResponse (
+    private async generateAlbResponse (
       responseJson: any
-    ): Response<Type> {
-      return new Response<Type>(
-        responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
-          .map(
-            (elbResponseItemJson: {
-                        DNSName: string;
-                        CreatedTime: string;
-                        Price: string;
-                        Tags: any[];
-                    }) => {
-              return new Elb(
-                elbResponseItemJson.DNSName,
-                DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
-                TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
-              )
-            }
-          )
-      )
+    ): Promise<Response<Type>> {
+      const albItems = responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+        .map(
+          (elbResponseItemJson: {
+                    DNSName: string;
+                    CreatedTime: string;
+                    Tags: any[];
+                }) => {
+            return new Alb(
+              elbResponseItemJson.DNSName,
+              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+            )
+          }
+        )
+
+      await this.awsPriceCalculator.putElbPrices(albItems)
+      return new Response<Type>(albItems)
     }
 
     private async generateEipResponse (

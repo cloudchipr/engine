@@ -1,11 +1,6 @@
-import { ProviderResource } from '../provider-resource'
+import { Elb } from './elb'
 
-export class Nlb extends ProviderResource {
-  constructor (
-    readonly dnsName: string,
-    readonly age?: string,
-    readonly nameTag?: string
-  ) {
-    super()
-  }
+export class Nlb extends Elb {
+    // NLB has different DNS structure
+    protected readonly REGION_FETCH_REGEXP = /.*\.elb\.(.*)\.amazonaws\.com/;
 }
