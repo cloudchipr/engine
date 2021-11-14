@@ -5,6 +5,9 @@ import { Configuration } from '../../configuration'
 import { Eip } from '../../domain/types/aws/eip'
 import { Ebs } from '../../domain/types/aws/ebs'
 import { Rds } from '../../domain/types/aws/rds'
+import { Alb } from '../../domain/types/aws/alb'
+import { Elb } from '../../domain/types/aws/elb'
+import { Nlb } from '../../domain/types/aws/nlb'
 
 export default class AwsPriceCalculator {
   private readonly client: AwsPricingClient
@@ -49,6 +52,56 @@ export default class AwsPriceCalculator {
     // @todo: update prising region 'us-east-1', and use ap-south-1 for Asia Pacific
     this.client = new AwsPricingClient('us-east-1', config.accessKeyId, config.secretAccessKey)
     this.ec2Client = new AwsEc2Client(config.region, config.accessKeyId, config.secretAccessKey)
+  }
+
+  async putElbPrices (elbItems: Elb[]): Promise<void> {
+    if (!elbItems.length) {
+      return
+    }
+
+    const filters: {
+      [region: string]: {
+        filter: {}[],
+        elbItems: Set<Elb>
+      }
+    } = {}
+
+    let loadBalancerFilterMethodName = 'getElbFilter'
+
+    if (elbItems[0] instanceof Alb) {
+      loadBalancerFilterMethodName = 'getAlbFilter'
+    }
+
+    if (elbItems[0] instanceof Nlb) {
+      loadBalancerFilterMethodName = 'getNlbFilter'
+    }
+
+    // collect all unique filters
+    for (const elb of elbItems) {
+      const region = elb.getRegion()
+      if (filters[region] === undefined) {
+        filters[region] = {
+          filter: (AwsPriceCalculator as any)[loadBalancerFilterMethodName](region),
+          elbItems: new Set<Elb>()
+        }
+      }
+      filters[region].elbItems.add(elb)
+    }
+
+    for (const regionKey of Object.keys(filters)) {
+      const filter = filters[regionKey].filter
+      const priceData = await this.client.getPrice('AWSELB', filter)
+
+      const onDemand = priceData.terms.OnDemand
+      const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+      const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
+
+      const elbItems = filters[regionKey].elbItems
+      elbItems.forEach(elb => {
+        elb.pricePerHour = pricePerUnit.USD
+        return elb
+      })
+    }
   }
 
   async putRdsPrices (rdsItems: Rds[]): Promise<void> {
@@ -382,6 +435,64 @@ export default class AwsPriceCalculator {
         Type: 'TERM_MATCH',
         Field: 'capacitystatus',
         Value: 'Used'
+      }
+    ]
+  }
+
+  private static getElbFilter (region: string): {}[] {
+    const generalFilter = this.getLbGeneralFilter(region)
+    generalFilter.push({
+      Type: 'TERM_MATCH',
+      Field: 'operation',
+      Value: 'LoadBalancing'
+    })
+
+    return generalFilter
+  }
+
+  private static getNlbFilter (region: string): {}[] {
+    const generalFilter = this.getLbGeneralFilter(region)
+    generalFilter.push({
+      Type: 'TERM_MATCH',
+      Field: 'operation',
+      Value: 'LoadBalancing:Network'
+    })
+
+    return generalFilter
+  }
+
+  private static getAlbFilter (region: string): {}[] {
+    const generalFilter = this.getLbGeneralFilter(region)
+    generalFilter.push({
+      Type: 'TERM_MATCH',
+      Field: 'operation',
+      Value: 'LoadBalancing:Application'
+    })
+
+    return generalFilter
+  }
+
+  private static getLbGeneralFilter (region: string): {}[] {
+    return [
+      {
+        Type: 'TERM_MATCH',
+        Field: 'ServiceCode',
+        Value: 'AWSELB'
+      },
+      {
+        Type: 'TERM_MATCH',
+        Field: 'location',
+        Value: this.REGION_CODES_TO_PRICING_NAMES.get(region)
+      },
+      {
+        Type: 'TERM_MATCH',
+        Field: 'locationType',
+        Value: 'AWS Region'
+      },
+      {
+        Type: 'TERM_MATCH',
+        Field: 'usagetype',
+        Value: 'LoadBalancerUsage'
       }
     ]
   }

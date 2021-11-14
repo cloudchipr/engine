@@ -68,7 +68,12 @@
     "policies": [
       {
         "name": "nlb-collect",
-        "resource": "app-elb"
+        "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "network"
+          }
+        ]
       }
     ]
   },
@@ -77,6 +82,11 @@
       {
         "name": "nlb-clean",
         "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "network"
+          }
+        ],
         "actions": [
           "delete"
         ]
@@ -87,7 +97,12 @@
     "policies": [
       {
         "name": "alb-collect",
-        "resource": "app-elb"
+        "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "application"
+          }
+        ]
       }
     ]
   },
@@ -96,6 +111,11 @@
       {
         "name": "alb-clean",
         "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "application"
+          }
+        ],
         "actions": [
           "delete"
         ]
