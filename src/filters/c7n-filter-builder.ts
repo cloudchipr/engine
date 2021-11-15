@@ -59,6 +59,8 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         return this.buildLaunchTime(expression)
       case 'instance-ids':
         return C7nFilterBuilder.buildInstanceId(expression)
+      case 'association-ids':
+        return C7nFilterBuilder.buildAssociationId(expression)
       case 'dns-name':
         return C7nFilterBuilder.buildDnsName(expression)
       case 'database-connections':
@@ -138,6 +140,15 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'value',
       key: 'InstanceId',
+      op: expression.operator,
+      value: Number(expression.value)
+    }
+  }
+
+  private static buildAssociationId (expression: FilterExpression): object {
+    return {
+      type: 'value',
+      key: 'AssociationId',
       op: expression.operator,
       value: Number(expression.value)
     }

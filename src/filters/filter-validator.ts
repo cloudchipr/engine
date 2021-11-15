@@ -11,7 +11,9 @@ export class FilterValidator {
       'launch-time',
       'instance-ids',
       'dns-name',
-      'database-connections'
+      'database-connections',
+      'instances',
+      'association-ids'
     ]
 
     public validate (filters: Filters) {
