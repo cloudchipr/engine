@@ -142,7 +142,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateElbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const elbItems = responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+      const elbItems = responseJson
         .map(
           (elbResponseItemJson: {
                     DNSName: string;
@@ -164,7 +164,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateNlbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const nlbItems = responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+      const nlbItems = responseJson
         .map(
           (elbResponseItemJson: {
                     DNSName: string;
@@ -186,7 +186,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateAlbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const albItems = responseJson.sort((a: any, b: any) => (a.CreatedTime > b.CreatedTime) ? 1 : ((b.CreatedTime > a.CreatedTime) ? -1 : 0))
+      const albItems = responseJson
         .map(
           (elbResponseItemJson: {
                     DNSName: string;
@@ -231,7 +231,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateRdsResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const rdsItems = responseJson.sort((a: any, b: any) => (a.InstanceCreateTime > b.InstanceCreateTime) ? 1 : ((b.InstanceCreateTime > a.InstanceCreateTime) ? -1 : 0))
+      const rdsItems = responseJson
         .map(
           (rdsResponseItemJson: {
                     DBInstanceIdentifier: string;
