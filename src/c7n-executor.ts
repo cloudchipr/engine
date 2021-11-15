@@ -1,4 +1,3 @@
-import { Configuration } from './configuration'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
@@ -12,7 +11,6 @@ export class C7nExecutor {
     }
 
     execute (
-      config: Configuration,
       policy: any,
       policyName: string
     ) {
@@ -22,7 +20,7 @@ export class C7nExecutor {
 
       try {
         execSync(
-                `AWS_DEFAULT_REGION=${config.region} AWS_ACCESS_KEY_ID=${config.accessKeyId} AWS_SECRET_ACCESS_KEY=${config.secretAccessKey} ${this.custodian} run --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`,
+                `${this.custodian} run --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`,
                 { stdio: 'pipe' }
         )
 

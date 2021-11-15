@@ -3,15 +3,19 @@ import {
   GetProductsCommandInput
 } from '@aws-sdk/client-pricing/dist-types/commands/GetProductsCommand'
 import { Pricing } from '@aws-sdk/client-pricing/dist-types/Pricing'
+import { CredentialProvider } from '@aws-sdk/types'
 
 export default class AwsPricingClient {
     private client: Pricing;
 
-    constructor (region: string, accessKeyId: string, secretAccessKey: string) {
-      this.client = new AWS.Pricing({ region: region, credentials: { accessKeyId, secretAccessKey } })
+    constructor (credentialProvider: CredentialProvider) {
+      // @todo make region dynamic between us-east-1, ap-south-1 (these are the only possible options)
+      this.client = new AWS.Pricing({
+        region: 'us-east-1',
+        credentials: credentialProvider
+      })
     }
 
-    // @todo handle region detection
     // @todo handle errors
     async getPrice (service: string, filter: object): Promise<
         {
