@@ -310,7 +310,7 @@ export default class AwsPriceCalculator {
         filters[region][ec2Item.type][platform][usageOperation][tenancy] = {
           ec2Items: new Set<Ec2>(),
           filter: AwsPriceCalculator.getEc2Filter(
-            'us-east-1', ec2Item.type, platform, usageOperation, tenancy
+            region, ec2Item.type, platform, usageOperation, tenancy
           )
         }
       }
