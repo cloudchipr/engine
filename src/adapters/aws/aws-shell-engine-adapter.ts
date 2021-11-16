@@ -15,15 +15,14 @@ import { DateTimeHelper } from '../../helpers/date-time-helper'
 import { TagsHelper } from '../../helpers/tags-helper'
 import { MetricsHelper } from '../../helpers/metrics-helper'
 import AwsPriceCalculator from './aws-price-calculator'
-import { Configuration } from '../../configuration'
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
     private readonly awsPriceCalculator: AwsPriceCalculator;
 
-    constructor (configuration: Configuration, custodian: string) {
+    constructor (custodian: string) {
       this.custodianExecutor = new C7nExecutor(custodian)
-      this.awsPriceCalculator = new AwsPriceCalculator(configuration)
+      this.awsPriceCalculator = new AwsPriceCalculator()
     }
 
     execute (request: EngineRequest): Promise<Response<Type>> {
@@ -49,7 +48,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       // execute custodian command and return response
       const response = this.custodianExecutor.execute(
-        request.configuration,
         policy,
         policyName
       )
@@ -116,8 +114,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 NetworkOut: string;
                 LaunchTime: string;
                 Tags: any[];
-                Platform: string | null;
-                UsageOperation: string | null,
                 Placement: { Tenancy: string, AvailabilityZone: string },
             }) => {
           return new Ec2(

@@ -1,17 +1,30 @@
 import AwsPricingClient from './aws-pricing-client'
 import { Ec2 } from '../../domain/types/aws/ec2'
 import AwsEc2Client from './aws-ec2-client'
-import { Configuration } from '../../configuration'
 import { Eip } from '../../domain/types/aws/eip'
 import { Ebs } from '../../domain/types/aws/ebs'
 import { Rds } from '../../domain/types/aws/rds'
 import { Alb } from '../../domain/types/aws/alb'
 import { Elb } from '../../domain/types/aws/elb'
 import { Nlb } from '../../domain/types/aws/nlb'
+import { fromIni } from '@aws-sdk/credential-providers'
 
 export default class AwsPriceCalculator {
   private readonly client: AwsPricingClient
   private readonly ec2Client: AwsEc2Client
+
+  private static EC2_PLATFORM_DETAILS_TO_PRICING_NAMES = new Map([
+    ['SUSE Linux', 'SUSE'],
+    ['Linux/UNIX', 'Linux'],
+    ['Red Hat BYOL Linux', 'RHEL'],
+    ['Red Hat Enterprise Linux', 'RHEL'],
+    ['Red Hat Enterprise Linux with HA', '"Red Hat Enterprise Linux with HA'],
+    ['Windows', 'Windows'],
+    ['Windows BYOL', 'Windows'],
+    ['Windows with SQL Server Enterprise *', 'Windows'],
+    ['Windows with SQL Server Standard *', 'Windows'],
+    ['Windows with SQL Server Web *', 'Windows']
+  ])
 
    private static EBS_TO_PRICING_NAMES = new Map([
      ['standard', 'Magnetic'],
@@ -48,10 +61,10 @@ export default class AwsPriceCalculator {
     ['sa-east-1', 'South America (São Paulo)']
   ]);
 
-  constructor (config: Configuration) {
-    // @todo: update prising region 'us-east-1', and use ap-south-1 for Asia Pacific
-    this.client = new AwsPricingClient('us-east-1', config.accessKeyId, config.secretAccessKey)
-    this.ec2Client = new AwsEc2Client(config.region, config.accessKeyId, config.secretAccessKey)
+  constructor () {
+    const credentialProvider = fromIni()
+    this.client = new AwsPricingClient(credentialProvider)
+    this.ec2Client = new AwsEc2Client(credentialProvider)
   }
 
   async putElbPrices (elbItems: Elb[]): Promise<void> {
@@ -253,7 +266,7 @@ export default class AwsPriceCalculator {
     let imagesData = await this.ec2Client.describeImages(uniqueImageIds)
     imagesData = imagesData.Images
 
-    const imageMap = new Map<string, { Platform: string, UsageOperation: string} >()
+    const imageMap = new Map<string, { PlatformDetails: string, Platform: string, UsageOperation: string} >()
     for (const imageData of imagesData) {
       imageMap.set(imageData.ImageId, imageData)
     }
@@ -280,7 +293,11 @@ export default class AwsPriceCalculator {
         continue
       }
 
-      const platform = imageData.Platform ?? 'linux'
+      const platform = AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get(imageData.PlatformDetails)
+      if (platform === undefined) {
+        throw new Error(`EC2 price calculation, cannot find platform of the instance: ${ec2Item.id} with platform details ${imageData.PlatformDetails}`)
+      }
+
       const usageOperation = imageData.UsageOperation
       const tenancy = !ec2Item.tenancy || ec2Item.tenancy === 'default' ? 'Shared' : ec2Item.tenancy
       const region = ec2Item.getRegion()
