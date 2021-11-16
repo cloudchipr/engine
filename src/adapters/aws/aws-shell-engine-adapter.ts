@@ -81,6 +81,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         (ebsResponseItemJson: {
                 VolumeId: string;
                 Size: number;
+                State: string;
                 VolumeType: string;
                 CreateTime: string;
                 AvailabilityZone: string;
@@ -89,6 +90,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
             ebsResponseItemJson.Size,
+            ebsResponseItemJson.State,
             ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.AvailabilityZone,
             DateTimeHelper.getAge(ebsResponseItemJson.CreateTime),
