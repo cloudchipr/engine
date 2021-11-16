@@ -200,7 +200,7 @@ export default class AwsPriceCalculator {
 
         const ebsItems = filters[regionKey][volumeTypeKey].ebsItems
         ebsItems.forEach(ebs => {
-          ebs.pricePerHour = pricePerUnit.USD
+          ebs.pricePerMonthGB = pricePerUnit.USD
           return ebs
         })
       }
