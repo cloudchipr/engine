@@ -46,25 +46,27 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       return C7nFilterBuilder.buildAbsent(expression)
     }
 
-    switch (expression.resource) {
-      case 'volume-age':
+    switch (true) {
+      case /^volume-age$/.test(expression.resource):
         return C7nFilterBuilder.buildVolumeAge(expression)
-      case 'cpu':
+      case /^cpu$/.test(expression.resource):
         return C7nFilterBuilder.buildCpu(expression)
-      case 'network-in':
+      case /^network-in$/.test(expression.resource):
         return C7nFilterBuilder.buildNetworkIn(expression)
-      case 'network-out':
+      case /^network-out$/.test(expression.resource):
         return C7nFilterBuilder.buildNetworkOut(expression)
-      case 'launch-time':
+      case /^launch-time$/.test(expression.resource):
         return this.buildLaunchTime(expression)
-      case 'instance-ids':
+      case /^instance-ids$/.test(expression.resource):
         return C7nFilterBuilder.buildInstanceId(expression)
-      case 'association-ids':
+      case /^association-ids$/.test(expression.resource):
         return C7nFilterBuilder.buildAssociationId(expression)
-      case 'dns-name':
+      case /^dns-name$/.test(expression.resource):
         return C7nFilterBuilder.buildDnsName(expression)
-      case 'database-connections':
+      case /^database-connections$/.test(expression.resource):
         return C7nFilterBuilder.buildDatabaseConnections(expression)
+      case /^tag:.{1,128}$/.test(expression.resource):
+        return C7nFilterBuilder.buildTag(expression)
       default:
         return {
           key: expression.resource,
@@ -185,5 +187,17 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       value: Number(expression.value),
       op: expression.operator
     }
+  }
+
+  private static buildTag (expression: FilterExpression): object {
+    return expression.operator === Operators.Exists
+      ? {
+          [expression.resource]: 'present'
+        }
+      : {
+          type: 'value',
+          key: expression.resource,
+          value: expression.value
+        }
   }
 }

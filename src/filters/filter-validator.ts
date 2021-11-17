@@ -3,17 +3,18 @@ import { Operators } from './operators'
 
 export class FilterValidator {
     private allowedResources: string[] = [
-      'attachments',
-      'volume-age',
-      'cpu',
-      'network-in',
-      'network-out',
-      'launch-time',
-      'instance-ids',
-      'dns-name',
-      'database-connections',
-      'instances',
-      'association-ids'
+      '^attachments$',
+      '^volume-age$',
+      '^cpu$',
+      '^network-in$',
+      '^network-out$',
+      '^launch-time$',
+      '^instance-ids$',
+      '^dns-name$',
+      '^database-connections$',
+      '^instances$',
+      '^association-ids$',
+      '^tag:.{1,128}$',
     ]
 
     public validate (filters: Filters) {
@@ -22,7 +23,12 @@ export class FilterValidator {
       }
 
       filters.and.forEach(filter => {
-        if (!this.allowedResources.includes(filter.resource)) {
+        let resourceValidation = this.allowedResources.some(u => {
+          let regexp = new RegExp(u)
+          return regexp.test(filter.resource)
+        });
+
+        if (!resourceValidation) {
           throw new Error(`Filter validation failed : ${filter.resource} is not allowed resource`)
         }
         if (typeof (Operators as any)[filter.op] === 'undefined') {
