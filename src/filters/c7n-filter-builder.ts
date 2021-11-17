@@ -170,7 +170,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   private static buildAbsent (expression: FilterExpression): object {
     return {
       type: 'value',
-      key: expression.resource,
+      key: this.mapResourceName(expression.resource),
       value: 'absent'
     }
   }
@@ -188,6 +188,17 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       days: Number(expression.since),
       value: Number(expression.value),
       op: expression.operator
+    }
+  }
+
+  private static mapResourceName (name: string): string {
+    switch (name) {
+      case 'instance-ids':
+        return 'InstanceId'
+      case 'association-ids':
+        return 'AssociationId'
+      default:
+        return StringHelper.capitalizeFirstLetter(name)
     }
   }
 
