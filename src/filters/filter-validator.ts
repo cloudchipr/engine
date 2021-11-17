@@ -14,7 +14,7 @@ export class FilterValidator {
       '^database-connections$',
       '^instances$',
       '^association-ids$',
-      '^tag:.{1,128}$',
+      '^tag:.{1,128}$'
     ]
 
     public validate (filters: Filters) {
@@ -23,10 +23,10 @@ export class FilterValidator {
       }
 
       filters.and.forEach(filter => {
-        let resourceValidation = this.allowedResources.some(u => {
-          let regexp = new RegExp(u)
+        const resourceValidation = this.allowedResources.some(u => {
+          const regexp = new RegExp(u)
           return regexp.test(filter.resource)
-        });
+        })
 
         if (!resourceValidation) {
           throw new Error(`Filter validation failed : ${filter.resource} is not allowed resource`)
