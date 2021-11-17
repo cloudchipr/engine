@@ -11,7 +11,6 @@ import { Eip } from '../../domain/types/aws/eip'
 import { Alb } from '../../domain/types/aws/alb'
 import { Nlb } from '../../domain/types/aws/nlb'
 import { Rds } from '../../domain/types/aws/rds'
-import { DateTimeHelper } from '../../helpers/date-time-helper'
 import { TagsHelper } from '../../helpers/tags-helper'
 import { MetricsHelper } from '../../helpers/metrics-helper'
 import AwsPriceCalculator from './aws-price-calculator'
@@ -93,7 +92,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.State,
             ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.AvailabilityZone,
-            DateTimeHelper.getAge(ebsResponseItemJson.CreateTime),
+            ebsResponseItemJson.CreateTime,
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags)
           )
         }
@@ -125,7 +124,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             MetricsHelper.getCpuUtilization(ec2ResponseItemJson),
             MetricsHelper.getNetworkIn(ec2ResponseItemJson),
             MetricsHelper.getNetworkOut(ec2ResponseItemJson),
-            DateTimeHelper.getAge(ec2ResponseItemJson.LaunchTime),
+            ec2ResponseItemJson.LaunchTime,
             ec2ResponseItemJson.Placement.Tenancy,
             ec2ResponseItemJson.Placement.AvailabilityZone,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
@@ -149,7 +148,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 }) => {
             return new Elb(
               elbResponseItemJson.DNSName,
-              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
             )
           }
@@ -171,7 +170,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 }) => {
             return new Nlb(
               elbResponseItemJson.DNSName,
-              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
             )
           }
@@ -193,7 +192,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 }) => {
             return new Alb(
               elbResponseItemJson.DNSName,
-              DateTimeHelper.getAge(elbResponseItemJson.CreatedTime),
+              elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
             )
           }
@@ -247,7 +246,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.StorageType,
               MetricsHelper.getDatabaseConnections(rdsResponseItemJson),
               rdsResponseItemJson.Engine,
-              DateTimeHelper.getAge(rdsResponseItemJson.InstanceCreateTime),
+              rdsResponseItemJson.InstanceCreateTime,
               rdsResponseItemJson.AvailabilityZone,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags)
             )
