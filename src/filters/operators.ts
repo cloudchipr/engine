@@ -10,4 +10,5 @@ export enum Operators {
   IsNotEmpty = 'isNotEmpty',
   In = 'in',
   NotIn = 'notIn',
+  Exists = 'exists',
 }

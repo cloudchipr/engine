@@ -46,6 +46,10 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       return C7nFilterBuilder.buildAbsent(expression)
     }
 
+    if (/^tag:.{1,128}$/.test(expression.resource)) {
+      return C7nFilterBuilder.buildTag(expression)
+    }
+
     switch (expression.resource) {
       case 'volume-age':
         return C7nFilterBuilder.buildVolumeAge(expression)
@@ -196,5 +200,17 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       default:
         return StringHelper.capitalizeFirstLetter(name)
     }
+  }
+
+  private static buildTag (expression: FilterExpression): object {
+    return expression.operator === Operators.Exists
+      ? {
+          [expression.resource]: 'present'
+        }
+      : {
+          type: 'value',
+          key: expression.resource,
+          value: expression.value
+        }
   }
 }
