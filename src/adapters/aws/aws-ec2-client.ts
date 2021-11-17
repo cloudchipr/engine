@@ -9,8 +9,10 @@ export default class AwsEc2Client {
     private client: EC2Client;
 
     constructor (credentialProvider: CredentialProvider) {
+      const region: string = process.env.AWS_DEFAULT_REGION ?? 'us-east-1'
       this.client = new EC2Client({
-        credentials: credentialProvider
+        credentials: credentialProvider,
+        region
       })
     }
 
