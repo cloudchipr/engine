@@ -61,6 +61,32 @@ export default class AwsPriceCalculator {
     ['sa-east-1', 'South America (São Paulo)']
   ]);
 
+  private static REGION_CODES_TO_SHORT_FORM_PRICING_NAMES = new Map([
+    ['us-east-1', 'USE1'],
+    ['us-east-2', 'USE2'],
+    ['us-west-1', 'USW1'],
+    ['us-west-2', 'USW2'],
+    ['af-south-1', 'AFS1'],
+    ['ap-east-1', 'APE1'],
+    ['ap-south-1', 'APS1'],
+    ['ap-northeast-1', 'APN1'],
+    ['ap-northeast-2', 'APN2'],
+    ['ap-northeast-3', 'APN3'],
+    ['ap-southeast-1', 'APS1'],
+    ['ap-southeast-2', 'APS2'],
+    ['ca-central-1', 'CAN1'],
+    ['cn-north-1', 'China (Beijing)'], // @todo must be fixed, cannot find them now
+    ['cn-northwest-1', 'China (Ningxia)'], // @todo must be fixed, cannot find them now
+    ['eu-central-1', 'EUC1'],
+    ['eu-west-1', 'EUW1'],
+    ['eu-west-2', 'EUW2'],
+    ['eu-west-3', 'EUW3'],
+    ['eu-south-1', 'EUS1'],
+    ['eu-north-1', 'EUN1'],
+    ['me-south-1', 'MES1'],
+    ['sa-east-1', 'SAE1']
+  ]);
+
   constructor () {
     const credentialProvider = fromIni()
     this.client = new AwsPricingClient(credentialProvider)
@@ -498,8 +524,8 @@ export default class AwsPriceCalculator {
       },
       {
         Type: 'TERM_MATCH',
-        Field: 'location',
-        Value: this.REGION_CODES_TO_PRICING_NAMES.get(region)
+        Field: 'regionCode',
+        Value: region
       },
       {
         Type: 'TERM_MATCH',
@@ -509,7 +535,7 @@ export default class AwsPriceCalculator {
       {
         Type: 'TERM_MATCH',
         Field: 'usagetype',
-        Value: 'LoadBalancerUsage'
+        Value: (region === 'us-east-1' ? '' : this.REGION_CODES_TO_SHORT_FORM_PRICING_NAMES.get(region) + '-') + 'LoadBalancerUsage'
       }
     ]
   }
