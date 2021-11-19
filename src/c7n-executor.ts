@@ -12,24 +12,42 @@ export class C7nExecutor {
 
     execute (
       policy: any,
-      policyName: string
+      policyName: string,
+      regions: string[]
     ) {
       const id: string = v4()
       const requestIdentifier: string = `${policyName}-${id}`
       fs.writeFileSync(`./${requestIdentifier}-policy.yaml`, yaml.dump(policy), 'utf8')
 
+      let regionOptions = ''
+      if (regions) {
+        regionOptions = regions.map(region => ' --region ' + region).join(' ')
+      }
+
+      // validate all region request
+      const all = regions.find(region => region === 'all')
+      if (all !== undefined) {
+        throw new Error('Region all is not implemented yet')
+      }
+
       try {
         execSync(
-                `${this.custodian} run --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`,
+                `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`,
                 { stdio: 'pipe' }
         )
 
-        const resourcesPath = `./${requestIdentifier}/${policyName}/resources.json`
-        if (!fs.existsSync(resourcesPath)) {
-          throw new Error(`./${requestIdentifier}/${policyName}/resources.json file does not exist.`)
+        if (regions.length > 1) {
+          return regions.flatMap(region => {
+            return C7nExecutor
+              .fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName, region))
+              .map(data => {
+                data.C8rRegion = region
+                return data
+              })
+          })
+        } else {
+          return C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName))
         }
-
-        return JSON.parse(fs.readFileSync(resourcesPath, 'utf8'))
       } finally {
         // remove temp files and folders
         C7nExecutor.removeTempFoldersAndFiles(requestIdentifier)
@@ -43,5 +61,22 @@ export class C7nExecutor {
       if (fs.existsSync(`${requestIdentifier}-policy.yaml`)) {
         execSync(`rm ${requestIdentifier}-policy.yaml`)
       }
+    }
+
+    private static buildResourcePath (requestIdentifier: string, policyName: string, region?: string) {
+      return `./${requestIdentifier}` +
+            (region ? `/${region}` : '') +
+            `/${policyName}` +
+            '/resources.json'
+    }
+
+    private static fetchResourceJson (filePath: string): {
+        C8rRegion: string|undefined
+    }[] {
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`${filePath} file does not exist.`)
+      }
+
+      return JSON.parse(fs.readFileSync(filePath, 'utf8'))
     }
 }

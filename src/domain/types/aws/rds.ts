@@ -9,7 +9,8 @@ export class Rds extends ProviderResource {
     readonly dbType: string,
     readonly age: string,
     readonly availabilityZone: string,
-    readonly nameTag?: string
+    readonly nameTag?: string,
+    readonly _c8rRegion?: string
   ) {
     super()
   }

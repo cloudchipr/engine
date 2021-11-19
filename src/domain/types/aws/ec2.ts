@@ -12,7 +12,8 @@ export class Ec2 extends ProviderResource {
     readonly age: string,
     readonly tenancy: string,
     readonly availabilityZone: string,
-    readonly nameTag?: string
+    readonly nameTag?: string,
+    readonly _c8rRegion?: string
   ) { super() }
 
   getRegion (): string {

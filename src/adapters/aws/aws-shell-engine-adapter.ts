@@ -48,7 +48,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       // execute custodian command and return response
       const response = this.custodianExecutor.execute(
         policy,
-        policyName
+        policyName,
+        request.parameter.regions
       )
       return (this as any)[generateResponseMethodName](response)
     }
@@ -85,6 +86,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 CreateTime: string;
                 AvailabilityZone: string;
                 Tags: any[];
+                C8rRegion: string|undefined;
             }) => {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
@@ -93,7 +95,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.AvailabilityZone,
             ebsResponseItemJson.CreateTime,
-            TagsHelper.getNameTagValue(ebsResponseItemJson.Tags)
+            TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
+            ebsResponseItemJson.C8rRegion
           )
         }
       )
@@ -115,7 +118,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 NetworkOut: string;
                 LaunchTime: string;
                 Tags: any[];
-                Placement: { Tenancy: string, AvailabilityZone: string },
+                Placement: { Tenancy: string, AvailabilityZone: string };
+                C8rRegion: string|undefined
             }) => {
           return new Ec2(
             ec2ResponseItemJson.InstanceId,
@@ -127,7 +131,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.LaunchTime,
             ec2ResponseItemJson.Placement.Tenancy,
             ec2ResponseItemJson.Placement.AvailabilityZone,
-            TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
+            TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
+            ec2ResponseItemJson.C8rRegion
           )
         }
       )
@@ -145,11 +150,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
+                    C8rRegion: string|undefined
                 }) => {
             return new Elb(
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
-              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              elbResponseItemJson.C8rRegion
             )
           }
         )
@@ -167,11 +174,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
+                    C8rRegion: string|undefined
                 }) => {
             return new Nlb(
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
-              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              elbResponseItemJson.C8rRegion
             )
           }
         )
@@ -189,11 +198,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
+                    C8rRegion: string|undefined;
                 }) => {
             return new Alb(
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
-              TagsHelper.getNameTagValue(elbResponseItemJson.Tags)
+              TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              elbResponseItemJson.C8rRegion
             )
           }
         )
@@ -212,11 +223,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     Price: string;
                     NetworkBorderGroup: string;
                     Tags: any[];
+                    C8rRegion: string|undefined;
                 }) => {
             return new Eip(
               eipResponseItemJson.PublicIp,
               eipResponseItemJson.NetworkBorderGroup,
-              TagsHelper.getNameTagValue(eipResponseItemJson.Tags)
+              TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
+              eipResponseItemJson.C8rRegion
             )
           }
         )
@@ -239,6 +252,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     'c7n.metrics': any;
                     AvailabilityZone: string;
                     Tags: any[];
+                    C8rRegion: string|undefined;
                 }) => {
             return new Rds(
               rdsResponseItemJson.DBInstanceIdentifier,
@@ -248,7 +262,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.Engine,
               rdsResponseItemJson.InstanceCreateTime,
               rdsResponseItemJson.AvailabilityZone,
-              TagsHelper.getNameTagValue(rdsResponseItemJson.Tags)
+              TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),
+              rdsResponseItemJson.C8rRegion
             )
           }
         )
