@@ -6,7 +6,8 @@ export class EngineRequest {
   constructor (
     private readonly _command: Command,
     private readonly _subCommand: SubCommandInterface,
-    private readonly _parameter: Parameter
+    private readonly _parameter: Parameter,
+    private readonly _isDebugMode: boolean
   ) {}
 
   get command (): Command {
@@ -19,5 +20,9 @@ export class EngineRequest {
 
   get parameter (): Parameter {
     return this._parameter
+  }
+
+  get isDebugMode (): boolean {
+    return this._isDebugMode
   }
 }
