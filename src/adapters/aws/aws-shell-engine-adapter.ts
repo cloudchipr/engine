@@ -50,6 +50,12 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         policy,
         policyName
       )
+
+      if (request.isDebugMode) {
+        console.log(policyName + ' Policy: ' + JSON.stringify(policy))
+        console.log(policyName + ' Response: ' + JSON.stringify(response))
+      }
+
       return (this as any)[generateResponseMethodName](response)
     }
 
