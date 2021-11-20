@@ -10,9 +10,9 @@ export class FilterBuilder {
   private connector: string = 'and';
   private resourceName: string = '';
 
-  constructor () {
+  constructor (filterValidator: FilterValidator) {
     this.filters = new FilterList()
-    this.filterValidator = new FilterValidator()
+    this.filterValidator = filterValidator
   }
 
   resource (resource: string): FilterBuilder {

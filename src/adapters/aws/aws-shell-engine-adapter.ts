@@ -46,18 +46,25 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
 
       // execute custodian command and return response
-      const response = this.custodianExecutor.execute(
-        policy,
-        policyName,
-        request.parameter.regions
-      )
+      try {
+        const response = this.custodianExecutor.execute(
+          policy,
+          policyName,
+          request.parameter.regions
+        )
 
-      if (request.isDebugMode) {
-        console.log(policyName + ' Policy: ' + JSON.stringify(policy))
-        console.log(policyName + ' Response: ' + JSON.stringify(response))
+        if (request.isDebugMode) {
+          console.log(policyName + ' Response: ' + JSON.stringify(response))
+        }
+
+        return (this as any)[generateResponseMethodName](response)
+      } catch {
+        throw new Error('Failed to execute custodian command')
+      } finally {
+        if (request.isDebugMode) {
+          console.log(policyName + ' Policy: ' + JSON.stringify(policy))
+        }
       }
-
-      return (this as any)[generateResponseMethodName](response)
     }
 
     private validateRequest (name: string) {

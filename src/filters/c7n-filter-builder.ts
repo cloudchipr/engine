@@ -42,6 +42,8 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   buildFilterExpression (expression: FilterExpression): object {
     if (expression.operator === Operators.IsEmpty) {
       return C7nFilterBuilder.buildEmpty(expression)
+    } else if (expression.operator === Operators.IsNotEmpty) {
+      return this.buildNotEmpty(expression)
     } else if (expression.operator === Operators.IsAbsent) {
       return C7nFilterBuilder.buildAbsent(expression)
     }
@@ -70,11 +72,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case 'database-connections':
         return C7nFilterBuilder.buildDatabaseConnections(expression)
       default:
-        return {
-          key: expression.resource,
-          op: expression.operator,
-          value: Number(expression.value)
-        }
+        throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
     }
   }
 
@@ -179,6 +177,18 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       [StringHelper.capitalizeFirstLetter(expression.resource)]: []
     }
+  }
+
+  private buildNotEmpty (expression: FilterExpression): object {
+    if (this.subCommand.getValue() === AwsSubCommand.EBS_SUBCOMMAND) {
+      return {
+        type: 'value',
+        key: 'Attachments[0].Device',
+        value: 'not-null'
+      }
+    }
+
+    throw new Error(`${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
   }
 
   private static buildDatabaseConnections (expression: FilterExpression): object {
