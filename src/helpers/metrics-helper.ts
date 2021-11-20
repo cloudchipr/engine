@@ -16,9 +16,9 @@ export class MetricsHelper {
   }
 
   private static getMetricAverage (object: any, key: string) {
-    const sum = object?.['c7n.metrics']?.[key]?.reduce(function (prev: Metric, current: Metric) {
-      return prev.Average + current.Average
-    })
+    const sum = object?.['c7n.metrics']?.[key]?.reduce(function (prev: number, current: Metric) {
+      return prev + current.Average
+    }, 0)
 
     return sum > 0 ? sum / object?.['c7n.metrics']?.[key]?.length : 0
   }

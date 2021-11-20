@@ -288,14 +288,30 @@ export default class AwsPriceCalculator {
       return
     }
 
-    const uniqueImageIds = Array.from(new Set(ec2Items.map(p => p.imageId)))
-    let imagesData = await this.ec2Client.describeImages(uniqueImageIds)
-    imagesData = imagesData.Images
+    const regionToInstancesMap = new Map<string, string[]>()
+    ec2Items.forEach(ec2 => {
+      const region = ec2.getRegion()
+      if (!regionToInstancesMap.has(region)) {
+        regionToInstancesMap.set(region, [])
+      }
+      regionToInstancesMap.get(region)?.push(ec2.imageId)
+    })
 
     const imageMap = new Map<string, { PlatformDetails: string, Platform: string, UsageOperation: string} >()
-    for (const imageData of imagesData) {
-      imageMap.set(imageData.ImageId, imageData)
-    }
+    const promises : Array<Promise<any>> = []
+    regionToInstancesMap.forEach((imageIds, region) => {
+      promises.push(this.ec2Client.describeImages(imageIds, region))
+    })
+
+    await Promise
+      .all(promises)
+      .then(result => {
+        result.forEach(imagesData => {
+          for (const imageData of imagesData.Images) {
+            imageMap.set(imageData.ImageId, imageData)
+          }
+        })
+      })
 
     const filters: {
         [region: string]: {

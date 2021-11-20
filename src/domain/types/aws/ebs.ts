@@ -8,7 +8,8 @@ export class Ebs extends ProviderResource {
       readonly type: string,
       readonly availabilityZone: string,
       readonly age?: string,
-      readonly nameTag?: string
+      readonly nameTag?: string,
+      readonly _c8rRegion?: string
   ) { super() }
 
   getRegion (): string {
