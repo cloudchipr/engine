@@ -122,6 +122,14 @@
       }
     ]
   },
+  "target-group-collect": {
+    "policies": [
+      {
+        "name": "target-group-collect",
+        "resource": "app-elb-target-group"
+      }
+    ]
+  },
   "eip-collect": {
     "policies": [
       {

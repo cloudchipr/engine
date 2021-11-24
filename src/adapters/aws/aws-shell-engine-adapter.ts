@@ -38,6 +38,53 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const policy: any = Object.assign({}, policies[policyName])
       const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
 
+      if (subCommand === 'nlb' || subCommand === 'alb') {
+        const policy: any = Object.assign({}, policies['target-group-collect'])
+        // execute custodian command and return response
+        try {
+          const response = this.custodianExecutor.execute(
+            policy,
+            'target-group-collect',
+            request.parameter.regions
+          )
+          const usedELB = new Set<string>()
+          const potentialGarbageELB = new Set<string>()
+          response.forEach((elbJson: {
+                    LoadBalancerArns: string[],
+                    TargetHealthDescriptions: object[]
+                }) => {
+            elbJson.LoadBalancerArns.forEach((elbArn: string) => {
+              if (elbJson.TargetHealthDescriptions.length === 0 && !usedELB.has(elbArn)) {
+                potentialGarbageELB.add(elbArn)
+              } else {
+                usedELB.add(elbArn)
+                potentialGarbageELB.delete(elbArn)
+              }
+            })
+          })
+
+          console.log(potentialGarbageELB)
+          // add this arns to the existing filter to get something like this
+          //     policies:
+          //         - name: alb-collect-by-instance
+          //           resource: app-elb
+          //           filters:
+          //              - Type: network
+          //              - and:
+          //                  - type: value
+          //                    key: LoadBalancerArn
+          //                    op: in
+          //                    value: ['arn:aws:elasticloadbalancing:us-east-1:914346082203:loadbalancer/app/alb-test/2dd6885ef33111ba', 'arn:aws:elasticloadbalancing:us-east-1:914346082203:loadbalancer/net/NLBNLBtest/13c304a247e42ca4']
+        } catch (e) {
+          console.log(e)
+          throw new Error('Failed to execute custodian command')
+        } finally {
+          if (request.isDebugMode) {
+            console.log(policyName + ' Policy: ' + JSON.stringify(policy))
+          }
+        }
+      }
+
       if (filters && Object.keys(filters).length) {
         if (typeof policy.policies[0].filters === 'undefined') {
           policy.policies[0].filters = []
