@@ -14,6 +14,14 @@ import { Rds } from '../../domain/types/aws/rds'
 import { TagsHelper } from '../../helpers/tags-helper'
 import { MetricsHelper } from '../../helpers/metrics-helper'
 import AwsPriceCalculator from './aws-price-calculator'
+import { AwsSubCommand } from '../../aws-sub-command'
+import { Command } from '../../command'
+
+interface TargetGroup {
+  LoadBalancerArns: string[]
+  TargetHealthDescriptions: object[]
+  C8rRegion: string|undefined
+}
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -28,6 +36,10 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const command = request.command.getValue()
       const subCommand = request.subCommand.getValue()
 
+      if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
+        return this.executeElb(request)
+      }
+
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
@@ -38,53 +50,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const policy: any = Object.assign({}, policies[policyName])
       const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
 
-      if (subCommand === 'nlb' || subCommand === 'alb') {
-        const policy: any = Object.assign({}, policies['target-group-collect'])
-        // execute custodian command and return response
-        try {
-          const response = this.custodianExecutor.execute(
-            policy,
-            'target-group-collect',
-            request.parameter.regions
-          )
-          const usedELB = new Set<string>()
-          const potentialGarbageELB = new Set<string>()
-          response.forEach((elbJson: {
-                    LoadBalancerArns: string[],
-                    TargetHealthDescriptions: object[]
-                }) => {
-            elbJson.LoadBalancerArns.forEach((elbArn: string) => {
-              if (elbJson.TargetHealthDescriptions.length === 0 && !usedELB.has(elbArn)) {
-                potentialGarbageELB.add(elbArn)
-              } else {
-                usedELB.add(elbArn)
-                potentialGarbageELB.delete(elbArn)
-              }
-            })
-          })
-
-          console.log(potentialGarbageELB)
-          // add this arns to the existing filter to get something like this
-          //     policies:
-          //         - name: alb-collect-by-instance
-          //           resource: app-elb
-          //           filters:
-          //              - Type: network
-          //              - and:
-          //                  - type: value
-          //                    key: LoadBalancerArn
-          //                    op: in
-          //                    value: ['arn:aws:elasticloadbalancing:us-east-1:914346082203:loadbalancer/app/alb-test/2dd6885ef33111ba', 'arn:aws:elasticloadbalancing:us-east-1:914346082203:loadbalancer/net/NLBNLBtest/13c304a247e42ca4']
-        } catch (e) {
-          console.log(e)
-          throw new Error('Failed to execute custodian command')
-        } finally {
-          if (request.isDebugMode) {
-            console.log(policyName + ' Policy: ' + JSON.stringify(policy))
-          }
-        }
-      }
-
       if (filters && Object.keys(filters).length) {
         if (typeof policy.policies[0].filters === 'undefined') {
           policy.policies[0].filters = []
@@ -93,6 +58,11 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
 
       // execute custodian command and return response
+      const response = this.executeC7nPolicy(policy, policyName, request)
+      return (this as any)[generateResponseMethodName](response)
+    }
+
+    private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest) {
       try {
         const response = this.custodianExecutor.execute(
           policy,
@@ -104,7 +74,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           console.log(policyName + ' Response: ' + JSON.stringify(response))
         }
 
-        return (this as any)[generateResponseMethodName](response)
+        return response
       } catch {
         throw new Error('Failed to execute custodian command')
       } finally {
@@ -112,6 +82,39 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           console.log(policyName + ' Policy: ' + JSON.stringify(policy))
         }
       }
+    }
+
+    private executeElb (request: EngineRequest) {
+      const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(request.subCommand.getValue())
+      this.validateRequest(generateResponseMethodName)
+
+      const policyName = 'target-group-collect'
+      const policy: any = Object.assign({}, policies[policyName])
+
+      const targetGroups = <Array<TargetGroup>> this.executeC7nPolicy(policy, policyName, request)
+
+      const usedElb = new Set<string>()
+      const potentialGarbageELB = new Set<string>()
+      targetGroups.forEach(targetGroup => {
+        targetGroup.LoadBalancerArns.forEach((elbArn: string) => {
+          if (targetGroup.TargetHealthDescriptions.length === 0 && !usedElb.has(elbArn)) {
+            potentialGarbageELB.add(elbArn)
+          } else {
+            usedElb.add(elbArn)
+            potentialGarbageELB.delete(elbArn)
+          }
+        })
+      })
+
+      const elbPolicyName = request.subCommand.getValue() + '-collect-by-instance'
+
+      // @ts-ignore
+      const elbPolicy: any = Object.assign({}, policies[elbPolicyName])
+      elbPolicy.policies[0].filters[1].and[0].value = '"[' + Array.from(potentialGarbageELB).map(x => "'" + x + "'").join(',') + ']"'
+
+      // execute custodian command and return response
+      const response = this.executeC7nPolicy(elbPolicy, elbPolicyName, request)
+      return (this as any)[generateResponseMethodName](response)
     }
 
     private validateRequest (name: string) {
