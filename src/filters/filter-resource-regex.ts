@@ -10,5 +10,7 @@ export enum FilterResourceRegex {
   DATABASE_CONNECTIONS = '^database-connections$',
   INSTANCES = '^instances$',
   ASSOCIATION_IDS = '^association-ids$',
-  TAG = '^tag:.{1,128}$'
+  TAG = '^tag:.{1,128}$',
+  VOLUME_ID = '^volume-id$',
+  INSTANCE_ID = '^instance-id$',
 }

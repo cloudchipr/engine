@@ -13,8 +13,8 @@ export class FilterValidator {
     }
 
     private allowedResourcesPerSubCommand : Map<string, Array<string>> = new Map<string, Array<string>>([
-      [AwsSubCommand.EBS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.VOLUME_AGE, FilterResourceRegex.TAG]],
-      [AwsSubCommand.EC2_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.CPU, FilterResourceRegex.NETWORK_IN, FilterResourceRegex.NETWORK_OUT, FilterResourceRegex.TAG]],
+      [AwsSubCommand.EBS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.VOLUME_AGE, FilterResourceRegex.TAG, FilterResourceRegex.VOLUME_ID]],
+      [AwsSubCommand.EC2_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.CPU, FilterResourceRegex.NETWORK_IN, FilterResourceRegex.NETWORK_OUT, FilterResourceRegex.INSTANCE_ID, FilterResourceRegex.TAG]],
       [AwsSubCommand.ELB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.TAG]],
       [AwsSubCommand.NLB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.TAG]],
       [AwsSubCommand.ALB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.TAG]],
@@ -34,7 +34,9 @@ export class FilterValidator {
       [FilterResource.INSTANCE_IDS, new Set([Operators.IsAbsent])],
       [FilterResource.ASSOCIATION_IDS, new Set([Operators.IsAbsent])],
       [FilterResource.DATABASE_CONNECTIONS, new Set([Operators.Equal, Operators.GreaterThan, Operators.GreaterThanEqualTo, Operators.LessThan, Operators.LessThanEqualTo])],
-      [FilterResource.TAG, new Set([Operators.Equal, Operators.Exists])]
+      [FilterResource.TAG, new Set([Operators.Equal, Operators.Exists])],
+      [FilterResource.VOLUME_ID, new Set([Operators.Equal])],
+      [FilterResource.INSTANCE_ID, new Set([Operators.Equal])]
     ]
     )
 
