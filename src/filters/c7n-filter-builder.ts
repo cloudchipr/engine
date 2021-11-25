@@ -75,6 +75,12 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         return C7nFilterBuilder.buildVolumeId(expression)
       case 'instance-id':
         return C7nFilterBuilder.buildInstanceId(expression)
+      case 'db-instance-identifier':
+        return C7nFilterBuilder.buildDBInstanceIdentifier(expression)
+      case 'public-ip':
+        return C7nFilterBuilder.buildPublicIP(expression)
+      case 'load-balancer-name':
+        return C7nFilterBuilder.buildLoadBalancerName(expression)
       default:
         throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
     }
@@ -214,6 +220,24 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   private static buildInstanceId (expression: FilterExpression): object {
     return {
       InstanceId: expression.value
+    }
+  }
+
+  private static buildDBInstanceIdentifier (expression: FilterExpression): object {
+    return {
+      DBInstanceIdentifier: expression.value
+    }
+  }
+
+  private static buildPublicIP (expression: FilterExpression): object {
+    return {
+      PublicIp: expression.value
+    }
+  }
+
+  private static buildLoadBalancerName (expression: FilterExpression): object {
+    return {
+      LoadBalancerName: expression.value
     }
   }
 

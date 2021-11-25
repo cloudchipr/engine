@@ -15,11 +15,11 @@ export class FilterValidator {
     private allowedResourcesPerSubCommand : Map<string, Array<string>> = new Map<string, Array<string>>([
       [AwsSubCommand.EBS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.VOLUME_AGE, FilterResourceRegex.TAG, FilterResourceRegex.VOLUME_ID]],
       [AwsSubCommand.EC2_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.CPU, FilterResourceRegex.NETWORK_IN, FilterResourceRegex.NETWORK_OUT, FilterResourceRegex.INSTANCE_ID, FilterResourceRegex.TAG]],
-      [AwsSubCommand.ELB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.TAG]],
-      [AwsSubCommand.NLB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.TAG]],
-      [AwsSubCommand.ALB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.TAG]],
-      [AwsSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.INSTANCE_IDS, FilterResourceRegex.ASSOCIATION_IDS, FilterResourceRegex.TAG]],
-      [AwsSubCommand.RDS_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS, FilterResourceRegex.TAG]]
+      [AwsSubCommand.ELB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.LOAD_BALANCER_NAME, FilterResourceRegex.TAG]],
+      [AwsSubCommand.NLB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.LOAD_BALANCER_NAME, FilterResourceRegex.TAG]],
+      [AwsSubCommand.ALB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.LOAD_BALANCER_NAME, FilterResourceRegex.TAG]],
+      [AwsSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.INSTANCE_IDS, FilterResourceRegex.ASSOCIATION_IDS, FilterResourceRegex.PUBLIC_IP, FilterResourceRegex.TAG]],
+      [AwsSubCommand.RDS_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS, FilterResourceRegex.DB_INSTANCE_IDENTIFIER, FilterResourceRegex.TAG]]
     ]
     )
 
@@ -36,7 +36,10 @@ export class FilterValidator {
       [FilterResource.DATABASE_CONNECTIONS, new Set([Operators.Equal, Operators.GreaterThan, Operators.GreaterThanEqualTo, Operators.LessThan, Operators.LessThanEqualTo])],
       [FilterResource.TAG, new Set([Operators.Equal, Operators.Exists])],
       [FilterResource.VOLUME_ID, new Set([Operators.Equal])],
-      [FilterResource.INSTANCE_ID, new Set([Operators.Equal])]
+      [FilterResource.INSTANCE_ID, new Set([Operators.Equal])],
+      [FilterResource.DB_INSTANCE_IDENTIFIER, new Set([Operators.Equal])],
+      [FilterResource.PUBLIC_IP, new Set([Operators.Equal])],
+      [FilterResource.LOAD_BALANCER_NAME, new Set([Operators.Equal])]
     ]
     )
 
