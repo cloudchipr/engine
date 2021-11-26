@@ -14,6 +14,14 @@ import { Rds } from '../../domain/types/aws/rds'
 import { TagsHelper } from '../../helpers/tags-helper'
 import { MetricsHelper } from '../../helpers/metrics-helper'
 import AwsPriceCalculator from './aws-price-calculator'
+import { AwsSubCommand } from '../../aws-sub-command'
+import { Command } from '../../command'
+
+interface TargetGroup {
+  LoadBalancerArns: string[]
+  TargetHealthDescriptions: object[]
+  C8rRegion: string|undefined
+}
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -31,21 +39,28 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
-      const policyName = `${subCommand}-${command}`
-      AWSShellEngineAdapter.validatePolicyName(policyName)
+      let policyName: string, policy: any
 
-      // @ts-ignore
-      const policy: any = Object.assign({}, policies[policyName])
-      const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
+      if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
+        [policyName, policy] = this.getElbPolicy(request)
+      } else {
+        [policyName, policy] = this.getDefaultPolicy(request)
+        const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
 
-      if (filters && Object.keys(filters).length) {
-        if (typeof policy.policies[0].filters === 'undefined') {
-          policy.policies[0].filters = []
+        if (filters && Object.keys(filters).length) {
+          if (typeof policy.policies[0].filters === 'undefined') {
+            policy.policies[0].filters = []
+          }
+          policy.policies[0].filters.push(filters)
         }
-        policy.policies[0].filters.push(filters)
       }
 
       // execute custodian command and return response
+      const response = this.executeC7nPolicy(policy, policyName, request)
+      return (this as any)[generateResponseMethodName](response)
+    }
+
+    private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest) {
       try {
         const response = this.custodianExecutor.execute(
           policy,
@@ -57,7 +72,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           console.log(policyName + ' Response: ' + JSON.stringify(response))
         }
 
-        return (this as any)[generateResponseMethodName](response)
+        return response
       } catch {
         throw new Error('Failed to execute custodian command')
       } finally {
@@ -65,6 +80,46 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           console.log(policyName + ' Policy: ' + JSON.stringify(policy))
         }
       }
+    }
+
+    private getDefaultPolicy(request: EngineRequest) : [string, any] {
+      let policyName = `${request.subCommand.getValue()}-${request.command.getValue()}`
+      // @ts-ignore
+      let policy: any = Object.assign({}, policies[policyName])
+      AWSShellEngineAdapter.validatePolicyName(policyName)
+
+      return [policyName, policy]
+    }
+
+    private getElbPolicy (request: EngineRequest) : [string, any] {
+      const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(request.subCommand.getValue())
+      this.validateRequest(generateResponseMethodName)
+
+      const policyName = 'target-group-collect'
+      const policy: any = Object.assign({}, policies[policyName])
+
+      const targetGroups = <Array<TargetGroup>> this.executeC7nPolicy(policy, policyName, request)
+
+      const usedElb = new Set<string>()
+      const potentialGarbageELB = new Set<string>()
+      targetGroups.forEach(targetGroup => {
+        targetGroup.LoadBalancerArns.forEach((elbArn: string) => {
+          if (targetGroup.TargetHealthDescriptions.length === 0 && !usedElb.has(elbArn)) {
+            potentialGarbageELB.add(elbArn)
+          } else {
+            usedElb.add(elbArn)
+            potentialGarbageELB.delete(elbArn)
+          }
+        })
+      })
+
+      const elbPolicyName = request.subCommand.getValue() + '-collect-by-instance'
+
+      // @ts-ignore
+      const elbPolicy: any = Object.assign({}, policies[elbPolicyName])
+      elbPolicy.policies[0].filters[1].and[0].value = '"[' + Array.from(potentialGarbageELB).map(x => "'" + x + "'").join(',') + ']"'
+
+      return [elbPolicyName, elbPolicy]
     }
 
     private validateRequest (name: string) {
