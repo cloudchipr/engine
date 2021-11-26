@@ -17,7 +17,8 @@ export class C7nExecutor {
       policyName: string,
       regions: string[],
       currentAccount: string| undefined,
-      accounts: string[]
+      accounts: string[],
+      isDebugMode: boolean
     ) {
       const id: string = v4()
       const requestIdentifier: string = `${policyName}-${id}`
@@ -72,17 +73,28 @@ export class C7nExecutor {
         const accountsConfigFile: string = `${requestIdentifier}-accounts`
         const outputDir: string = `${requestIdentifier}-org`
         fs.writeFileSync(`./${accountsConfigFile}.yaml`, yaml.dump(accountsObject), 'utf8')
+        const command = `${this.custodianOrg} run ${regionOptions} -c ./${accountsConfigFile}.yaml -s ${outputDir}  -u ${requestIdentifier}-policy.yaml --cache-period=0`
+
+        if (isDebugMode) {
+          console.log(command)
+        }
 
         execSync(
-              `${this.custodianOrg} run ${regionOptions} -c ./${accountsConfigFile}.yaml -s ${outputDir}  -u ${requestIdentifier}-policy.yaml --cache-period=0`,
-              { stdio: 'pipe' }
+          command,
+          { stdio: 'pipe' }
         )
       }
 
       try {
+        const command = `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`
+
+        if (isDebugMode) {
+          console.log(command)
+        }
+
         execSync(
-                `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`,
-                { stdio: 'pipe' }
+          command,
+          { stdio: 'pipe' }
         )
 
         if (regions.length > 1) {

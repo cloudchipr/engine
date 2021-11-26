@@ -76,7 +76,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           policyName,
           request.parameter.regions,
           currentAccount,
-          accounts
+          accounts,
+          request.isDebugMode
         )
 
         if (request.isDebugMode) {
@@ -84,8 +85,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         }
 
         return response
-      } catch {
-        throw new Error('Failed to execute custodian command')
+      } catch (e) {
+        const custodianErrorMessage: string | undefined = (e as Error).message.match('botocore.exceptions.ClientError:(.*).')?.[0]
+        throw new Error('Failed to execute custodian command: ' + (custodianErrorMessage ?? ''))
       } finally {
         if (request.isDebugMode) {
           console.log(policyName + ' Policy: ' + JSON.stringify(policy))
