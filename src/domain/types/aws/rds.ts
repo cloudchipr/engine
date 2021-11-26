@@ -22,7 +22,6 @@ export class Rds extends ProviderResource {
   }
 
   get pricePerMonth (): number {
-    console.log(this.averageIOPS);
     return <number> this._pricePerMonthGB // * this.averageIOPS @todo check this later
   }
 }
