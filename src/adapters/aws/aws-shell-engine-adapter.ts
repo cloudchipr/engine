@@ -19,6 +19,7 @@ import { Command } from '../../command'
 import { fromIni } from '@aws-sdk/credential-providers'
 import AwsOrganisationClient from './aws-organisation-client'
 import AwsAccountClient from './aws-account-client'
+import { DebugHelper } from '../../helpers/debug-helper'
 
 interface TargetGroup {
     LoadBalancerArns: string[]
@@ -81,16 +82,19 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         )
 
         if (request.isDebugMode) {
-          console.log(policyName + ' Response: ' + JSON.stringify(response))
+          DebugHelper.log(policyName + ' Response: ' + JSON.stringify(response))
         }
 
         return response
       } catch (e) {
+        if (request.isDebugMode) {
+          DebugHelper.log((e as Error).message)
+        }
         const custodianErrorMessage: string | undefined = (e as Error).message.match('botocore.exceptions.ClientError:(.*).')?.[0]
         throw new Error('Failed to execute custodian command: ' + (custodianErrorMessage ?? ''))
       } finally {
         if (request.isDebugMode) {
-          console.log(policyName + ' Policy: ' + JSON.stringify(policy))
+          DebugHelper.log(policyName + ' Policy: ' + JSON.stringify(policy))
         }
       }
     }

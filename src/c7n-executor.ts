@@ -2,6 +2,7 @@ import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { execSync } from 'child_process'
+import { DebugHelper } from './helpers/debug-helper'
 
 export class C7nExecutor {
     private readonly custodian: string;
@@ -76,7 +77,7 @@ export class C7nExecutor {
         const command = `${this.custodianOrg} run ${regionOptions} -c ./${accountsConfigFile}.yaml -s ${outputDir}  -u ${requestIdentifier}-policy.yaml --cache-period=0`
 
         if (isDebugMode) {
-          console.log(command)
+          DebugHelper.log(command)
         }
 
         execSync(
@@ -89,7 +90,7 @@ export class C7nExecutor {
         const command = `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`
 
         if (isDebugMode) {
-          console.log(command)
+          DebugHelper.log(command)
         }
 
         execSync(
