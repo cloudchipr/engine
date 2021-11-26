@@ -9,19 +9,15 @@ export default class AwsAccountClient {
     }
 
     async getCurrentAccount (): Promise<string | undefined> {
-      try {
-        const client = new STSClient(
-          {
-            region: 'us-east-1',
-            credentials: this.credentialProvider
-          }
-        )
-        const params = {
-        } as GetCallerIdentityCommandInput
-        const result = await client.send(new GetCallerIdentityCommand(params))
-        return result.Account
-      } catch (error) {
-        console.log(error)
-      }
+      const client = new STSClient(
+        {
+          region: 'us-east-1',
+          credentials: this.credentialProvider
+        }
+      )
+      const params = {
+      } as GetCallerIdentityCommandInput
+      const result = await client.send(new GetCallerIdentityCommand(params))
+      return result.Account
     }
 }

@@ -10,24 +10,20 @@ export default class AwsOrganisationClient {
 
     async getAllAccounts (): Promise<string[]> {
       let result: any[] = []
-      try {
-        const client = new OrganizationsClient(
-          {
-            region: 'eu-east-1',
-            credentials: this.credentialProvider
-          }
-        )
-        const params = {
-          MaxResults: 20
-        } as ListAccountsCommandInput
-        do {
-          const perPageResult = await client.send(new ListAccountsCommand(params))
-          result = result.concat(perPageResult.Accounts)
-          params.NextToken = perPageResult.NextToken
-        } while (params.NextToken)
-      } catch (error) {
-        console.log(error)
-      }
+      const client = new OrganizationsClient(
+        {
+          region: 'eu-east-1',
+          credentials: this.credentialProvider
+        }
+      )
+      const params = {
+        MaxResults: 20
+      } as ListAccountsCommandInput
+      do {
+        const perPageResult = await client.send(new ListAccountsCommand(params))
+        result = result.concat(perPageResult.Accounts)
+        params.NextToken = perPageResult.NextToken
+      } while (params.NextToken)
 
       return result.map((a: {Id: string}) => a.Id)
     }
