@@ -47,18 +47,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
-      const currentAccount: string | undefined = await this.awsAccountClient.getCurrentAccount()
-      let accounts: string[] = []
-      if (request.parameter.accounts.length !== 0) {
-        if (request.parameter.accounts.includes('all')) {
-          accounts = await this.awsOrganisationClient.getAllAccounts()
-        } else {
-          accounts = request.parameter.accounts
-        }
-      }
+      const [currentAccount, accounts] = await this.getCurrentAndPossibleAllAccounts(request.parameter.accounts)
 
       let policyName: string, policy: any
-
       if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
         [policyName, policy] = this.getElbPolicy(request, currentAccount, accounts)
       } else {
@@ -160,6 +151,20 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
     private static capitalizeFirstLetter (str: string): string {
       return str.charAt(0).toUpperCase() + str.slice(1)
+    }
+
+    private async getCurrentAndPossibleAllAccounts (requestedAccounts: string[]): Promise<[string | undefined, string[]]> {
+      const currentAccount: string | undefined = await this.awsAccountClient.getCurrentAccount()
+      let accounts: string[] = []
+      if (requestedAccounts.length !== 0) {
+        if (requestedAccounts.includes('all')) {
+          accounts = await this.awsOrganisationClient.getAllAccounts()
+        } else {
+          accounts = requestedAccounts
+        }
+      }
+
+      return [currentAccount, accounts]
     }
 
     private async generateEbsResponse (
