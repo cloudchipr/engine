@@ -7,7 +7,8 @@ export class Elb extends ProviderResource {
         readonly dnsName: string,
         readonly age?: string,
         readonly nameTag?: string,
-        readonly _c8rRegion?: string
+        readonly _c8rRegion?: string,
+        readonly _c8rAccount?: string
   ) {
     super()
   }

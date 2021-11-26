@@ -3,6 +3,7 @@ export abstract class ProviderResource {
     protected _pricePerMonthGB?: number;
     protected _pricePerMonth?: number;
     protected _c8rRegion?: string|undefined;
+    protected _c8rAccount?: string|undefined;
 
     get pricePerHour (): number {
       return <number> this._pricePerHour
@@ -33,5 +34,9 @@ export abstract class ProviderResource {
 
     set c8rRegion (value: string | undefined) {
       this._c8rRegion = value
+    }
+
+    get c8rAccount (): string | undefined {
+      return this._c8rAccount
     }
 }
