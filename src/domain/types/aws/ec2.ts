@@ -13,7 +13,8 @@ export class Ec2 extends ProviderResource {
     readonly tenancy: string,
     readonly availabilityZone: string,
     readonly nameTag?: string,
-    readonly _c8rRegion?: string
+    readonly _c8rRegion?: string,
+    readonly _c8rAccount?: string
   ) { super() }
 
   getRegion (): string {

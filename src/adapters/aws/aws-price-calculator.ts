@@ -7,7 +7,7 @@ import { Rds } from '../../domain/types/aws/rds'
 import { Alb } from '../../domain/types/aws/alb'
 import { Elb } from '../../domain/types/aws/elb'
 import { Nlb } from '../../domain/types/aws/nlb'
-import { fromIni } from '@aws-sdk/credential-providers'
+import { CredentialProvider } from '@aws-sdk/types'
 
 export default class AwsPriceCalculator {
   private readonly client: AwsPricingClient
@@ -87,8 +87,7 @@ export default class AwsPriceCalculator {
     ['sa-east-1', 'SAE1']
   ]);
 
-  constructor () {
-    const credentialProvider = fromIni()
+  constructor (credentialProvider: CredentialProvider) {
     this.client = new AwsPricingClient(credentialProvider)
     this.ec2Client = new AwsEc2Client(credentialProvider)
   }

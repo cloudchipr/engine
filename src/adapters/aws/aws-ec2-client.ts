@@ -22,8 +22,6 @@ export default class AwsEc2Client {
         // process data.
       } catch (error) {
         console.log(error)
-      } finally {
-        // finally.
       }
     }
 
