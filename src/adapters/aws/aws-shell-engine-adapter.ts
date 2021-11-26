@@ -16,33 +16,51 @@ import { MetricsHelper } from '../../helpers/metrics-helper'
 import AwsPriceCalculator from './aws-price-calculator'
 import { AwsSubCommand } from '../../aws-sub-command'
 import { Command } from '../../command'
+import { fromIni } from '@aws-sdk/credential-providers'
+import AwsOrganisationClient from './aws-organisation-client'
+import AwsAccountClient from './aws-account-client'
 
 interface TargetGroup {
-  LoadBalancerArns: string[]
-  TargetHealthDescriptions: object[]
-  C8rRegion: string|undefined
+    LoadBalancerArns: string[]
+    TargetHealthDescriptions: object[]
+    C8rRegion: string|undefined
 }
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
     private readonly awsPriceCalculator: AwsPriceCalculator;
+    private readonly awsOrganisationClient: AwsOrganisationClient;
+    private readonly awsAccountClient: AwsAccountClient;
 
-    constructor (custodian: string) {
-      this.custodianExecutor = new C7nExecutor(custodian)
-      this.awsPriceCalculator = new AwsPriceCalculator()
+    constructor (custodian: string, custodianOrg?: string) {
+      const credentialProvider = fromIni()
+      this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
+      this.awsPriceCalculator = new AwsPriceCalculator(credentialProvider)
+      this.awsOrganisationClient = new AwsOrganisationClient(credentialProvider)
+      this.awsAccountClient = new AwsAccountClient(credentialProvider)
     }
 
-    execute (request: EngineRequest): Promise<Response<Type>> {
+    async execute (request: EngineRequest): Promise<Response<Type>> {
       const command = request.command.getValue()
       const subCommand = request.subCommand.getValue()
 
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
+      const currentAccount: string | undefined = await this.awsAccountClient.getCurrentAccount()
+      let accounts: string[] = []
+      if (request.parameter.accounts.length !== 0) {
+        if (request.parameter.accounts.includes('all')) {
+          accounts = await this.awsOrganisationClient.getAllAccounts()
+        } else {
+          accounts = request.parameter.accounts
+        }
+      }
+
       let policyName: string, policy: any
 
       if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
-        [policyName, policy] = this.getElbPolicy(request)
+        [policyName, policy] = this.getElbPolicy(request, currentAccount, accounts)
       } else {
         [policyName, policy] = this.getDefaultPolicy(request)
         const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
@@ -56,16 +74,18 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
 
       // execute custodian command and return response
-      const response = this.executeC7nPolicy(policy, policyName, request)
+      const response = this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
       return (this as any)[generateResponseMethodName](response)
     }
 
-    private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest) {
+    private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest, currentAccount: string| undefined, accounts: string[]) {
       try {
         const response = this.custodianExecutor.execute(
           policy,
           policyName,
-          request.parameter.regions
+          request.parameter.regions,
+          currentAccount,
+          accounts
         )
 
         if (request.isDebugMode) {
@@ -82,23 +102,23 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
     }
 
-    private getDefaultPolicy(request: EngineRequest) : [string, any] {
-      let policyName = `${request.subCommand.getValue()}-${request.command.getValue()}`
+    private getDefaultPolicy (request: EngineRequest) : [string, any] {
+      const policyName = `${request.subCommand.getValue()}-${request.command.getValue()}`
       // @ts-ignore
-      let policy: any = Object.assign({}, policies[policyName])
+      const policy: any = Object.assign({}, policies[policyName])
       AWSShellEngineAdapter.validatePolicyName(policyName)
 
       return [policyName, policy]
     }
 
-    private getElbPolicy (request: EngineRequest) : [string, any] {
+    private getElbPolicy (request: EngineRequest, currentAccount: string| undefined, accounts: string[]) : [string, any] {
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(request.subCommand.getValue())
       this.validateRequest(generateResponseMethodName)
 
       const policyName = 'target-group-collect'
       const policy: any = Object.assign({}, policies[policyName])
 
-      const targetGroups = <Array<TargetGroup>> this.executeC7nPolicy(policy, policyName, request)
+      const targetGroups = <Array<TargetGroup>><unknown> this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
 
       const usedElb = new Set<string>()
       const potentialGarbageELB = new Set<string>()
@@ -155,6 +175,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 AvailabilityZone: string;
                 Tags: any[];
                 C8rRegion: string|undefined;
+                C8rAccount: string|undefined;
             }) => {
           return new Ebs(
             ebsResponseItemJson.VolumeId,
@@ -164,7 +185,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.AvailabilityZone,
             ebsResponseItemJson.CreateTime,
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
-            ebsResponseItemJson.C8rRegion
+            ebsResponseItemJson.C8rRegion,
+            ebsResponseItemJson.C8rAccount
           )
         }
       )
@@ -187,7 +209,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 LaunchTime: string;
                 Tags: any[];
                 Placement: { Tenancy: string, AvailabilityZone: string };
-                C8rRegion: string|undefined
+                C8rRegion: string|undefined;
+                C8rAccount: string|undefined;
             }) => {
           return new Ec2(
             ec2ResponseItemJson.InstanceId,
@@ -200,7 +223,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.Placement.Tenancy,
             ec2ResponseItemJson.Placement.AvailabilityZone,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
-            ec2ResponseItemJson.C8rRegion
+            ec2ResponseItemJson.C8rRegion,
+            ec2ResponseItemJson.C8rAccount
           )
         }
       )
@@ -219,14 +243,16 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
-                    C8rRegion: string|undefined
+                    C8rRegion: string|undefined;
+                    C8rAccount: string|undefined;
                 }) => {
             return new Elb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
-              elbResponseItemJson.C8rRegion
+              elbResponseItemJson.C8rRegion,
+              elbResponseItemJson.C8rAccount
             )
           }
         )
@@ -245,14 +271,16 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
-                    C8rRegion: string|undefined
+                    C8rRegion: string|undefined;
+                    C8rAccount: string|undefined;
                 }) => {
             return new Nlb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
-              elbResponseItemJson.C8rRegion
+              elbResponseItemJson.C8rRegion,
+              elbResponseItemJson.C8rAccount
             )
           }
         )
@@ -272,13 +300,15 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     CreatedTime: string;
                     Tags: any[];
                     C8rRegion: string|undefined;
+                    C8rAccount: string|undefined;
                 }) => {
             return new Alb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
-              elbResponseItemJson.C8rRegion
+              elbResponseItemJson.C8rRegion,
+              elbResponseItemJson.C8rAccount
             )
           }
         )
@@ -298,12 +328,14 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     NetworkBorderGroup: string;
                     Tags: any[];
                     C8rRegion: string|undefined;
+                    C8rAccount: string|undefined;
                 }) => {
             return new Eip(
               eipResponseItemJson.PublicIp,
               eipResponseItemJson.NetworkBorderGroup,
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
-              eipResponseItemJson.C8rRegion
+              eipResponseItemJson.C8rRegion,
+              eipResponseItemJson.C8rAccount
             )
           }
         )
@@ -327,6 +359,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     AvailabilityZone: string;
                     Tags: any[];
                     C8rRegion: string|undefined;
+                    C8rAccount: string|undefined;
                 }) => {
             return new Rds(
               rdsResponseItemJson.DBInstanceIdentifier,
@@ -337,7 +370,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.InstanceCreateTime,
               rdsResponseItemJson.AvailabilityZone,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),
-              rdsResponseItemJson.C8rRegion
+              rdsResponseItemJson.C8rRegion,
+              rdsResponseItemJson.C8rAccount
             )
           }
         )
