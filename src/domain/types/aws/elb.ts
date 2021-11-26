@@ -3,6 +3,7 @@ import { ProviderResource } from '../provider-resource'
 export class Elb extends ProviderResource {
   protected readonly REGION_FETCH_REGEXP = /.*\.(.*)\.elb\.amazonaws\.com/;
   constructor (
+        readonly loadBalancerName: string,
         readonly dnsName: string,
         readonly age?: string,
         readonly nameTag?: string,

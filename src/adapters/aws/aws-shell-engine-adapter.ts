@@ -215,12 +215,14 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const elbItems = responseJson
         .map(
           (elbResponseItemJson: {
+                    LoadBalancerName: string;
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
                     C8rRegion: string|undefined
                 }) => {
             return new Elb(
+              elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
@@ -239,12 +241,14 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const nlbItems = responseJson
         .map(
           (elbResponseItemJson: {
+                    LoadBalancerName: string;
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
                     C8rRegion: string|undefined
                 }) => {
             return new Nlb(
+              elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
@@ -263,12 +267,14 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const albItems = responseJson
         .map(
           (elbResponseItemJson: {
+                    LoadBalancerName: string;
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
                     C8rRegion: string|undefined;
                 }) => {
             return new Alb(
+              elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
               elbResponseItemJson.CreatedTime,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),

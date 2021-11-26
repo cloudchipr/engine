@@ -64,13 +64,23 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case 'launch-time':
         return this.buildLaunchTime(expression)
       case 'instance-ids':
-        return C7nFilterBuilder.buildInstanceId(expression)
+        return C7nFilterBuilder.buildInstanceIds(expression)
       case 'association-ids':
         return C7nFilterBuilder.buildAssociationId(expression)
       case 'dns-name':
         return C7nFilterBuilder.buildDnsName(expression)
       case 'database-connections':
         return C7nFilterBuilder.buildDatabaseConnections(expression)
+      case 'volume-id':
+        return C7nFilterBuilder.buildVolumeId(expression)
+      case 'instance-id':
+        return C7nFilterBuilder.buildInstanceId(expression)
+      case 'db-instance-identifier':
+        return C7nFilterBuilder.buildDBInstanceIdentifier(expression)
+      case 'public-ip':
+        return C7nFilterBuilder.buildPublicIP(expression)
+      case 'load-balancer-name':
+        return C7nFilterBuilder.buildLoadBalancerName(expression)
       default:
         throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
     }
@@ -138,7 +148,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         }
   }
 
-  private static buildInstanceId (expression: FilterExpression): object {
+  private static buildInstanceIds (expression: FilterExpression): object {
     return {
       type: 'value',
       key: 'InstanceId',
@@ -198,6 +208,36 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       days: Number(expression.since),
       value: Number(expression.value),
       op: expression.operator
+    }
+  }
+
+  private static buildVolumeId (expression: FilterExpression): object {
+    return {
+      VolumeId: expression.value
+    }
+  }
+
+  private static buildInstanceId (expression: FilterExpression): object {
+    return {
+      InstanceId: expression.value
+    }
+  }
+
+  private static buildDBInstanceIdentifier (expression: FilterExpression): object {
+    return {
+      DBInstanceIdentifier: expression.value
+    }
+  }
+
+  private static buildPublicIP (expression: FilterExpression): object {
+    return {
+      PublicIp: expression.value
+    }
+  }
+
+  private static buildLoadBalancerName (expression: FilterExpression): object {
+    return {
+      LoadBalancerName: expression.value
     }
   }
 
