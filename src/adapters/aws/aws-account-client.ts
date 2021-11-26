@@ -5,19 +5,19 @@ export default class AwsAccountClient {
     private readonly credentialProvider: CredentialProvider;
 
     constructor (credentialProvider: CredentialProvider) {
-      this.credentialProvider = credentialProvider
+        this.credentialProvider = credentialProvider
     }
 
     async getCurrentAccount (): Promise<string | undefined> {
-      const client = new STSClient(
-        {
-          region: 'us-east-1',
-          credentials: this.credentialProvider
-        }
-      )
-      const params = {
-      } as GetCallerIdentityCommandInput
-      const result = await client.send(new GetCallerIdentityCommand(params))
-      return result.Account
+        const client = new STSClient(
+            {
+                region: 'us-east-1',
+                credentials: this.credentialProvider
+            }
+        )
+        const params = {
+        } as GetCallerIdentityCommandInput
+        const result = await client.send(new GetCallerIdentityCommand(params))
+        return result.Account
     }
 }
