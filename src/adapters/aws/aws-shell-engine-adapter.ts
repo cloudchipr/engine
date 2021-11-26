@@ -36,25 +36,23 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const command = request.command.getValue()
       const subCommand = request.subCommand.getValue()
 
-      if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
-        return this.executeElb(request)
-      }
-
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
-      const policyName = `${subCommand}-${command}`
-      AWSShellEngineAdapter.validatePolicyName(policyName)
+      let policyName: string, policy: any
 
-      // @ts-ignore
-      const policy: any = Object.assign({}, policies[policyName])
-      const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
+      if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
+        [policyName, policy] = this.getElbPolicy(request)
+      } else {
+        [policyName, policy] = this.getDefaultPolicy(request)
+        const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
 
-      if (filters && Object.keys(filters).length) {
-        if (typeof policy.policies[0].filters === 'undefined') {
-          policy.policies[0].filters = []
+        if (filters && Object.keys(filters).length) {
+          if (typeof policy.policies[0].filters === 'undefined') {
+            policy.policies[0].filters = []
+          }
+          policy.policies[0].filters.push(filters)
         }
-        policy.policies[0].filters.push(filters)
       }
 
       // execute custodian command and return response
@@ -84,7 +82,16 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
     }
 
-    private executeElb (request: EngineRequest) {
+    private getDefaultPolicy(request: EngineRequest) : [string, any] {
+      let policyName = `${request.subCommand.getValue()}-${request.command.getValue()}`
+      // @ts-ignore
+      let policy: any = Object.assign({}, policies[policyName])
+      AWSShellEngineAdapter.validatePolicyName(policyName)
+
+      return [policyName, policy]
+    }
+
+    private getElbPolicy (request: EngineRequest) : [string, any] {
       const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(request.subCommand.getValue())
       this.validateRequest(generateResponseMethodName)
 
@@ -112,9 +119,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const elbPolicy: any = Object.assign({}, policies[elbPolicyName])
       elbPolicy.policies[0].filters[1].and[0].value = '"[' + Array.from(potentialGarbageELB).map(x => "'" + x + "'").join(',') + ']"'
 
-      // execute custodian command and return response
-      const response = this.executeC7nPolicy(elbPolicy, elbPolicyName, request)
-      return (this as any)[generateResponseMethodName](response)
+      return [elbPolicyName, elbPolicy]
     }
 
     private validateRequest (name: string) {
