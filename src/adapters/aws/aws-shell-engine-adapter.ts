@@ -373,6 +373,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.DBInstanceClass,
               rdsResponseItemJson.StorageType,
               MetricsHelper.getDatabaseConnections(rdsResponseItemJson),
+              MetricsHelper.getDatabaseIOPS(rdsResponseItemJson),
               rdsResponseItemJson.Engine,
               rdsResponseItemJson.InstanceCreateTime,
               rdsResponseItemJson.AvailabilityZone,

@@ -3,6 +3,10 @@ export class MetricsHelper {
     return MetricsHelper.getMetricAverage(object, 'AWS/RDS.DatabaseConnections.Average')
   }
 
+  static getDatabaseIOPS (object: any): number {
+    return MetricsHelper.getMetricAverage(object, 'AWS/RDS.IOPS.Average')
+  }
+
   static getCpuUtilization (object: any): number {
     return MetricsHelper.getMetricAverage(object, 'AWS/EC2.CPUUtilization.Average')
   }
