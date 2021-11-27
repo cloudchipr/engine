@@ -89,7 +89,16 @@ export default class AwsPriceCalculator {
 
   private static REDS_DB_TYPES_TO_PRICING_NAMES = new Map([
     ['mysql', 'MySQL'],
-    ['postgres', 'PostgreSQL']
+    ['postgres', 'PostgreSQL'],
+    ['mariadb', 'MariaDB'],
+    ['oracle-ee', 'Oracle'],
+    ['oracle-se2', 'Oracle'],
+    ['sqlserver-web', 'SQL Server'],
+    ['sqlserver-ex', 'SQL Server'],
+    ['sqlserver-se', 'SQL Server'],
+    ['sqlserver-ee', 'SQL Server'],
+    ['aurora-postgresql', 'Aurora PostgreSQL'],
+    ['aurora-mysql', 'Aurora MySQL']
   ])
 
   constructor (credentialProvider: CredentialProvider) {
