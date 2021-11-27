@@ -365,6 +365,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DBInstanceClass: string;
                     StorageType: string;
                     Engine: string;
+                    MultiAZ: boolean;
                     InstanceCreateTime: string;
                     'c7n.metrics': any;
                     AvailabilityZone: string;
@@ -379,6 +380,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               MetricsHelper.getDatabaseConnections(rdsResponseItemJson),
               MetricsHelper.getDatabaseIOPS(rdsResponseItemJson),
               rdsResponseItemJson.Engine,
+              rdsResponseItemJson.MultiAZ,
               rdsResponseItemJson.InstanceCreateTime,
               rdsResponseItemJson.AvailabilityZone,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),

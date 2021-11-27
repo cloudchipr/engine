@@ -8,6 +8,7 @@ export class Rds extends ProviderResource {
     readonly averageConnections: number,
     readonly averageIOPS: number,
     readonly dbType: string,
+    readonly multiAZ: boolean,
     readonly age: string,
     readonly availabilityZone: string,
     readonly nameTag?: string,
@@ -19,9 +20,5 @@ export class Rds extends ProviderResource {
 
   getRegion (): string {
     return this.availabilityZone.slice(0, -1)
-  }
-
-  get pricePerMonth (): number {
-    return <number> this._pricePerMonthGB // * this.averageIOPS @todo check this later
   }
 }
