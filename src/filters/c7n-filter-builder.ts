@@ -253,14 +253,24 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   }
 
   private static buildTag (expression: FilterExpression): object {
-    return expression.operator === Operators.Exists
-      ? {
+    switch (expression.operator) {
+      case Operators.Exists:
+        return {
           [expression.resource]: 'present'
         }
-      : {
+      case Operators.Contains:
+        return {
+          type: 'value',
+          key: expression.resource,
+          op: 'regex',
+          value: `(.*${expression.value}.*)`
+        }
+      default:
+        return {
           type: 'value',
           key: expression.resource,
           value: expression.value
         }
+    }
   }
 }

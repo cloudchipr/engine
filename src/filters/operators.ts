@@ -11,4 +11,5 @@ export enum Operators {
   In = 'in',
   NotIn = 'notIn',
   Exists = 'exists',
+  Contains = 'contains'
 }

@@ -34,7 +34,7 @@ export class FilterValidator {
       [FilterResource.INSTANCE_IDS, new Set([Operators.IsAbsent])],
       [FilterResource.ASSOCIATION_IDS, new Set([Operators.IsAbsent])],
       [FilterResource.DATABASE_CONNECTIONS, new Set([Operators.Equal, Operators.GreaterThan, Operators.GreaterThanEqualTo, Operators.LessThan, Operators.LessThanEqualTo])],
-      [FilterResource.TAG, new Set([Operators.Equal, Operators.Exists])],
+      [FilterResource.TAG, new Set([Operators.Equal, Operators.Exists, Operators.Contains])],
       [FilterResource.VOLUME_ID, new Set([Operators.Equal])],
       [FilterResource.INSTANCE_ID, new Set([Operators.Equal])],
       [FilterResource.DB_INSTANCE_IDENTIFIER, new Set([Operators.Equal])],
