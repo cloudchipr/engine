@@ -87,6 +87,11 @@ export default class AwsPriceCalculator {
     ['sa-east-1', 'SAE1']
   ]);
 
+  private static REDS_DB_TYPES_TO_PRICING_NAMES = new Map([
+    ['mysql', 'MySQL'],
+    ['postgres', 'PostgreSQL']
+  ])
+
   constructor (credentialProvider: CredentialProvider) {
     this.client = new AwsPricingClient(credentialProvider)
     this.ec2Client = new AwsEc2Client(credentialProvider)
@@ -149,9 +154,13 @@ export default class AwsPriceCalculator {
 
     const filters: {
       [region: string]: {
-        [volumeType: string]: {
-            filter: {}[],
-            rdsItems: Set<Rds>
+        [instanceType: string]: {
+            [dbType: string]: {
+                [multiAZ: string]: {
+                  filter: {}[],
+                  rdsItems: Set<Rds>
+              }
+            }
           }
         }
       } = {}
@@ -159,30 +168,37 @@ export default class AwsPriceCalculator {
     // collect all unique filters
     for (const rds of rdsItems) {
       const region = rds.getRegion()
+      const multiAZFilterKey = rds.multiAZ ? 1 : 0
       if (filters[region] === undefined) filters[region] = {}
-      if (filters[region][rds.storageType] === undefined) {
-        filters[region][rds.storageType] = {
-          filter: AwsPriceCalculator.getRdsFilter(region, rds.storageType),
+      if (filters[region][rds.instanceType] === undefined) filters[region][rds.instanceType] = {}
+      if (filters[region][rds.instanceType][rds.dbType] === undefined) filters[region][rds.instanceType][rds.dbType] = {}
+      if (filters[region][rds.instanceType][rds.dbType][multiAZFilterKey] === undefined) {
+        filters[region][rds.instanceType][rds.dbType][multiAZFilterKey] = {
+          filter: AwsPriceCalculator.getRdsFilter(region, rds.instanceType, rds.dbType, rds.multiAZ),
           rdsItems: new Set<Rds>()
         }
       }
-      filters[region][rds.storageType].rdsItems.add(rds)
+      filters[region][rds.instanceType][rds.dbType][multiAZFilterKey].rdsItems.add(rds)
     }
 
     for (const regionKey of Object.keys(filters)) {
-      for (const volumeTypeKey of Object.keys(filters[regionKey])) {
-        const filter = filters[regionKey][volumeTypeKey].filter
-        const priceData = await this.client.getPrice('AmazonRDS', filter)
+      for (const instanceTypeKey of Object.keys(filters[regionKey])) {
+        for (const dbTypeKey of Object.keys(filters[regionKey][instanceTypeKey])) {
+          for (const multiAZKey of Object.keys(filters[regionKey][instanceTypeKey][dbTypeKey])) {
+            const filter = filters[regionKey][instanceTypeKey][dbTypeKey][multiAZKey].filter
+            const priceData = await this.client.getPrice('AmazonRDS', filter)
 
-        const onDemand = priceData.terms.OnDemand
-        const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
-        const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
+            const onDemand = priceData.terms.OnDemand
+            const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+            const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
 
-        const rdsItems = filters[regionKey][volumeTypeKey].rdsItems
-        rdsItems.forEach(rds => {
-          rds.pricePerMonthGB = pricePerUnit.USD
-          return rds
-        })
+            const rdsItems = filters[regionKey][instanceTypeKey][dbTypeKey][multiAZKey].rdsItems
+            rdsItems.forEach(rds => {
+              rds.pricePerHour = pricePerUnit.USD
+              return rds
+            })
+          }
+        }
       }
     }
   }
@@ -382,7 +398,7 @@ export default class AwsPriceCalculator {
     }
   }
 
-  private static getRdsFilter (region: string, storageType: string): {}[] {
+  private static getRdsFilter (region: string, instanceType: string, dbType: string, multiAZ: boolean): {}[] {
     return [
       {
         Type: 'TERM_MATCH',
@@ -391,13 +407,23 @@ export default class AwsPriceCalculator {
       },
       {
         Type: 'TERM_MATCH',
-        Field: 'location',
-        Value: this.REGION_CODES_TO_PRICING_NAMES.get(region)
+        Field: 'regionCode',
+        Value: region
       },
       {
         Type: 'TERM_MATCH',
-        Field: 'volumeName',
-        Value: storageType
+        Field: 'databaseEngine',
+        Value: this.REDS_DB_TYPES_TO_PRICING_NAMES.get(dbType)
+      },
+      {
+        Type: 'TERM_MATCH',
+        Field: 'instanceType',
+        Value: instanceType
+      },
+      {
+        Type: 'TERM_MATCH',
+        Field: 'deploymentOption',
+        Value: multiAZ ? 'Multi-AZ' : 'Single-AZ'
       }
     ]
   }
