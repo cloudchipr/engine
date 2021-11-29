@@ -101,8 +101,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
     private getDefaultPolicy (request: EngineRequest) : [string, any] {
       const policyName = `${request.subCommand.getValue()}-${request.command.getValue()}`
-      // @ts-ignore
-      const policy: any = Object.assign({}, policies[policyName])
+
+      const policy: any = this.getPolicy(policyName)
       AWSShellEngineAdapter.validatePolicyName(policyName)
 
       return [policyName, policy]
@@ -113,7 +113,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       this.validateRequest(generateResponseMethodName)
 
       const policyName = 'target-group-collect'
-      const policy: any = Object.assign({}, policies[policyName])
+      const policy: any = this.getPolicy(policyName)
 
       const targetGroups = <Array<TargetGroup>><unknown> this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
 
@@ -392,5 +392,10 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       await this.awsPriceCalculator.putRdsPrices(rdsItems)
       return new Response<Type>(rdsItems)
+    }
+
+    private getPolicy (policyName: string) {
+      // @ts-ignore
+      return JSON.parse(JSON.stringify(Object.assign({}, policies[policyName])))
     }
 }
