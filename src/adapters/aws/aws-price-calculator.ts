@@ -92,13 +92,16 @@ export default class AwsPriceCalculator {
     ['postgres', 'PostgreSQL'],
     ['mariadb', 'MariaDB'],
     ['oracle-ee', 'Oracle'],
+    ['oracle-ee-cdb', 'Oracle'],
     ['oracle-se2', 'Oracle'],
+    ['oracle-se2-cdb', 'Oracle'],
     ['sqlserver-web', 'SQL Server'],
     ['sqlserver-ex', 'SQL Server'],
     ['sqlserver-se', 'SQL Server'],
     ['sqlserver-ee', 'SQL Server'],
     ['aurora-postgresql', 'Aurora PostgreSQL'],
-    ['aurora-mysql', 'Aurora MySQL']
+    ['aurora-mysql', 'Aurora MySQL'],
+    ['aurora', 'Aurora MySQL']
   ])
 
   constructor (credentialProvider: CredentialProvider) {
