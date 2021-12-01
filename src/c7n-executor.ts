@@ -41,14 +41,19 @@ export class C7nExecutor {
           C8rAccount: string|undefined
       }[] = []
 
+      let includeCurrentAccount = true
+      // use multi account, but not for the case when the accounts is 1 and it is current one
       const useMultiAccount = accounts.length > 0 && !(accounts.length === 1 && currentAccount && accounts.includes(currentAccount))
       if (useMultiAccount) {
         if (regions.length === 0) {
           regions.push('us-east-1') // default AWS region @todo must be changed later for other clouds
         }
 
-        // exclude current account, anyway it will be fetch by signe clud custodian
-        accounts = accounts.filter(a => a !== currentAccount)
+        includeCurrentAccount = currentAccount !== undefined && accounts.includes(currentAccount)
+        // exclude current account from custodian anyway it will be fetch by signe cloud custodian
+        if (includeCurrentAccount) {
+          accounts = accounts.filter(a => a !== currentAccount)
+        }
 
         // custodianOrg exists and executable
         // @ts-ignore it is just for snake case
@@ -87,28 +92,30 @@ export class C7nExecutor {
       }
 
       try {
-        const command = `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`
+        if (includeCurrentAccount) {
+          const command = `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`
 
-        if (isDebugMode) {
-          DebugHelper.log(command)
-        }
+          if (isDebugMode) {
+            DebugHelper.log(command)
+          }
 
-        execSync(
-          command,
-          { stdio: 'pipe' }
-        )
+          execSync(
+            command,
+            { stdio: 'pipe' }
+          )
 
-        if (regions.length > 1) {
-          result = regions.flatMap(region => {
-            return C7nExecutor
-              .fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName, undefined, region))
-              .map(data => {
-                data.C8rRegion = region
-                return data
-              })
-          })
-        } else {
-          result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName))
+          if (regions.length > 1) {
+            result = regions.flatMap(region => {
+              return C7nExecutor
+                .fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName, undefined, region))
+                .map(data => {
+                  data.C8rRegion = region
+                  return data
+                })
+            })
+          } else {
+            result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName))
+          }
         }
 
         if (useMultiAccount) {
