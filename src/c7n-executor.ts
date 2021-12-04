@@ -21,79 +21,83 @@ export class C7nExecutor {
       accounts: string[],
       isDebugMode: boolean
     ) {
-      const id: string = v4()
-      const requestIdentifier: string = `${policyName}-${id}`
-      fs.writeFileSync(`./${requestIdentifier}-policy.yaml`, yaml.dump(policy), 'utf8')
-
-      let regionOptions = ''
-      if (regions) {
-        regionOptions = regions.map(region => ' --region ' + region).join(' ')
-      }
-
-      // validate all region request
-      const all = regions.find(region => region === 'all')
-      if (all !== undefined) {
-        throw new Error('Region all is not implemented yet')
-      }
-
-      let result: {
-          C8rRegion: string|undefined,
-          C8rAccount: string|undefined
-      }[] = []
-
-      let includeCurrentAccount = true
-      // use multi account, but not for the case when the accounts is 1 and it is current one
-      const useMultiAccount = accounts.length > 0 && !(accounts.length === 1 && currentAccount && accounts.includes(currentAccount))
-      if (useMultiAccount) {
-        if (regions.length === 0) {
-          regions.push('us-east-1') // default AWS region @todo must be changed later for other clouds
-        }
-
-        includeCurrentAccount = currentAccount !== undefined && accounts.includes(currentAccount)
-        // exclude current account from custodian anyway it will be fetch by signe cloud custodian
-        if (includeCurrentAccount) {
-          accounts = accounts.filter(a => a !== currentAccount)
-        }
-
-        // custodianOrg exists and executable
-        // @ts-ignore it is just for snake case
-        const accountsObject: {
-            accounts: {
-                accountId: string,
-                name: string,
-                regions: string[],
-                role: string
-            }[]
-        } = {}
-
-        // @ts-ignore it is just for snake case
-        accountsObject.accounts = accounts.map(id => {
-          return {
-            account_id: id,
-            name: id,
-            regions: regions,
-            role: `arn:aws:iam::${id}:role/OrganizationAccountAccessRole`
-          }
-        })
-
-        const accountsConfigFile: string = `${requestIdentifier}-accounts`
-        const outputDir: string = `${requestIdentifier}-org`
-        fs.writeFileSync(`./${accountsConfigFile}.yaml`, yaml.dump(accountsObject), 'utf8')
-        const command = `${this.custodianOrg} run ${regionOptions} -c ./${accountsConfigFile}.yaml -s ${outputDir}  -u ${requestIdentifier}-policy.yaml --cache-period=0`
-
-        if (isDebugMode) {
-          DebugHelper.log(command)
-        }
-
-        execSync(
-          command,
-          { stdio: 'pipe' }
-        )
-      }
-
+      const id: string = `${policyName}-${v4()}`
+      const timestamp: string = Date.now().toString()
       try {
+        const dir: string = `./tmp/c7r/${timestamp}/${id}/`
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true })
+        }
+        const policyPath: string = `${dir}policy.yaml`
+        fs.writeFileSync(policyPath, yaml.dump(policy), 'utf8')
+
+        let regionOptions = ''
+        if (regions) {
+          regionOptions = regions.map(region => ' --region ' + region).join(' ')
+        }
+
+        // validate all region request
+        const all = regions.find(region => region === 'all')
+        if (all !== undefined) {
+          throw new Error('Region all is not implemented yet')
+        }
+
+        let result: {
+            C8rRegion: string|undefined,
+            C8rAccount: string|undefined
+        }[] = []
+
+        let includeCurrentAccount = true
+        // use multi account, but not for the case when the accounts is 1 and it is current one
+        const useMultiAccount = accounts.length > 0 && !(accounts.length === 1 && currentAccount && accounts.includes(currentAccount))
+        if (useMultiAccount) {
+          if (regions.length === 0) {
+            regions.push('us-east-1') // default AWS region @todo must be changed later for other clouds
+          }
+
+          includeCurrentAccount = currentAccount !== undefined && accounts.includes(currentAccount)
+          // exclude current account from custodian anyway it will be fetch by signe cloud custodian
+          if (includeCurrentAccount) {
+            accounts = accounts.filter(a => a !== currentAccount)
+          }
+
+          // custodianOrg exists and executable
+          // @ts-ignore it is just for snake case
+          const accountsObject: {
+              accounts: {
+                  accountId: string,
+                  name: string,
+                  regions: string[],
+                  role: string
+              }[]
+          } = {}
+
+          // @ts-ignore it is just for snake case
+          accountsObject.accounts = accounts.map(id => {
+            return {
+              account_id: id,
+              name: id,
+              regions: regions,
+              role: `arn:aws:iam::${id}:role/OrganizationAccountAccessRole`
+            }
+          })
+
+          const accountsConfigFile: string = `${dir}accounts.yaml`
+          fs.writeFileSync(`${accountsConfigFile}`, yaml.dump(accountsObject), 'utf8')
+          const command = `${this.custodianOrg} run ${regionOptions} -c ${accountsConfigFile} -s ${dir}response-org  -u ${policyPath} --cache-period=0`
+
+          if (isDebugMode) {
+            DebugHelper.log(command)
+          }
+
+          execSync(
+            command,
+            { stdio: 'pipe' }
+          )
+        }
+
         if (includeCurrentAccount) {
-          const command = `${this.custodian} run ${regionOptions} --output-dir=${requestIdentifier}  ${requestIdentifier}-policy.yaml --cache-period=0`
+          const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
 
           if (isDebugMode) {
             DebugHelper.log(command)
@@ -107,14 +111,14 @@ export class C7nExecutor {
           if (regions.length > 1) {
             result = regions.flatMap(region => {
               return C7nExecutor
-                .fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName, undefined, region))
+                .fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region))
                 .map(data => {
                   data.C8rRegion = region
                   return data
                 })
             })
           } else {
-            result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName))
+            result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
           }
         }
 
@@ -129,7 +133,7 @@ export class C7nExecutor {
             regions.forEach(region => {
               result = result.concat(
                 C7nExecutor
-                  .fetchResourceJson(C7nExecutor.buildResourcePath(requestIdentifier, policyName, account, region))
+                  .fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
                   .flatMap(data => {
                     if (regions.length > 1) {
                       data.C8rRegion = region
@@ -144,27 +148,27 @@ export class C7nExecutor {
         return result
       } finally {
         // remove temp files and folders
-        C7nExecutor.removeTempFoldersAndFiles(requestIdentifier)
+        C7nExecutor.removeTempFoldersAndFiles(timestamp, id)
       }
     }
 
-    private static removeTempFoldersAndFiles (requestIdentifier: string): void {
-      if (fs.existsSync(`${requestIdentifier}`)) {
-        execSync(`rm -r ${requestIdentifier}`)
+    private static removeTempFoldersAndFiles (timestamp: string, id: string): void {
+      if (fs.existsSync(`./tmp/c7r/${timestamp}/${id}`)) {
+        execSync(`rm -r ./tmp/c7r/${timestamp}/${id}`)
       }
-      if (fs.existsSync(`${requestIdentifier}-policy.yaml`)) {
-        execSync(`rm ${requestIdentifier}-policy.yaml`)
+      if (fs.readdirSync(`./tmp/c7r/${timestamp}`).length === 0) {
+        execSync(`rm -r ./tmp/c7r/${timestamp}`)
       }
-      if (fs.existsSync(`${requestIdentifier}-accounts.yaml`)) {
-        execSync(`rm ${requestIdentifier}-accounts.yaml`)
+      if (fs.readdirSync('./tmp/c7r').length === 0) {
+        execSync('rm -r ./tmp/c7r')
       }
-      if (fs.existsSync(`${requestIdentifier}-org`)) {
-        execSync(`rm -r ${requestIdentifier}-org`)
+      if (fs.readdirSync('./tmp').length === 0) {
+        execSync('rm -r ./tmp')
       }
     }
 
-    private static buildResourcePath (requestIdentifier: string, policyName: string, account?: string, region?: string) {
-      return `./${requestIdentifier}` + (account ? '-org' : '') +
+    private static buildResourcePath (dir: string, policyName: string, account?: string, region?: string) {
+      return `./${dir}` + (account ? 'response-org' : 'response') +
             (account ? `/${account}` : '') +
             (region ? `/${region}` : '') +
             `/${policyName}` +
