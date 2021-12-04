@@ -2,20 +2,15 @@ import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { execSync } from 'child_process'
-import winston, { Logger, transports } from 'winston'
+import { CustodianError } from './exceptions/CustodianError'
 
 export class C7nExecutor {
     private readonly custodian: string;
     private readonly custodianOrg?: string;
-    private readonly logger: Logger;
 
     constructor (custodian: string, custodianOrg?: string) {
       this.custodian = custodian
       this.custodianOrg = custodianOrg
-      this.logger = winston.createLogger({
-        level: 'error',
-        defaultMeta: { service: 'cloudchipr-engine' }
-      })
     }
 
     execute (
@@ -144,15 +139,13 @@ export class C7nExecutor {
         }
         return result
       } catch (e: any) {
+        let message = 'Failed on executing custodian, '
         if (isDebugMode) {
-          this.logger.clear().add(new transports.File({
-            filename: `${dir}error.log`,
-            format: winston.format.prettyPrint()
-          })).error('Failed on executing custodian', e)
-          throw new Error(`Failed on executing custodian, the trace log can be found in ${dir} directory.`)
+          message += `the trace log can be found in ${dir} directory.`
         } else {
-          throw new Error('Failed on executing custodian, please run c8r with --verbose flag and follow the trace log.')
+          message += 'please run c8r with --verbose flag and follow the trace log.'
         }
+        throw new CustodianError(message, dir, isDebugMode)
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
