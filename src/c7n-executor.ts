@@ -2,15 +2,20 @@ import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { execSync } from 'child_process'
-import { DebugHelper } from './helpers/debug-helper'
+import winston, { Logger, transports } from 'winston'
 
 export class C7nExecutor {
     private readonly custodian: string;
     private readonly custodianOrg?: string;
+    private readonly logger: Logger;
 
     constructor (custodian: string, custodianOrg?: string) {
       this.custodian = custodian
       this.custodianOrg = custodianOrg
+      this.logger = winston.createLogger({
+        level: 'error',
+        defaultMeta: { service: 'cloudchipr-engine' }
+      })
     }
 
     execute (
@@ -23,11 +28,11 @@ export class C7nExecutor {
     ) {
       const id: string = `${policyName}-${v4()}`
       const timestamp: string = Date.now().toString()
+      const dir: string = `./tmp/c7r/${timestamp}/${id}/`
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true })
+      }
       try {
-        const dir: string = `./tmp/c7r/${timestamp}/${id}/`
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true })
-        }
         const policyPath: string = `${dir}policy.yaml`
         fs.writeFileSync(policyPath, yaml.dump(policy), 'utf8')
 
@@ -86,10 +91,6 @@ export class C7nExecutor {
           fs.writeFileSync(`${accountsConfigFile}`, yaml.dump(accountsObject), 'utf8')
           const command = `${this.custodianOrg} run ${regionOptions} -c ${accountsConfigFile} -s ${dir}response-org  -u ${policyPath} --cache-period=0`
 
-          if (isDebugMode) {
-            DebugHelper.log(command)
-          }
-
           execSync(
             command,
             { stdio: 'pipe' }
@@ -98,10 +99,6 @@ export class C7nExecutor {
 
         if (includeCurrentAccount) {
           const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
-
-          if (isDebugMode) {
-            DebugHelper.log(command)
-          }
 
           execSync(
             command,
@@ -146,6 +143,16 @@ export class C7nExecutor {
           })
         }
         return result
+      } catch (e: any) {
+        if (isDebugMode) {
+          this.logger.clear().add(new transports.File({
+            filename: `${dir}error.log`,
+            format: winston.format.prettyPrint()
+          })).error('Failed on executing custodian', e)
+          throw new Error(`Failed on executing custodian. The trace log can be found in ${dir} directory.`)
+        } else {
+          throw new Error('Failed on executing custodian, please run c8s with --verbose flag and follow the trace log.')
+        }
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
