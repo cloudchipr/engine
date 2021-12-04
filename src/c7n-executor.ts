@@ -151,7 +151,7 @@ export class C7nExecutor {
           })).error('Failed on executing custodian', e)
           throw new Error(`Failed on executing custodian, the trace log can be found in ${dir} directory.`)
         } else {
-          throw new Error('Failed on executing custodian, please run c8s with --verbose flag and follow the trace log.')
+          throw new Error('Failed on executing custodian, please run c8r with --verbose flag and follow the trace log.')
         }
       } finally {
         // remove temp files and folders
