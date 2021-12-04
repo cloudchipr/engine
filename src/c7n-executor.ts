@@ -23,10 +23,11 @@ export class C7nExecutor {
     ) {
       const id: string = `${policyName}-${v4()}`
       const dir: string = `./tmp/c7r/${id}/`
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true })
-      }
       try {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true })
+        }
+
         const policyPath: string = `${dir}policy.yaml`
         fs.writeFileSync(policyPath, yaml.dump(policy), 'utf8')
 
