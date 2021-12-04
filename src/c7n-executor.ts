@@ -149,7 +149,7 @@ export class C7nExecutor {
             filename: `${dir}error.log`,
             format: winston.format.prettyPrint()
           })).error('Failed on executing custodian', e)
-          throw new Error(`Failed on executing custodian. The trace log can be found in ${dir} directory.`)
+          throw new Error(`Failed on executing custodian, the trace log can be found in ${dir} directory.`)
         } else {
           throw new Error('Failed on executing custodian, please run c8s with --verbose flag and follow the trace log.')
         }
