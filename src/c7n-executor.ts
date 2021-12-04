@@ -148,7 +148,9 @@ export class C7nExecutor {
         return result
       } finally {
         // remove temp files and folders
-        C7nExecutor.removeTempFoldersAndFiles(timestamp, id)
+        if (!isDebugMode) {
+          C7nExecutor.removeTempFoldersAndFiles(timestamp, id)
+        }
       }
     }
 
