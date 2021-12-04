@@ -2,7 +2,7 @@ import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { execSync } from 'child_process'
-import { CustodianError } from './exceptions/CustodianError'
+import { CustodianError } from './exceptions/custodian-error'
 
 export class C7nExecutor {
     private readonly custodian: string;
@@ -22,8 +22,7 @@ export class C7nExecutor {
       isDebugMode: boolean
     ) {
       const id: string = `${policyName}-${v4()}`
-      const timestamp: string = Date.now().toString()
-      const dir: string = `./tmp/c7r/${timestamp}/${id}/`
+      const dir: string = `./tmp/c7r/${id}/`
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true })
       }
@@ -139,27 +138,18 @@ export class C7nExecutor {
         }
         return result
       } catch (e: any) {
-        let message = 'Failed on executing custodian, '
-        if (isDebugMode) {
-          message += `the trace log can be found in ${dir} directory.`
-        } else {
-          message += 'please run c8r with --verbose flag and follow the trace log.'
-        }
-        throw new CustodianError(message, dir, isDebugMode)
+        throw new CustodianError(e.message, id)
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
-          C7nExecutor.removeTempFoldersAndFiles(timestamp, id)
+          C7nExecutor.removeTempFoldersAndFiles(id)
         }
       }
     }
 
-    private static removeTempFoldersAndFiles (timestamp: string, id: string): void {
-      if (fs.existsSync(`./tmp/c7r/${timestamp}/${id}`)) {
-        execSync(`rm -r ./tmp/c7r/${timestamp}/${id}`)
-      }
-      if (fs.readdirSync(`./tmp/c7r/${timestamp}`).length === 0) {
-        execSync(`rm -r ./tmp/c7r/${timestamp}`)
+    private static removeTempFoldersAndFiles (id: string): void {
+      if (fs.existsSync(`./tmp/c7r/${id}`)) {
+        execSync(`rm -r ./tmp/c7r/${id}`)
       }
       if (fs.readdirSync('./tmp/c7r').length === 0) {
         execSync('rm -r ./tmp/c7r')

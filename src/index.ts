@@ -24,3 +24,5 @@ export * from './responses/response'
 export * from './command'
 export * from './sub-command-interface'
 export * from './aws-sub-command'
+
+export * from './exceptions/custodian-error'
