@@ -19,7 +19,6 @@ import { Command } from '../../command'
 import { fromIni } from '@aws-sdk/credential-providers'
 import AwsOrganisationClient from './aws-organisation-client'
 import AwsAccountClient from './aws-account-client'
-import { DebugHelper } from '../../helpers/debug-helper'
 
 interface TargetGroup {
     LoadBalancerArns: string[]
@@ -71,32 +70,14 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest, currentAccount: string| undefined, accounts: string[]) {
-      try {
-        const response = this.custodianExecutor.execute(
-          policy,
-          policyName,
-          request.parameter.regions,
-          currentAccount,
-          accounts,
-          request.isDebugMode
-        )
-
-        if (request.isDebugMode) {
-          DebugHelper.log(policyName + ' Response: ' + JSON.stringify(response))
-        }
-
-        return response
-      } catch (e) {
-        if (request.isDebugMode) {
-          DebugHelper.log((e as Error).message)
-        }
-        const custodianErrorMessage: string | undefined = (e as Error).message.match('botocore.exceptions.ClientError:(.*).')?.[0]
-        throw new Error('Failed to execute custodian command: ' + (custodianErrorMessage ?? ''))
-      } finally {
-        if (request.isDebugMode) {
-          DebugHelper.log(policyName + ' Policy: ' + JSON.stringify(policy))
-        }
-      }
+      return this.custodianExecutor.execute(
+        policy,
+        policyName,
+        request.parameter.regions,
+        currentAccount,
+        accounts,
+        request.isDebugMode
+      )
     }
 
     private getDefaultPolicy (request: EngineRequest) : [string, any] {

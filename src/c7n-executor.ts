@@ -2,7 +2,7 @@ import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { execSync } from 'child_process'
-import { DebugHelper } from './helpers/debug-helper'
+import { CustodianError } from './exceptions/custodian-error'
 
 export class C7nExecutor {
     private readonly custodian: string;
@@ -22,12 +22,12 @@ export class C7nExecutor {
       isDebugMode: boolean
     ) {
       const id: string = `${policyName}-${v4()}`
-      const timestamp: string = Date.now().toString()
+      const dir: string = `./tmp/c7r/${id}/`
       try {
-        const dir: string = `./tmp/c7r/${timestamp}/${id}/`
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true })
         }
+
         const policyPath: string = `${dir}policy.yaml`
         fs.writeFileSync(policyPath, yaml.dump(policy), 'utf8')
 
@@ -86,10 +86,6 @@ export class C7nExecutor {
           fs.writeFileSync(`${accountsConfigFile}`, yaml.dump(accountsObject), 'utf8')
           const command = `${this.custodianOrg} run ${regionOptions} -c ${accountsConfigFile} -s ${dir}response-org  -u ${policyPath} --cache-period=0`
 
-          if (isDebugMode) {
-            DebugHelper.log(command)
-          }
-
           execSync(
             command,
             { stdio: 'pipe' }
@@ -98,10 +94,6 @@ export class C7nExecutor {
 
         if (includeCurrentAccount) {
           const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
-
-          if (isDebugMode) {
-            DebugHelper.log(command)
-          }
 
           execSync(
             command,
@@ -146,20 +138,19 @@ export class C7nExecutor {
           })
         }
         return result
+      } catch (e: any) {
+        throw new CustodianError(e.message, id)
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
-          C7nExecutor.removeTempFoldersAndFiles(timestamp, id)
+          C7nExecutor.removeTempFoldersAndFiles(id)
         }
       }
     }
 
-    private static removeTempFoldersAndFiles (timestamp: string, id: string): void {
-      if (fs.existsSync(`./tmp/c7r/${timestamp}/${id}`)) {
-        execSync(`rm -r ./tmp/c7r/${timestamp}/${id}`)
-      }
-      if (fs.readdirSync(`./tmp/c7r/${timestamp}`).length === 0) {
-        execSync(`rm -r ./tmp/c7r/${timestamp}`)
+    private static removeTempFoldersAndFiles (id: string): void {
+      if (fs.existsSync(`./tmp/c7r/${id}`)) {
+        execSync(`rm -r ./tmp/c7r/${id}`)
       }
       if (fs.readdirSync('./tmp/c7r').length === 0) {
         execSync('rm -r ./tmp/c7r')
