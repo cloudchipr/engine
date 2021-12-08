@@ -43,9 +43,11 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     if (expression.operator === Operators.IsEmpty) {
       return C7nFilterBuilder.buildEmpty(expression)
     } else if (expression.operator === Operators.IsNotEmpty) {
-      return this.buildNotEmpty(expression)
+      return C7nFilterBuilder.buildNotEmpty(expression)
     } else if (expression.operator === Operators.IsAbsent) {
       return C7nFilterBuilder.buildAbsent(expression)
+    } else if (expression.operator === Operators.IsNotAbsent) {
+      return C7nFilterBuilder.buildNotAbsent(expression)
     }
 
     if (/^tag:.{1,128}$/.test(expression.resource)) {
@@ -189,16 +191,26 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private buildNotEmpty (expression: FilterExpression): object {
-    if (this.subCommand.getValue() === AwsSubCommand.EBS_SUBCOMMAND) {
-      return {
-        type: 'value',
-        key: 'Attachments[0].Device',
-        value: 'not-null'
-      }
+  private static buildNotEmpty (expression: FilterExpression): object {
+    return {
+      not: [
+        {
+          [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+        }
+      ]
     }
+  }
 
-    throw new Error(`${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
+  private static buildNotAbsent (expression: FilterExpression): object {
+    return {
+      not: [
+        {
+          type: 'value',
+          key: C7nFilterBuilder.mapResourceName(expression.resource),
+          value: 'absent'
+        }
+      ]
+    }
   }
 
   private static buildDatabaseConnections (expression: FilterExpression): object {

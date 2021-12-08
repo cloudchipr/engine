@@ -8,6 +8,7 @@ export enum Operators {
   IsEmpty = 'isEmpty',
   IsAbsent = 'isAbsent',
   IsNotEmpty = 'isNotEmpty',
+  IsNotAbsent = 'isNotAbsent',
   In = 'in',
   NotIn = 'notIn',
   Exists = 'exists',
