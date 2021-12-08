@@ -1,7 +1,7 @@
 export class CustodianError extends Error {
   private readonly id?: string
   private readonly executionDetails?: string
-  private readonly timestamp: number
+  private readonly dateTime: string
 
   constructor (message?: string, id?: string) {
     super(message)
@@ -12,7 +12,7 @@ export class CustodianError extends Error {
 
     this.id = id
     this.executionDetails = id !== undefined ? `./tmp/c7r/${id}/` : ''
-    this.timestamp = Date.now()
+    this.dateTime = (new Date()).toString()
   }
 
   getId (): string | undefined {
@@ -23,7 +23,7 @@ export class CustodianError extends Error {
     return this.executionDetails
   }
 
-  getTimestamp (): number {
-    return this.timestamp
+  getDateTime (): string {
+    return this.dateTime
   }
 }
