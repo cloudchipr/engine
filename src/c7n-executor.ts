@@ -22,7 +22,7 @@ export class C7nExecutor {
       isDebugMode: boolean
     ) {
       const id: string = `${policyName}-${v4()}`
-      const dir: string = `./tmp/c7r/${id}/`
+      const dir: string = `./.c8r/run/c7n/${id}/`
       try {
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true })
@@ -149,14 +149,14 @@ export class C7nExecutor {
     }
 
     private static removeTempFoldersAndFiles (id: string): void {
-      if (fs.existsSync(`./tmp/c7r/${id}`)) {
-        execSync(`rm -r ./tmp/c7r/${id}`)
+      if (fs.existsSync(`./.c8r/run/c7n/${id}`)) {
+        execSync(`rm -r ./.c8r/run/c7n/${id}`)
       }
-      if (fs.readdirSync('./tmp/c7r').length === 0) {
-        execSync('rm -r ./tmp/c7r')
+      if (fs.readdirSync('./.c8r/run/c7n').length === 0) {
+        execSync('rm -r ./.c8r/run/c7n')
       }
-      if (fs.readdirSync('./tmp').length === 0) {
-        execSync('rm -r ./tmp')
+      if (fs.readdirSync('./.c8r/run').length === 0) {
+        execSync('rm -r ./.c8r/run')
       }
     }
 
