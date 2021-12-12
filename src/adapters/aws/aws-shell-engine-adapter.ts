@@ -90,9 +90,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     private getElbPolicy (request: EngineRequest, currentAccount: string| undefined, accounts: string[]) : [string, any] {
-      const generateResponseMethodName = AWSShellEngineAdapter.getResponseMethodName(request.subCommand.getValue())
-      this.validateRequest(generateResponseMethodName)
-
       const policyName = 'target-group-collect'
       const policy: any = this.getPolicy(policyName)
 
@@ -142,16 +139,10 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
     private async getCurrentAndPossibleAllAccounts (requestedAccounts: string[]): Promise<[string | undefined, string[]]> {
       const currentAccount: string | undefined = await this.awsAccountClient.getCurrentAccount()
-      let accounts: string[] = []
-      if (requestedAccounts.length !== 0) {
-        if (requestedAccounts.includes('all')) {
-          accounts = await this.awsOrganisationClient.getAllAccounts()
-        } else {
-          accounts = requestedAccounts
-        }
+      if (requestedAccounts.length > 0 && requestedAccounts.includes('all')) {
+        requestedAccounts = await this.awsOrganisationClient.getAllAccounts()
       }
-
-      return [currentAccount, accounts]
+      return [currentAccount, requestedAccounts]
     }
 
     private async generateEbsResponse (

@@ -8,4 +8,8 @@ export class Eip extends ProviderResource {
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string
   ) { super() }
+
+  getRegion (): string {
+    return this.region
+  }
 }

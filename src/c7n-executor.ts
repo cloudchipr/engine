@@ -36,12 +36,6 @@ export class C7nExecutor {
           regionOptions = regions.map(region => ' --region ' + region).join(' ')
         }
 
-        // validate all region request
-        const all = regions.find(region => region === 'all')
-        if (all !== undefined) {
-          throw new Error('Region all is not implemented yet')
-        }
-
         let result: {
             C8rRegion: string|undefined,
             C8rAccount: string|undefined
@@ -105,31 +99,29 @@ export class C7nExecutor {
               return C7nExecutor
                 .fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region))
                 .map(data => {
-                  data.C8rRegion = region
+                  data.C8rAccount = currentAccount
                   return data
                 })
             })
           } else {
-            result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
+            result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName)).map(data => {
+              data.C8rAccount = currentAccount
+              return data
+            })
           }
         }
 
         if (useMultiAccount) {
-          if (result.length > 0) {
-            result = result.map(data => {
-              data.C8rAccount = currentAccount + ' - Current'
-              return data
-            })
-          }
+          result = result.map(data => {
+            data.C8rAccount = currentAccount + ' - Current'
+            return data
+          })
           accounts.forEach(account => {
             regions.forEach(region => {
               result = result.concat(
                 C7nExecutor
                   .fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
                   .flatMap(data => {
-                    if (regions.length > 1) {
-                      data.C8rRegion = region
-                    }
                     data.C8rAccount = account
                     return data
                   })
