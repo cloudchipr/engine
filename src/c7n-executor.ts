@@ -111,7 +111,7 @@ export class C7nExecutor {
           }
         }
 
-        if (useMultiAccount) { /// manaca account
+        if (useMultiAccount) {
           result = result.map(data => {
             data.C8rAccount = currentAccount + ' - Current'
             return data

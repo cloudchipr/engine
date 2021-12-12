@@ -39,4 +39,6 @@ export abstract class ProviderResource {
     get c8rAccount (): string | undefined {
       return this._c8rAccount
     }
+
+    abstract getRegion(): string
 }
