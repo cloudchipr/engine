@@ -1,8 +1,8 @@
 import fs from 'fs'
 import yaml from 'js-yaml'
 import { v4 } from 'uuid'
-import { execSync } from 'child_process'
 import { CustodianError } from './exceptions/custodian-error'
+import { ShellHelper } from './helpers/shell-helper'
 
 export class C7nExecutor {
     private readonly custodian: string;
@@ -13,7 +13,7 @@ export class C7nExecutor {
       this.custodianOrg = custodianOrg
     }
 
-    execute (
+    async execute (
       policy: any,
       policyName: string,
       regions: string[],
@@ -24,12 +24,14 @@ export class C7nExecutor {
       const id: string = `${policyName}-${v4()}`
       const dir: string = `./.c8r/run/c7n/${id}/`
       try {
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true })
+        try {
+          await fs.promises.access(dir)
+        } catch (error) {
+          await fs.promises.mkdir(dir, { recursive: true })
         }
 
         const policyPath: string = `${dir}policy.yaml`
-        fs.writeFileSync(policyPath, yaml.dump(policy), 'utf8')
+        await fs.promises.writeFile(policyPath, yaml.dump(policy), 'utf8')
 
         let regionOptions = ''
         if (regions) {
@@ -38,7 +40,8 @@ export class C7nExecutor {
 
         let result: {
             C8rRegion: string|undefined,
-            C8rAccount: string|undefined
+            C8rAccount: string|undefined,
+            [key: string]: unknown
         }[] = []
 
         let includeCurrentAccount = true
@@ -77,34 +80,28 @@ export class C7nExecutor {
           })
 
           const accountsConfigFile: string = `${dir}accounts.yaml`
-          fs.writeFileSync(`${accountsConfigFile}`, yaml.dump(accountsObject), 'utf8')
+          await fs.promises.writeFile(`${accountsConfigFile}`, yaml.dump(accountsObject), 'utf8')
           const command = `${this.custodianOrg} run ${regionOptions} -c ${accountsConfigFile} -s ${dir}response-org  -u ${policyPath} --cache-period=0`
 
-          execSync(
-            command,
-            { stdio: 'pipe' }
-          )
+          await ShellHelper.execAsync(command)
         }
 
         if (includeCurrentAccount) {
           const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
 
-          execSync(
-            command,
-            { stdio: 'pipe' }
-          )
+          await ShellHelper.execAsync(command)
 
           if (regions.length > 1) {
-            result = regions.flatMap(region => {
-              return C7nExecutor
-                .fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region))
-                .map(data => {
-                  data.C8rAccount = currentAccount
-                  return data
-                })
+            result = regions.flatMap(async (region) => {
+              const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region))
+              return tempData.map(data => {
+                data.C8rAccount = currentAccount
+                return data
+              })
             })
           } else {
-            result = C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName)).map(data => {
+            const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
+            result = tempData.map(data => {
               data.C8rAccount = currentAccount
               return data
             })
@@ -117,14 +114,13 @@ export class C7nExecutor {
             return data
           })
           accounts.forEach(account => {
-            regions.forEach(region => {
+            regions.forEach(async (region) => {
+              const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
               result = result.concat(
-                C7nExecutor
-                  .fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
-                  .flatMap(data => {
-                    data.C8rAccount = account
-                    return data
-                  })
+                tempData.flatMap(data => {
+                  data.C8rAccount = account
+                  return data
+                })
               )
             })
           })
@@ -135,39 +131,35 @@ export class C7nExecutor {
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
-          C7nExecutor.removeTempFoldersAndFiles(id)
+          await C7nExecutor.removeTempFoldersAndFiles(id)
         }
       }
     }
 
-    private static removeTempFoldersAndFiles (id: string): void {
-      if (fs.existsSync(`./.c8r/run/c7n/${id}`)) {
-        execSync(`rm -r ./.c8r/run/c7n/${id}`)
-      }
-      if (fs.readdirSync('./.c8r/run/c7n').length === 0) {
-        execSync('rm -r ./.c8r/run/c7n')
-      }
-      if (fs.readdirSync('./.c8r/run').length === 0) {
-        execSync('rm -r ./.c8r/run')
-      }
+    private static async removeTempFoldersAndFiles (id: string) {
+      await fs.promises.rm(`./.c8r/run/c7n/${id}`, { recursive: true, force: true })
+      try {
+        await fs.promises.rmdir('./.c8r/run/c7n')
+        await fs.promises.rmdir('./.c8r/run')
+      } catch (e) {}
     }
 
     private static buildResourcePath (dir: string, policyName: string, account?: string, region?: string) {
-      return `./${dir}` + (account ? 'response-org' : 'response') +
+      return `${dir}` + (account ? 'response-org' : 'response') +
             (account ? `/${account}` : '') +
             (region ? `/${region}` : '') +
             `/${policyName}` +
             '/resources.json'
     }
 
-    private static fetchResourceJson (filePath: string): {
-        C8rRegion: string|undefined,
-        C8rAccount: string|undefined
-    }[] {
-      if (!fs.existsSync(filePath)) {
+    private static async fetchResourceJson (filePath: string): Promise<{
+      C8rRegion: string|undefined,
+      C8rAccount: string|undefined
+    }[]> {
+      try {
+        return JSON.parse(await fs.promises.readFile(filePath, 'utf8'))
+      } catch (e) {
         throw new Error(`${filePath} file does not exist.`)
       }
-
-      return JSON.parse(fs.readFileSync(filePath, 'utf8'))
     }
 }
