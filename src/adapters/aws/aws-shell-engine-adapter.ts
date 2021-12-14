@@ -51,7 +51,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       let policyName: string, policy: any
       if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
-        [policyName, policy] = this.getElbPolicy(request, currentAccount, accounts)
+        [policyName, policy] = await this.getElbPolicy(request, currentAccount, accounts)
       } else {
         [policyName, policy] = this.getDefaultPolicy(request)
         const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
@@ -65,7 +65,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
 
       // execute custodian command and return response
-      const response = this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
+      const response = await this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
       return (this as any)[generateResponseMethodName](response)
     }
 
@@ -89,11 +89,11 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       return [policyName, policy]
     }
 
-    private getElbPolicy (request: EngineRequest, currentAccount: string| undefined, accounts: string[]) : [string, any] {
+    private async getElbPolicy (request: EngineRequest, currentAccount: string| undefined, accounts: string[]) : Promise<[string, any]> {
       const policyName = 'target-group-collect'
       const policy: any = this.getPolicy(policyName)
 
-      const targetGroups = <Array<TargetGroup>><unknown> this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
+      const targetGroups = <Array<TargetGroup>><unknown> await this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
 
       const usedElb = new Set<string>()
       const potentialGarbageELB = new Set<string>()
