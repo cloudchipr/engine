@@ -92,6 +92,7 @@ export class C7nExecutor {
           await ShellHelper.execAsync(command)
 
           if (regions.length > 1) {
+            // @ts-ignore
             result = regions.flatMap(async (region) => {
               const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region))
               return tempData.map(data => {
