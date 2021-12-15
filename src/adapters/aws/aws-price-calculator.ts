@@ -367,6 +367,14 @@ export default class AwsPriceCalculator {
         throw new Error(`EC2 price calculation, cannot find platform of the instance: ${ec2Item.id} with platform details ${imageData.PlatformDetails}`)
       }
 
+      if (ec2Item.isSpotInstance) {
+        const spotPrice = await this.ec2Client.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, imageData.PlatformDetails)
+        if (spotPrice !== undefined) {
+          ec2Item.pricePerHour = parseFloat(spotPrice)
+        }
+        continue
+      }
+
       const usageOperation = imageData.UsageOperation
       const tenancy = !ec2Item.tenancy || ec2Item.tenancy === 'default' ? 'Shared' : ec2Item.tenancy
       const region = ec2Item.getRegion()
@@ -524,8 +532,8 @@ export default class AwsPriceCalculator {
       },
       {
         Type: 'TERM_MATCH',
-        Field: 'location',
-        Value: this.REGION_CODES_TO_PRICING_NAMES.get(region)
+        Field: 'regionCode',
+        Value: region
       },
       {
         Type: 'TERM_MATCH',

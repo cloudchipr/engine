@@ -1,6 +1,9 @@
 import {
   DescribeImagesCommand,
   DescribeImagesCommandInput,
+  DescribeSpotPriceHistoryCommand,
+  DescribeSpotPriceHistoryCommandInput,
+  DescribeSpotPriceHistoryCommandOutput,
   EC2Client
 } from '@aws-sdk/client-ec2'
 import { CredentialProvider } from '@aws-sdk/types'
@@ -20,6 +23,23 @@ export default class AwsEc2Client {
         } as DescribeImagesCommandInput)
         return await this.getClient(region).send(command)
         // process data.
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    async getSpotInstancePrice (region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {
+      try {
+        const command = new DescribeSpotPriceHistoryCommand({
+          AvailabilityZone: availabilityZone,
+          InstanceTypes: [instanceType],
+          ProductDescriptions: [productDescription],
+          StartTime: new Date()
+        } as DescribeSpotPriceHistoryCommandInput)
+
+        const result: DescribeSpotPriceHistoryCommandOutput = await this.getClient(region).send(command)
+
+        return result.SpotPriceHistory === undefined ? undefined : result.SpotPriceHistory[0].SpotPrice
       } catch (error) {
         console.log(error)
       }
