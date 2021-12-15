@@ -39,9 +39,7 @@ export class C7nExecutor {
         }
 
         let result: {
-            C8rRegion: string|undefined,
-            C8rAccount: string|undefined,
-            [key: string]: unknown
+            C8rAccount: string|undefined
         }[] = []
 
         let includeCurrentAccount = true
@@ -90,23 +88,18 @@ export class C7nExecutor {
           const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
 
           await ShellHelper.execAsync(command)
-
           if (regions.length > 1) {
-            // @ts-ignore
-            result = regions.flatMap(async (region) => {
-              const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region))
-              return tempData.map(data => {
-                data.C8rAccount = currentAccount
-                return data
-              })
-            })
+            for (const region of regions) {
+              result = result.concat(await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region)))
+            }
           } else {
-            const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
-            result = tempData.map(data => {
-              data.C8rAccount = currentAccount
-              return data
-            })
+            result = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
           }
+
+          result = result.map(data => {
+            data.C8rAccount = currentAccount
+            return data
+          })
         }
 
         if (useMultiAccount) {
@@ -154,7 +147,6 @@ export class C7nExecutor {
     }
 
     private static async fetchResourceJson (filePath: string): Promise<{
-      C8rRegion: string|undefined,
       C8rAccount: string|undefined
     }[]> {
       try {
