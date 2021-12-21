@@ -5,6 +5,7 @@ import { Operators } from './operators'
 import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
+import { Statistics } from '../domain/statistics'
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
   private readonly subCommand: SubCommandInterface;
@@ -19,6 +20,73 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
 
   buildFilter (filterList: FilterList): object {
     const filterResponse: any = {}
+
+    // Starting a nasty Hack to get Statistics Object in case metrics are not provided for CPU, NetIn, NetOut and DatabaseConnections
+    if (this.subCommand.getValue() === AwsSubCommand.EC2_SUBCOMMAND) {
+      const isCPUFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'cpu')
+      })
+      const isNetworkInFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'network-in')
+      })
+      const isNetworkOutFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'network-out')
+      })
+
+      if (!isCPUFilterProvided) {
+        filterList.andList.push(
+          new FilterExpression(
+            'cpu',
+            Operators.GreaterThanEqualTo,
+            '0',
+            '1',
+            Statistics.Maximum
+          )
+        )
+      }
+
+      if (!isNetworkInFilterProvided) {
+        filterList.andList.push(
+          new FilterExpression(
+            'network-in',
+            Operators.GreaterThanEqualTo,
+            '0',
+            '1',
+            Statistics.Maximum
+          )
+        )
+      }
+
+      if (!isNetworkOutFilterProvided) {
+        filterList.andList.push(
+          new FilterExpression(
+            'network-out',
+            Operators.GreaterThanEqualTo,
+            '0',
+            '1',
+            Statistics.Maximum
+          )
+        )
+      }
+    }
+    if (this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND) {
+      const isDatabaseConnectionsFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'database-connections')
+      })
+
+      if (!isDatabaseConnectionsFilterProvided) {
+        filterList.andList.push(
+          new FilterExpression(
+            'database-connections',
+            Operators.GreaterThanEqualTo,
+            '0',
+            '1',
+            Statistics.Maximum
+          )
+        )
+      }
+    }
+    // End of nasty hack
 
     for (const filter of filterList.andList) {
       if (!Object.prototype.hasOwnProperty.call(filterResponse, 'and')) {
@@ -102,7 +170,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'CPUUtilization',
-      statistics: 'Average',
+      statistics: expression.statistics,
       period: 86400,
       days: Number(expression.since),
       op: expression.operator,
@@ -114,7 +182,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'NetworkIn',
-      statistics: 'Average',
+      statistics: expression.statistics,
       period: 86400,
       days: Number(expression.since),
       op: expression.operator,
@@ -126,7 +194,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'NetworkOut',
-      statistics: 'Average',
+      statistics: expression.statistics,
       period: 86400,
       days: Number(expression.since),
       op: expression.operator,
@@ -217,6 +285,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'DatabaseConnections',
+      statistics: expression.statistics,
       days: Number(expression.since),
       value: Number(expression.value),
       op: expression.operator

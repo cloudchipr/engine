@@ -1,12 +1,13 @@
 import { ProviderResource } from '../provider-resource'
+import { Metric } from '../../metric'
 
 export class Rds extends ProviderResource {
   constructor (
     readonly id: string,
     readonly instanceType: string,
     readonly storageType: string,
-    readonly averageConnections: number,
-    readonly averageIOPS: number,
+    readonly averageConnections: Metric,
+    readonly averageIOPS: Metric,
     readonly dbType: string,
     readonly multiAZ: boolean,
     readonly age: string,
