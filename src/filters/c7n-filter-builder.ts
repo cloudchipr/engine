@@ -5,9 +5,10 @@ import { Operators } from './operators'
 import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
+import { Statistics } from '../domain/statistics'
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
-  private readonly subCommand: SubCommandInterface;
+  private readonly subCommand: SubCommandInterface
 
   constructor (subCommand: SubCommandInterface) {
     this.subCommand = subCommand
@@ -19,6 +20,9 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
 
   buildFilter (filterList: FilterList): object {
     const filterResponse: any = {}
+
+    // Nasty Hack to get Statistics Object in case metrics are not provided for CPU, NetIn, NetOut and DatabaseConnections
+    this.pushDefaultMetricFilterExpressions(filterList)
 
     for (const filter of filterList.andList) {
       if (!Object.prototype.hasOwnProperty.call(filterResponse, 'and')) {
@@ -102,7 +106,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'CPUUtilization',
-      statistics: 'Average',
+      statistics: expression.statistics,
       period: 86400,
       days: Number(expression.since),
       op: expression.operator,
@@ -114,7 +118,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'NetworkIn',
-      statistics: 'Average',
+      statistics: expression.statistics,
       period: 86400,
       days: Number(expression.since),
       op: expression.operator,
@@ -126,7 +130,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'NetworkOut',
-      statistics: 'Average',
+      statistics: expression.statistics,
       period: 86400,
       days: Number(expression.since),
       op: expression.operator,
@@ -217,6 +221,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     return {
       type: 'metrics',
       name: 'DatabaseConnections',
+      statistics: expression.statistics,
       days: Number(expression.since),
       value: Number(expression.value),
       op: expression.operator
@@ -284,5 +289,52 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
           value: expression.value
         }
     }
+  }
+
+  private pushDefaultMetricFilterExpressions (filterList: FilterList) {
+    if (this.subCommand.getValue() === AwsSubCommand.EC2_SUBCOMMAND) {
+      const isCPUFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'cpu')
+      })
+      const isNetworkInFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'network-in')
+      })
+      const isNetworkOutFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'network-out')
+      })
+
+      if (!isCPUFilterProvided) {
+        C7nFilterBuilder.pushDefaultFilterExpression('cpu', filterList)
+      }
+
+      if (!isNetworkInFilterProvided) {
+        C7nFilterBuilder.pushDefaultFilterExpression('network-in', filterList)
+      }
+
+      if (!isNetworkOutFilterProvided) {
+        C7nFilterBuilder.pushDefaultFilterExpression('network-out', filterList)
+      }
+    }
+    if (this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND) {
+      const isDatabaseConnectionsFilterProvided = filterList.andList.some(filter => {
+        return (filter instanceof FilterExpression && filter.resource === 'database-connections')
+      })
+
+      if (!isDatabaseConnectionsFilterProvided) {
+        C7nFilterBuilder.pushDefaultFilterExpression('database-connections', filterList)
+      }
+    }
+  }
+
+  private static pushDefaultFilterExpression (resource: string, filterList: FilterList) {
+    filterList.andList.push(
+      new FilterExpression(
+        resource,
+        Operators.GreaterThanEqualTo,
+        '0',
+        '1',
+        Statistics.Maximum
+      )
+    )
   }
 }

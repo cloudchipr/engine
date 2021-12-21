@@ -3,6 +3,7 @@ import { FilterExpression } from './filter-expression'
 import { Operators } from './operators'
 import { Filters } from './filters'
 import { FilterValidator } from './filter-validator'
+import { Statistics } from '../domain/statistics'
 
 export class FilterBuilder {
   private readonly filters: FilterList;
@@ -30,51 +31,54 @@ export class FilterBuilder {
     return this
   }
 
-  equal (value: string, since?: string): FilterBuilder {
+  equal (value: string, since?: string, statistics?: Statistics): FilterBuilder {
     this.addToList(
-      new FilterExpression(this.resourceName, Operators.Equal, value, since)
+      new FilterExpression(this.resourceName, Operators.Equal, value, since, statistics)
     )
     return this
   }
 
-  greaterThan (value: string, since?: string): FilterBuilder {
+  greaterThan (value: string, since?: string, statistics?: Statistics): FilterBuilder {
     this.addToList(
       new FilterExpression(
         this.resourceName,
         Operators.GreaterThan,
         value,
-        since
+        since,
+        statistics
       )
     )
     return this
   }
 
-  greaterThanOrEqualTo (value: string, since?: string): FilterBuilder {
+  greaterThanOrEqualTo (value: string, since?: string, statistics?: Statistics): FilterBuilder {
     this.addToList(
       new FilterExpression(
         this.resourceName,
         Operators.GreaterThanEqualTo,
         value,
-        since
+        since,
+        statistics
       )
     )
     return this
   }
 
-  lessThan (value: string, since?: string): FilterBuilder {
+  lessThan (value: string, since?: string, statistics?: Statistics): FilterBuilder {
     this.addToList(
-      new FilterExpression(this.resourceName, Operators.LessThan, value, since)
+      new FilterExpression(this.resourceName, Operators.LessThan, value, since, statistics)
     )
     return this
   }
 
-  lessThanOrEqualTo (value: string, since?: string): FilterBuilder {
+  lessThanOrEqualTo (value: string, since?: string, statistics?: Statistics): FilterBuilder {
     this.addToList(
       new FilterExpression(
         this.resourceName,
         Operators.LessThanEqualTo,
         value,
-        since
+        since,
+        statistics
       )
     )
     return this
@@ -98,7 +102,8 @@ export class FilterBuilder {
           filter.resource,
           (Operators as any)[filter.op],
           filter.value ?? null,
-          filter.since ?? null
+          filter.since ?? null,
+          (Statistics as any)[filter.statistics] ?? null
         )
       )
     }

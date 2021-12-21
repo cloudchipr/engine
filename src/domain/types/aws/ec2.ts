@@ -1,4 +1,5 @@
 import { ProviderResource } from '../provider-resource'
+import { Metric } from '../../metric'
 
 // Elastic Compute Cloud
 export class Ec2 extends ProviderResource {
@@ -6,9 +7,9 @@ export class Ec2 extends ProviderResource {
     readonly id: string,
     readonly imageId: string,
     readonly type: string,
-    readonly cpu: number,
-    readonly networkIn: number,
-    readonly networkOut: number,
+    readonly cpu: Metric,
+    readonly networkIn: Metric,
+    readonly networkOut: Metric,
     readonly age: string,
     readonly tenancy: string,
     readonly availabilityZone: string,
