@@ -21,7 +21,7 @@ export class FilterExpression implements FilterInterface {
     this.operator = operator
     this.value = value
     this.since = since
-    this.statistics = statistics
+    this.statistics = statistics ?? Statistics.Maximum
   }
 
   public build (builder: FilterBuilderInterface): object {
