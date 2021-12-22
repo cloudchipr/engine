@@ -107,7 +107,6 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       type: 'metrics',
       name: 'CPUUtilization',
       statistics: expression.statistics,
-      period: 86400,
       days: Number(expression.since),
       op: expression.operator,
       value: Number(expression.value)
@@ -119,7 +118,6 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       type: 'metrics',
       name: 'NetworkIn',
       statistics: expression.statistics,
-      period: 86400,
       days: Number(expression.since),
       op: expression.operator,
       value: Number(expression.value)
@@ -131,7 +129,6 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       type: 'metrics',
       name: 'NetworkOut',
       statistics: expression.statistics,
-      period: 86400,
       days: Number(expression.since),
       op: expression.operator,
       value: Number(expression.value)
