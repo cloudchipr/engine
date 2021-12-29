@@ -148,7 +148,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateEbsResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const ebsItems = responseJson.map(
+      const ebsItems = responseJson.success.map(
         (ebsResponseItemJson: {
                 VolumeId: string;
                 Size: number;
@@ -175,13 +175,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       )
 
       await this.awsPriceCalculator.putEbsPrices(ebsItems)
-      return new Response<Type>(ebsItems)
+      return new Response<Type>(ebsItems, responseJson.failure)
     }
 
     private async generateEc2Response (
       responseJson: any
     ): Promise<Response<Type>> {
-      const ec2Items = responseJson.map(
+      const ec2Items = responseJson.success.map(
         (ec2ResponseItemJson: {
                 InstanceId: string;
                 ImageId: string;
@@ -215,13 +215,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       )
 
       await this.awsPriceCalculator.putEc2Prices(ec2Items)
-      return new Response<Type>(ec2Items)
+      return new Response<Type>(ec2Items, responseJson.failure)
     }
 
     private async generateElbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const elbItems = responseJson
+      const elbItems = responseJson.success
         .map(
           (elbResponseItemJson: {
                     LoadBalancerName: string;
@@ -243,13 +243,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         )
 
       await this.awsPriceCalculator.putElbPrices(elbItems)
-      return new Response<Type>(elbItems)
+      return new Response<Type>(elbItems, responseJson.failure)
     }
 
     private async generateNlbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const nlbItems = responseJson
+      const nlbItems = responseJson.success
         .map(
           (elbResponseItemJson: {
                     LoadBalancerName: string;
@@ -271,13 +271,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         )
 
       await this.awsPriceCalculator.putElbPrices(nlbItems)
-      return new Response<Type>(nlbItems)
+      return new Response<Type>(nlbItems, responseJson.failure)
     }
 
     private async generateAlbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const albItems = responseJson
+      const albItems = responseJson.success
         .map(
           (elbResponseItemJson: {
                     LoadBalancerName: string;
@@ -299,13 +299,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         )
 
       await this.awsPriceCalculator.putElbPrices(albItems)
-      return new Response<Type>(albItems)
+      return new Response<Type>(albItems, responseJson.failure)
     }
 
     private async generateEipResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const eipItems = responseJson
+      const eipItems = responseJson.success
         .map(
           (eipResponseItemJson: {
                     PublicIp: string;
@@ -326,13 +326,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         )
 
       await this.awsPriceCalculator.putEipPrices(eipItems)
-      return new Response<Type>(eipItems)
+      return new Response<Type>(eipItems, responseJson.failure)
     }
 
     private async generateRdsResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const rdsItems = responseJson
+      const rdsItems = responseJson.success
         .map(
           (rdsResponseItemJson: {
                     DBInstanceIdentifier: string;
@@ -365,7 +365,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         )
 
       await this.awsPriceCalculator.putRdsPrices(rdsItems)
-      return new Response<Type>(rdsItems)
+      return new Response<Type>(rdsItems, responseJson.failure)
     }
 
     private getPolicy (policyName: string) {

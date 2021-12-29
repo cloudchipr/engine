@@ -4,6 +4,16 @@ import { v4 } from 'uuid'
 import { CustodianError } from './exceptions/custodian-error'
 import { ShellHelper } from './helpers/shell-helper'
 
+interface ResourceSuccessInterface {
+  [K: string]: any,
+  C8rAccount: string|undefined
+}
+
+interface ResourceFailureInterface {
+  region: any,
+  account: any
+}
+
 export class C7nExecutor {
     private readonly custodian: string;
     private readonly custodianOrg?: string;
@@ -38,9 +48,8 @@ export class C7nExecutor {
           regionOptions = regions.map(region => ' --region ' + region).join(' ')
         }
 
-        let result: {
-            C8rAccount: string|undefined
-        }[] = []
+        let successResult: ResourceSuccessInterface[] = []
+        let failureResult: ResourceFailureInterface[] = []
 
         let includeCurrentAccount = true
         // use multi account, but not for the case when the accounts is 1 and it is current one
@@ -81,47 +90,73 @@ export class C7nExecutor {
           await fs.promises.writeFile(`${accountsConfigFile}`, yaml.dump(accountsObject), 'utf8')
           const command = `${this.custodianOrg} run ${regionOptions} -c ${accountsConfigFile} -s ${dir}response-org  -u ${policyPath} --cache-period=0`
 
-          await ShellHelper.execAsync(command)
+          try {
+            await ShellHelper.execAsync(command)
+          } catch (e: any) {
+            if (await C7nExecutor.isFullFailure(dir)) {
+              throw new CustodianError(e.message, id)
+            }
+          }
         }
 
         if (includeCurrentAccount) {
           const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
 
-          await ShellHelper.execAsync(command)
+          try {
+            await ShellHelper.execAsync(command)
+          } catch (e: any) {
+            if (await C7nExecutor.isFullFailure(dir)) {
+              throw new CustodianError(e.message, id)
+            }
+          }
+          // await ShellHelper.execAsync(command)
           if (regions.length > 1) {
             for (const region of regions) {
-              result = result.concat(await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region)))
+              try {
+                successResult = successResult.concat(await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, undefined, region)))
+              } catch (e) {
+                failureResult.push({ account: currentAccount, region: region })
+              }
             }
           } else {
-            result = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
+            try {
+              successResult = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName))
+            } catch (e) {
+              failureResult.push({ account: currentAccount, region: regions[0] })
+            }
           }
 
-          result = result.map(data => {
+          successResult = successResult.map(data => {
             data.C8rAccount = currentAccount
             return data
           })
         }
 
         if (useMultiAccount) {
-          result = result.map(data => {
+          successResult = successResult.map(data => {
             data.C8rAccount = currentAccount + ' - Current'
             return data
           })
           accounts.forEach(account => {
             regions.forEach(async (region) => {
-              const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
-              result = result.concat(
-                tempData.flatMap(data => {
-                  data.C8rAccount = account
-                  return data
-                })
-              )
+              try {
+                const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
+                successResult = successResult.concat(
+                  tempData.flatMap(data => {
+                    data.C8rAccount = account
+                    return data
+                  })
+                )
+              } catch (e) {
+                failureResult.push({ account: account, region: region })
+              }
             })
           })
         }
-        return result
-      } catch (e: any) {
-        throw new CustodianError(e.message, id)
+        return {
+          success: successResult,
+          failure: [{ account: 'test1', region: 'region1' }, { account: 'test2', region: 'region2' }]
+        }
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
@@ -146,13 +181,27 @@ export class C7nExecutor {
             '/resources.json'
     }
 
-    private static async fetchResourceJson (filePath: string): Promise<{
-      C8rAccount: string|undefined
-    }[]> {
+    private static async fetchResourceJson (filePath: string): Promise<ResourceSuccessInterface[]> {
       try {
         return JSON.parse(await fs.promises.readFile(filePath, 'utf8'))
       } catch (e) {
         throw new Error(`${filePath} file does not exist.`)
       }
+    }
+
+    private static async isFullFailure (dir: string): Promise<boolean> {
+      let resourceDirectoryExists = true
+      let resourceOrgDirectoryExists = true
+      try {
+        await fs.promises.access(`${dir}response/`)
+      } catch (error) {
+        resourceDirectoryExists = false
+      }
+      try {
+        await fs.promises.access(`${dir}response-org/`)
+      } catch (error) {
+        resourceOrgDirectoryExists = false
+      }
+      return !(resourceDirectoryExists || resourceOrgDirectoryExists)
     }
 }
