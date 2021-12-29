@@ -137,8 +137,8 @@ export class C7nExecutor {
             data.C8rAccount = currentAccount + ' - Current'
             return data
           })
-          accounts.forEach(account => {
-            regions.forEach(async (region) => {
+          for (const account of accounts) {
+            for (const region of regions) {
               try {
                 const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
                 successResult = successResult.concat(
@@ -150,8 +150,8 @@ export class C7nExecutor {
               } catch (e) {
                 failureResult.push({ account: account, region: region })
               }
-            })
-          })
+            }
+          }
         }
         return {
           success: successResult,
@@ -183,7 +183,8 @@ export class C7nExecutor {
 
     private static async fetchResourceJson (filePath: string): Promise<ResourceSuccessInterface[]> {
       try {
-        return JSON.parse(await fs.promises.readFile(filePath, 'utf8'))
+        const data = await fs.promises.readFile(filePath, 'utf8')
+        return JSON.parse(data)
       } catch (e) {
         throw new Error(`${filePath} file does not exist.`)
       }
