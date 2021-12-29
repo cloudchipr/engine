@@ -155,7 +155,7 @@ export class C7nExecutor {
         }
         return {
           success: successResult,
-          failure: [{ account: 'test1', region: 'region1' }, { account: 'test2', region: 'region2' }]
+          failure: failureResult
         }
       } finally {
         // remove temp files and folders
