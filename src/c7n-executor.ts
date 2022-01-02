@@ -3,6 +3,7 @@ import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { CustodianError } from './exceptions/custodian-error'
 import { ShellHelper } from './helpers/shell-helper'
+import AWSConfiguration from './adapters/aws/aws-configuration'
 
 export class C7nExecutor {
     private readonly custodian: string;
@@ -19,7 +20,8 @@ export class C7nExecutor {
       regions: string[],
       currentAccount: string| undefined,
       accounts: string[],
-      isDebugMode: boolean
+      isDebugMode: boolean,
+      awsConfiguration?: AWSConfiguration
     ) {
       const id: string = `${policyName}-${v4()}`
       const dir: string = `./.c8r/run/c7n/${id}/`
@@ -85,8 +87,14 @@ export class C7nExecutor {
         }
 
         if (includeCurrentAccount) {
-          const command = `${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
+          let awsEnvConfigurationPart = ''
+          if (awsConfiguration !== undefined) {
+            awsEnvConfigurationPart = `AWS_ACCESS_KEY_ID="${awsConfiguration.accessKeyId}"` +
+            ` AWS_SECRET_ACCESS_KEY="${awsConfiguration.secretAccessKey}"` +
+            ` AWS_SESSION_TOKEN="${awsConfiguration.secretToken}"`
+          }
 
+          const command = `${awsEnvConfigurationPart} ${this.custodian} run ${regionOptions} --output-dir=${dir}response  ${policyPath} --cache-period=0`
           await ShellHelper.execAsync(command)
           if (regions.length > 1) {
             for (const region of regions) {

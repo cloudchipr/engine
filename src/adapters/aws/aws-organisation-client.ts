@@ -12,7 +12,7 @@ export default class AwsOrganisationClient {
       let result: any[] = []
       const client = new OrganizationsClient(
         {
-          region: 'eu-east-1',
+          region: 'us-east-1',
           credentials: this.credentialProvider
         }
       )
