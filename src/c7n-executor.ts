@@ -3,7 +3,7 @@ import yaml from 'js-yaml'
 import { v4 } from 'uuid'
 import { CustodianError } from './exceptions/custodian-error'
 import { ShellHelper } from './helpers/shell-helper'
-import AWSConfiguration from './adapters/aws/aws-configuration'
+import { AWSConfiguration } from './adapters/aws/aws-configuration'
 
 export class C7nExecutor {
     private readonly custodian: string;
