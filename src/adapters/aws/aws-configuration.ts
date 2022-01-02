@@ -1,6 +1,6 @@
 import { CredentialProvider } from '@aws-sdk/types'
 
-export default class AWSConfiguration {
+export class AWSConfiguration {
   constructor (
         readonly credentialProvider: CredentialProvider,
         readonly accessKeyId: string,

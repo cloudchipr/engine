@@ -19,7 +19,7 @@ import { Command } from '../../command'
 import { fromIni } from '@aws-sdk/credential-providers'
 import AwsOrganisationClient from './aws-organisation-client'
 import AwsAccountClient from './aws-account-client'
-import AWSConfiguration from './aws-configuration'
+import { AWSConfiguration } from './aws-configuration'
 
 interface TargetGroup {
     LoadBalancerArns: string[]
