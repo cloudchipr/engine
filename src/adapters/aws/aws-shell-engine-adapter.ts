@@ -19,6 +19,7 @@ import { Command } from '../../command'
 import { fromIni } from '@aws-sdk/credential-providers'
 import AwsOrganisationClient from './aws-organisation-client'
 import AwsAccountClient from './aws-account-client'
+import AWSConfiguration from './aws-configuration'
 
 interface TargetGroup {
     LoadBalancerArns: string[]
@@ -31,13 +32,16 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly awsPriceCalculator: AwsPriceCalculator;
     private readonly awsOrganisationClient: AwsOrganisationClient;
     private readonly awsAccountClient: AwsAccountClient;
+    private readonly awsConfiguration?: AWSConfiguration;
 
-    constructor (custodian: string, custodianOrg?: string) {
-      const credentialProvider = fromIni()
+    constructor (custodian: string, custodianOrg?: string, awsConfiguration?: AWSConfiguration) {
+      const credentialProvider = awsConfiguration?.credentialProvider ?? fromIni()
+
       this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
       this.awsPriceCalculator = new AwsPriceCalculator(credentialProvider)
       this.awsOrganisationClient = new AwsOrganisationClient(credentialProvider)
       this.awsAccountClient = new AwsAccountClient(credentialProvider)
+      this.awsConfiguration = awsConfiguration
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {
@@ -76,7 +80,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         request.parameter.regions,
         currentAccount,
         accounts,
-        request.isDebugMode
+        request.isDebugMode,
+        this.awsConfiguration
       )
     }
 
