@@ -29,4 +29,8 @@ export class FilterList implements FilterInterface {
   public build (builder: FilterBuilderInterface): object {
     return builder.buildFilter(this)
   }
+
+  public isEmpty (): boolean {
+    return this._andList.length === 0 && this._orList.length === 0
+  }
 }

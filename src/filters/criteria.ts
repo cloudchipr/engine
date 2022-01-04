@@ -20,4 +20,8 @@ export class Criteria implements FilterInterface {
   public build (builder: FilterBuilderInterface): object {
     return this.filters.build(builder)
   }
+
+  public isEmpty (): boolean {
+    return this.filters.isEmpty()
+  }
 }

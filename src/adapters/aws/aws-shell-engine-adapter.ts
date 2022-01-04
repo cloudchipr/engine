@@ -54,7 +54,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const [currentAccount, accounts] = await this.getCurrentAndPossibleAllAccounts(request.parameter.accounts)
 
       let policyName: string, policy: any
-      if (command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
+      if (!request.parameter.filter.isEmpty() && command === Command.COLLECT_COMMAND && (subCommand === AwsSubCommand.nlb().getValue() || subCommand === AwsSubCommand.alb().getValue())) {
         [policyName, policy] = await this.getElbPolicy(request, currentAccount, accounts)
       } else {
         [policyName, policy] = this.getDefaultPolicy(request)
