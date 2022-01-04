@@ -27,4 +27,8 @@ export class FilterExpression implements FilterInterface {
   public build (builder: FilterBuilderInterface): object {
     return builder.buildFilterExpression(this)
   }
+
+  isEmpty (): boolean {
+    return false
+  }
 }
