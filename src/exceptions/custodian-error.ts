@@ -1,3 +1,5 @@
+import moment from 'moment'
+
 export class CustodianError extends Error {
   private readonly id?: string
   private readonly executionDetails?: string
@@ -11,8 +13,8 @@ export class CustodianError extends Error {
     }
 
     this.id = id
-    this.executionDetails = id !== undefined ? `./tmp/c7r/${id}/` : ''
-    this.dateTime = (new Date()).toString()
+    this.executionDetails = id !== undefined ? `./.c8r/run/${id}/` : ''
+    this.dateTime = moment().format('dddd, MMMM Do YYYY, h:mm:ss A Z')
   }
 
   getId (): string | undefined {
