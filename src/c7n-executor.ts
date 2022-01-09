@@ -1,5 +1,6 @@
 import fs from 'fs'
 import yaml from 'js-yaml'
+import moment from 'moment'
 import { v4 } from 'uuid'
 import { CustodianError } from './exceptions/custodian-error'
 import { ShellHelper } from './helpers/shell-helper'
@@ -23,8 +24,8 @@ export class C7nExecutor {
       isDebugMode: boolean,
       awsConfiguration?: AWSConfiguration
     ) {
-      const id: string = `${policyName}-${v4()}`
-      const dir: string = `./.c8r/run/c7n/${id}/`
+      const id: string = `${moment().format('YYYY-MM-DD_HH:mm:ss')}_${v4()}`
+      const dir: string = `./.c8r/run/${id}/${policyName}/`
       try {
         try {
           await fs.promises.access(dir)
@@ -139,9 +140,8 @@ export class C7nExecutor {
     }
 
     private static async removeTempFoldersAndFiles (id: string) {
-      await fs.promises.rm(`./.c8r/run/c7n/${id}`, { recursive: true, force: true })
+      await fs.promises.rm(`./.c8r/run/${id}`, { recursive: true, force: true })
       try {
-        await fs.promises.rmdir('./.c8r/run/c7n')
         await fs.promises.rmdir('./.c8r/run')
       } catch (e) {}
     }
