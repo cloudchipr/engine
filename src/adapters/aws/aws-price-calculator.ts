@@ -358,7 +358,6 @@ export default class AwsPriceCalculator {
     for (const ec2Item of ec2Items) {
       const imageData = imageMap.get(ec2Item.imageId)
       if (imageData === undefined) {
-        console.error('Cannot get image details, from map')
         continue
       }
 
