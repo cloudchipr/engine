@@ -1,6 +1,4 @@
 import {
-  DescribeImagesCommand,
-  DescribeImagesCommandInput,
   DescribeSpotPriceHistoryCommand,
   DescribeSpotPriceHistoryCommandInput,
   DescribeSpotPriceHistoryCommandOutput,
@@ -13,19 +11,6 @@ export default class AwsEc2Client {
 
     constructor (credentialProvider: CredentialProvider) {
       this.credentialProvider = credentialProvider
-    }
-
-    // @todo make explicit response
-    async describeImages (imageIds: string[], region: string): Promise<any> {
-      try {
-        const command = new DescribeImagesCommand({
-          ImageIds: imageIds
-        } as DescribeImagesCommandInput)
-        return await this.getClient(region).send(command)
-        // process data.
-      } catch (error) {
-        console.log(error)
-      }
     }
 
     async getSpotInstancePrice (region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {

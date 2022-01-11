@@ -192,6 +192,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 ImageId: string;
                 InstanceType: string;
                 SpotInstanceRequestId: string|undefined;
+                PlatformDetails: string;
+                UsageOperation: string
                 Cpu: string;
                 NetworkIn: string;
                 NetworkOut: string;
@@ -212,6 +214,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.Placement.Tenancy,
             ec2ResponseItemJson.Placement.AvailabilityZone,
             ec2ResponseItemJson.SpotInstanceRequestId !== undefined,
+            ec2ResponseItemJson.PlatformDetails,
+            ec2ResponseItemJson.UsageOperation,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
             ec2ResponseItemJson.C8rRegion,
             ec2ResponseItemJson.C8rAccount

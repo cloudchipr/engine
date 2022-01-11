@@ -315,31 +315,6 @@ export default class AwsPriceCalculator {
       return
     }
 
-    const regionToInstancesMap = new Map<string, string[]>()
-    ec2Items.forEach(ec2 => {
-      const region = ec2.getRegion()
-      if (!regionToInstancesMap.has(region)) {
-        regionToInstancesMap.set(region, [])
-      }
-      regionToInstancesMap.get(region)?.push(ec2.imageId)
-    })
-
-    const imageMap = new Map<string, { PlatformDetails: string, Platform: string, UsageOperation: string} >()
-    const promises : Array<Promise<any>> = []
-    regionToInstancesMap.forEach((imageIds, region) => {
-      promises.push(this.ec2Client.describeImages(imageIds, region))
-    })
-
-    await Promise
-      .all(promises)
-      .then(result => {
-        result.forEach(imagesData => {
-          for (const imageData of imagesData.Images) {
-            imageMap.set(imageData.ImageId, imageData)
-          }
-        })
-      })
-
     const filters: {
         [region: string]: {
             [instanceType: string]: {
@@ -356,25 +331,20 @@ export default class AwsPriceCalculator {
       } = {}
 
     for (const ec2Item of ec2Items) {
-      const imageData = imageMap.get(ec2Item.imageId)
-      if (imageData === undefined) {
-        continue
-      }
-
-      const platform = AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get(imageData.PlatformDetails)
+      const platform = AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get(ec2Item.platformDetails)
       if (platform === undefined) {
-        throw new Error(`EC2 price calculation, cannot find platform of the instance: ${ec2Item.id} with platform details ${imageData.PlatformDetails}`)
+        throw new Error(`EC2 price calculation, cannot find platform of the instance: ${ec2Item.id} with platform details ${ec2Item.platformDetails}`)
       }
 
       if (ec2Item.isSpotInstance) {
-        const spotPrice = await this.ec2Client.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, imageData.PlatformDetails)
+        const spotPrice = await this.ec2Client.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, ec2Item.platformDetails)
         if (spotPrice !== undefined) {
           ec2Item.pricePerHour = parseFloat(spotPrice)
         }
         continue
       }
 
-      const usageOperation = imageData.UsageOperation
+      const usageOperation = ec2Item.usageOperation
       const tenancy = !ec2Item.tenancy || ec2Item.tenancy === 'default' ? 'Shared' : ec2Item.tenancy
       const region = ec2Item.getRegion()
 
