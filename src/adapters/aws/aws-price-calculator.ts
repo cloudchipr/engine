@@ -1,6 +1,6 @@
 import AwsPricingClient from './aws-pricing-client'
 import { Ec2 } from '../../domain/types/aws/ec2'
-import AwsEc2Client from './aws-ec2-client'
+import AwsEc2Client from './clients/aws-ec2-client'
 import { Eip } from '../../domain/types/aws/eip'
 import { Ebs } from '../../domain/types/aws/ebs'
 import { Rds } from '../../domain/types/aws/rds'
@@ -315,30 +315,38 @@ export default class AwsPriceCalculator {
       return
     }
 
+    // Start to describe images for price calculation, include only instances which does not have platform details
     const regionToInstancesMap = new Map<string, string[]>()
     ec2Items.forEach(ec2 => {
       const region = ec2.getRegion()
       if (!regionToInstancesMap.has(region)) {
         regionToInstancesMap.set(region, [])
       }
-      regionToInstancesMap.get(region)?.push(ec2.imageId)
+      if (!ec2.hasPlatformDetails()) {
+        regionToInstancesMap.get(region)?.push(ec2.imageId)
+      }
     })
 
-    const imageMap = new Map<string, { PlatformDetails: string, Platform: string, UsageOperation: string} >()
+    const imageMap = new Map<string, { PlatformDetails: string, UsageOperation: string} >()
     const promises : Array<Promise<any>> = []
     regionToInstancesMap.forEach((imageIds, region) => {
-      promises.push(this.ec2Client.describeImages(imageIds, region))
+      if (imageIds.length > 0) {
+        promises.push(this.ec2Client.describeImages(imageIds, region))
+      }
     })
 
-    await Promise
-      .all(promises)
-      .then(result => {
-        result.forEach(imagesData => {
-          for (const imageData of imagesData.Images) {
-            imageMap.set(imageData.ImageId, imageData)
-          }
+    console.log(promises.length)
+    if (promises.length > 0) {
+      await Promise
+        .all(promises)
+        .then(result => {
+          result.forEach(imagesData => {
+            for (const imageData of imagesData.Images) {
+              imageMap.set(imageData.ImageId, imageData)
+            }
+          })
         })
-      })
+    }
 
     const filters: {
         [region: string]: {
@@ -356,10 +364,9 @@ export default class AwsPriceCalculator {
       } = {}
 
     for (const ec2Item of ec2Items) {
-      const imageData = imageMap.get(ec2Item.imageId)
+      let imageData = imageMap.get(ec2Item.imageId)
       if (imageData === undefined) {
-        console.error('Cannot get image details, from map')
-        continue
+        imageData = { PlatformDetails: ec2Item.platformDetails ?? '', UsageOperation: ec2Item.usageOperation ?? '' }
       }
 
       const platform = AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get(imageData.PlatformDetails)

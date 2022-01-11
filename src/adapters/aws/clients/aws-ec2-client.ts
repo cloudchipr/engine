@@ -1,6 +1,8 @@
 import {
   DescribeImagesCommand,
   DescribeImagesCommandInput,
+  DescribeInstancesCommand,
+  DescribeInstancesCommandOutput,
   DescribeSpotPriceHistoryCommand,
   DescribeSpotPriceHistoryCommandInput,
   DescribeSpotPriceHistoryCommandOutput,
@@ -13,6 +15,18 @@ export default class AwsEc2Client {
 
     constructor (credentialProvider: CredentialProvider) {
       this.credentialProvider = credentialProvider
+    }
+
+    describeInstances (regions: string[]): Promise<DescribeInstancesCommandOutput>[] {
+      const promises = []
+      for (const region of regions) {
+        promises.push(
+          this.getClient(region)
+            .send(new DescribeInstancesCommand({ MaxResults: 1000 }))
+        )
+      }
+
+      return promises
     }
 
     // @todo make explicit response
