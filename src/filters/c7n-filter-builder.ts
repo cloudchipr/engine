@@ -6,11 +6,14 @@ import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
 import { Statistics } from '../domain/statistics'
+import { Command } from '../command';
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
+  private readonly command: Command
   private readonly subCommand: SubCommandInterface
 
-  constructor (subCommand: SubCommandInterface) {
+  constructor (command: Command, subCommand: SubCommandInterface) {
+    this.command = command
     this.subCommand = subCommand
   }
 
@@ -20,9 +23,11 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
 
   buildFilter (filterList: FilterList): object {
     const filterResponse: any = {}
-
     // Nasty Hack to get Statistics Object in case metrics are not provided for CPU, NetIn, NetOut and DatabaseConnections
-    this.pushDefaultMetricFilterExpressions(filterList)
+    // skip for clean commands
+    if (!this.command.isClean()) {
+      this.pushDefaultMetricFilterExpressions(filterList)
+    }
 
     for (const filter of filterList.andList) {
       if (!Object.prototype.hasOwnProperty.call(filterResponse, 'and')) {

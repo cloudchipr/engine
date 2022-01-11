@@ -58,7 +58,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         [policyName, policy] = await this.getElbPolicy(request, currentAccount, accounts)
       } else {
         [policyName, policy] = this.getDefaultPolicy(request)
-        const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.subCommand))
+        const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.command, request.subCommand))
 
         if (filters && Object.keys(filters).length) {
           if (typeof policy.policies[0].filters === 'undefined') {
