@@ -117,23 +117,17 @@ export class C7nExecutor {
             return data
           })
 
-          const fetchPromises: Promise<any>[] = []
-          accounts.forEach(account => {
-            regions.forEach((region) => {
-              fetchPromises.push(C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region)).then(
-                tempData => {
-                  result = result.concat(
-                    tempData.flatMap(data => {
-                      data.C8rAccount = account
-                      return data
-                    })
-                  )
-                }
-              ))
-            })
-          })
-
-          await Promise.all(fetchPromises)
+          for (const account of accounts) {
+            for (const region of regions) {
+              const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
+              result = result.concat(
+                tempData.flatMap(data => {
+                  data.C8rAccount = account
+                  return data
+                })
+              )
+            }
+          }
         }
 
         return result
