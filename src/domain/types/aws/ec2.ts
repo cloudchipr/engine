@@ -14,6 +14,8 @@ export class Ec2 extends ProviderResource {
     readonly tenancy: string,
     readonly availabilityZone: string,
     readonly isSpotInstance: boolean,
+    readonly platformDetails: string,
+    readonly usageOperation: string,
     readonly nameTag?: string,
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string
