@@ -116,18 +116,26 @@ export class C7nExecutor {
             data.C8rAccount = currentAccount + ' - Current'
             return data
           })
+
+          const fetchPromises: Promise<any>[] = []
           accounts.forEach(account => {
-            regions.forEach(async (region) => {
-              const tempData = await C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region))
-              result = result.concat(
-                tempData.flatMap(data => {
-                  data.C8rAccount = account
-                  return data
-                })
-              )
+            regions.forEach((region) => {
+              fetchPromises.push(C7nExecutor.fetchResourceJson(C7nExecutor.buildResourcePath(dir, policyName, account, region)).then(
+                tempData => {
+                  result = result.concat(
+                    tempData.flatMap(data => {
+                      data.C8rAccount = account
+                      return data
+                    })
+                  )
+                }
+              ))
             })
           })
+
+          await Promise.all(fetchPromises)
         }
+
         return result
       } catch (e: any) {
         throw new CustodianError(e.message, id)
