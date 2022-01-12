@@ -36,6 +36,10 @@ export class MetricsHelper {
   }
 
   private static getMetricType (object: any, key: string): Statistics {
+    if (object?.['c7n.metrics'] === undefined) {
+      return Statistics.Unspecified
+    }
+
     switch (true) {
       case (key + '.Average' in object?.['c7n.metrics']):
         return Statistics.Average
