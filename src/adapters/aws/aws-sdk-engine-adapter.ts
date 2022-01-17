@@ -1,22 +1,20 @@
-import { EngineInterface } from '../engine-interface'
-import { Ebs } from '../../domain/types/aws/ebs'
-import { EngineRequest } from '../../engine-request'
-import { Response } from '../../responses/response'
-import { Ec2 } from '../../domain/types/aws/ec2'
-import { Elb } from '../../domain/types/aws/elb'
-import { Eip } from '../../domain/types/aws/eip'
+import { fromIni } from '@aws-sdk/credential-providers'
 import { Alb } from '../../domain/types/aws/alb'
+import { Ebs } from '../../domain/types/aws/ebs'
+import { Ec2 } from '../../domain/types/aws/ec2'
+import { Eip } from '../../domain/types/aws/eip'
+import { Elb } from '../../domain/types/aws/elb'
 import { Nlb } from '../../domain/types/aws/nlb'
 import { Rds } from '../../domain/types/aws/rds'
-import { TagsHelper } from '../../helpers/tags-helper'
+import { EngineRequest } from '../../engine-request'
 import { MetricsHelper } from '../../helpers/metrics-helper'
-import AwsPriceCalculator from './aws-price-calculator'
-import { AwsSubCommand } from '../../aws-sub-command'
-import { Command } from '../../command'
-import { fromIni } from '@aws-sdk/credential-providers'
-import AwsOrganisationClient from './aws-organisation-client'
+import { TagsHelper } from '../../helpers/tags-helper'
+import { Response } from '../../responses/response'
+import { EngineInterface } from '../engine-interface'
 import AwsAccountClient from './aws-account-client'
 import { AWSConfiguration } from './aws-configuration'
+import AwsOrganisationClient from './aws-organisation-client'
+import AwsPriceCalculator from './aws-price-calculator'
 import AwsEc2Client from './clients/aws-ec2-client'
 
 interface TargetGroup {
@@ -53,15 +51,21 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
 
       const response = await Promise.all(this.awsEc2.describeInstances(request.parameter.regions))
 
-        // console.log(response.filter( (e) => e.Reservations.length ).map((r) => {
-        //     return r.Reservations.map((i) => { return this.generateEc2Response(i.Instances) })
-        // }))
-
-      return response.filter( (e) => e.Reservations.length ).map((r) => {
-          return r.Reservations.map((i) => {
-              return this.generateEc2Response(i.Instances)
-          })
-      })
+      const items = response.reduce((p: any, r: any) => {
+        if (Array.isArray(r.Reservations) && r.Reservations.length) {
+          const newInstances = r.Reservations.reduce((p1: any, c1: any) => {
+            if (Array.isArray(c1.Instances) && c1.Instances.length) {
+              return [...p1, ...c1.Instances]
+            } else {
+              return [...p1]
+            }
+          }, [])
+          return [...p, ...newInstances]
+        } else {
+          return [...p]
+        }
+      }, [])
+      return this.generateEc2Response(items)
     }
 
     private validateRequest (name: string) {
