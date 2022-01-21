@@ -1,7 +1,8 @@
 import { fromIni } from '@aws-sdk/credential-providers'
+import { CredentialProvider } from '@aws-sdk/types'
+import fs from 'fs'
+import { v4 } from 'uuid'
 import { Alb } from '../../domain/types/aws/alb'
-import { Ebs } from '../../domain/types/aws/ebs'
-import { Ec2 } from '../../domain/types/aws/ec2'
 import { Eip } from '../../domain/types/aws/eip'
 import { Elb } from '../../domain/types/aws/elb'
 import { Nlb } from '../../domain/types/aws/nlb'
@@ -11,153 +12,27 @@ import { MetricsHelper } from '../../helpers/metrics-helper'
 import { TagsHelper } from '../../helpers/tags-helper'
 import { Response } from '../../responses/response'
 import { EngineInterface } from '../engine-interface'
-import AwsAccountClient from './aws-account-client'
 import { AWSConfiguration } from './aws-configuration'
-import AwsOrganisationClient from './aws-organisation-client'
-import AwsPriceCalculator from './aws-price-calculator'
-import AwsEc2Client from './clients/aws-ec2-client'
-
-interface TargetGroup {
-    LoadBalancerArns: string[]
-    TargetHealthDescriptions: object[]
-    C8rRegion: string|undefined
-}
+import AwsClient from './clients/aws-client'
 
 export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
-    private readonly awsPriceCalculator: AwsPriceCalculator;
-    private readonly awsOrganisationClient: AwsOrganisationClient;
-    private readonly awsAccountClient: AwsAccountClient;
-    private readonly awsEc2: AwsEc2Client;
-    private readonly awsConfiguration?: AWSConfiguration;
+    private readonly credentials: CredentialProvider;
 
     constructor (awsConfiguration?: AWSConfiguration) {
-      const credentialProvider = awsConfiguration?.credentialProvider ?? fromIni()
-
-      this.awsPriceCalculator = new AwsPriceCalculator(credentialProvider)
-      this.awsOrganisationClient = new AwsOrganisationClient(credentialProvider)
-      this.awsAccountClient = new AwsAccountClient(credentialProvider)
-      this.awsEc2 = new AwsEc2Client(credentialProvider)
-      this.awsConfiguration = awsConfiguration
+      this.credentials = awsConfiguration?.credentialProvider ?? fromIni()
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {
-      const command = request.command.getValue()
       const subCommand = request.subCommand.getValue()
 
-      const generateResponseMethodName = AWSSDKEngineAdapter.getResponseMethodName(subCommand)
-      this.validateRequest(generateResponseMethodName)
+      const awsClient = new AwsClient(subCommand)
+      const response = await Promise.all(awsClient.getResources(this.credentials, request.parameter.regions))
 
-      const [currentAccount, accounts] = await this.getCurrentAndPossibleAllAccounts(request.parameter.accounts)
+      const dir: string = `./.c8r/subCommand_${v4()}.json`
+      await fs.promises.writeFile(dir, JSON.stringify(response), 'utf8')
 
-      const response = await Promise.all(this.awsEc2.describeInstances(request.parameter.regions))
-
-      const items = response.reduce((p: any, r: any) => {
-        if (Array.isArray(r.Reservations) && r.Reservations.length) {
-          const newInstances = r.Reservations.reduce((p1: any, c1: any) => {
-            if (Array.isArray(c1.Instances) && c1.Instances.length) {
-              return [...p1, ...c1.Instances]
-            } else {
-              return [...p1]
-            }
-          }, [])
-          return [...p, ...newInstances]
-        } else {
-          return [...p]
-        }
-      }, [])
-      return this.generateEc2Response(items)
-    }
-
-    private validateRequest (name: string) {
-      if (typeof (this as any)[name] !== 'function') {
-        throw Error('Invalid AWS subcommand provided: ' + name)
-      }
-    }
-
-    private static getResponseMethodName (subCommand: string): string {
-      return `generate${AWSSDKEngineAdapter.capitalizeFirstLetter(subCommand)}Response`
-    }
-
-    private static capitalizeFirstLetter (str: string): string {
-      return str.charAt(0).toUpperCase() + str.slice(1)
-    }
-
-    private async getCurrentAndPossibleAllAccounts (requestedAccounts: string[]): Promise<[string | undefined, string[]]> {
-      const currentAccount: string | undefined = await this.awsAccountClient.getCurrentAccount()
-      if (requestedAccounts.length > 0 && requestedAccounts.includes('all')) {
-        requestedAccounts = await this.awsOrganisationClient.getAllAccounts()
-      }
-      return [currentAccount, requestedAccounts]
-    }
-
-    private async generateEbsResponse (
-      responseJson: any
-    ): Promise<Response<Type>> {
-      const ebsItems = responseJson.map(
-        (ebsResponseItemJson: {
-                VolumeId: string;
-                Size: number;
-                State: string;
-                VolumeType: string;
-                CreateTime: string;
-                AvailabilityZone: string;
-                Tags: any[];
-                C8rRegion: string|undefined;
-                C8rAccount: string|undefined;
-            }) => {
-          return new Ebs(
-            ebsResponseItemJson.VolumeId,
-            ebsResponseItemJson.Size,
-            ebsResponseItemJson.State,
-            ebsResponseItemJson.VolumeType,
-            ebsResponseItemJson.AvailabilityZone,
-            ebsResponseItemJson.CreateTime,
-            TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
-            ebsResponseItemJson.C8rRegion,
-            ebsResponseItemJson.C8rAccount
-          )
-        }
-      )
-
-      await this.awsPriceCalculator.putEbsPrices(ebsItems)
-      return new Response<Type>(ebsItems)
-    }
-
-    private generateEc2Response (
-      responseJson: any
-    ): Response<Type> {
-      const ec2Items = responseJson.map(
-        (ec2ResponseItemJson: {
-                InstanceId: string;
-                InstanceType: string;
-                ImageId: string;
-                SpotInstanceRequestId: string|undefined;
-                Cpu: string;
-                NetworkIn: string;
-                NetworkOut: string;
-                LaunchTime: string;
-                Tags: any[];
-                Placement: { Tenancy: string, AvailabilityZone: string };
-                PlatformDetails: string;
-                UsageOperation: string
-            }) => {
-          return new Ec2(
-            ec2ResponseItemJson.InstanceId,
-            ec2ResponseItemJson.ImageId,
-            ec2ResponseItemJson.InstanceType,
-            ec2ResponseItemJson.LaunchTime,
-            ec2ResponseItemJson.Placement.Tenancy,
-            ec2ResponseItemJson.Placement.AvailabilityZone,
-            ec2ResponseItemJson.SpotInstanceRequestId !== undefined,
-            ec2ResponseItemJson.PlatformDetails,
-            ec2ResponseItemJson.UsageOperation,
-            TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
-          )
-        }
-      )
-
-      //await this.awsPriceCalculator.putEc2Prices(ec2Items)
-      return new Response<Type>(ec2Items)
+      const items = awsClient.formatResponse(response)
+      return awsClient.generateResponse<Type>(items)
     }
 
     private async generateElbResponse (
@@ -184,7 +59,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
           }
         )
 
-      await this.awsPriceCalculator.putElbPrices(elbItems)
+      // await this.awsPriceCalculator.putElbPrices(elbItems)
       return new Response<Type>(elbItems)
     }
 
@@ -212,7 +87,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
           }
         )
 
-      await this.awsPriceCalculator.putElbPrices(nlbItems)
+      // await this.awsPriceCalculator.putElbPrices(nlbItems)
       return new Response<Type>(nlbItems)
     }
 
@@ -240,7 +115,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
           }
         )
 
-      await this.awsPriceCalculator.putElbPrices(albItems)
+      // await this.awsPriceCalculator.putElbPrices(albItems)
       return new Response<Type>(albItems)
     }
 
@@ -267,7 +142,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
           }
         )
 
-      await this.awsPriceCalculator.putEipPrices(eipItems)
+      // await this.awsPriceCalculator.putEipPrices(eipItems)
       return new Response<Type>(eipItems)
     }
 
@@ -306,7 +181,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
           }
         )
 
-      await this.awsPriceCalculator.putRdsPrices(rdsItems)
+      // await this.awsPriceCalculator.putRdsPrices(rdsItems)
       return new Response<Type>(rdsItems)
     }
 }
