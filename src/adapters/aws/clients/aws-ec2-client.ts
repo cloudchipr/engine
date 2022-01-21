@@ -42,7 +42,7 @@ export default class AwsEc2Client {
             instance.SpotInstanceRequestId !== undefined,
             instance.PlatformDetails,
             instance.UsageOperation,
-            TagsHelper.getNameTagValue([])
+            TagsHelper.getNameTagValue(instance.Tags || [])
           ))
         })
       })
