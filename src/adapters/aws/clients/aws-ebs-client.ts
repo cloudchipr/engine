@@ -27,7 +27,7 @@ export default class AwsEbsClient {
           volume.VolumeType || '',
           volume.AvailabilityZone || '',
           volume.CreateTime?.toISOString() || '',
-          TagsHelper.getNameTagValue([])
+          TagsHelper.getNameTagValue(volume.Tags || [])
         ))
       })
     })

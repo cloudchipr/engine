@@ -1,5 +1,6 @@
 import {
-  DescribeAddressesCommand, DescribeAddressesCommandOutput,
+  DescribeAddressesCommand,
+  DescribeAddressesCommandOutput,
   DescribeInstancesCommand,
   DescribeInstancesCommandOutput,
   DescribeVolumesCommand,
@@ -7,9 +8,9 @@ import {
   EC2Client
 } from '@aws-sdk/client-ec2'
 import {
-  DescribeLoadBalancersCommand,
+  ElasticLoadBalancingClient,
   DescribeLoadBalancersCommandOutput,
-  ElasticLoadBalancingClient
+  DescribeLoadBalancersCommand
 } from '@aws-sdk/client-elastic-load-balancing'
 import {
   DescribeDBInstancesCommand,

@@ -18,6 +18,20 @@ export default class AwsElbClient {
   }
 
   formatResponse<Type> (response: DescribeLoadBalancersCommandOutput[]): Response<Type> {
-    return new Response<Type>([])
+    const data: any[] = []
+    response.forEach((res) => {
+      if (!Array.isArray(res.LoadBalancerDescriptions) || res.LoadBalancerDescriptions.length === 0) {
+        return
+      }
+      res.LoadBalancerDescriptions.forEach((lb) => {
+        data.push(new Elb(
+          lb.LoadBalancerName || '',
+          lb.DNSName || '',
+          lb.CreatedTime?.toISOString() || '',
+          TagsHelper.getNameTagValue([])
+        ))
+      })
+    })
+    return new Response<Type>(data)
   }
 }
