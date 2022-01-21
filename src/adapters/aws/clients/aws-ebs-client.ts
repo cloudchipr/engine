@@ -13,55 +13,24 @@ export default class AwsEbsClient {
     return new DescribeVolumesCommand({ MaxResults: 1000 })
   }
 
-  formatResponse (response: DescribeVolumesCommandOutput[]): any {
+  formatResponse<Type> (response: DescribeVolumesCommandOutput[]): Response<Type> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Volumes) || res.Volumes.length === 0) {
         return
       }
       res.Volumes.forEach((volume) => {
-        data.push({
-          VolumeId: volume.VolumeId,
-          Size: volume.Size,
-          State: volume.State,
-          VolumeType: volume.VolumeType,
-          AvailabilityZone: volume.AvailabilityZone,
-          CreateTime: volume.CreateTime,
-          Tags: []
-        })
+        data.push(new Ebs(
+          volume.VolumeId || '',
+          volume.Size || 0,
+          volume.State || '',
+          volume.VolumeType || '',
+          volume.AvailabilityZone || '',
+          volume.CreateTime?.toISOString() || '',
+          TagsHelper.getNameTagValue([])
+        ))
       })
     })
-    return data
-  }
-
-  async generateResponse<Type> (
-    responseJson: any
-  ): Promise<Response<Type>> {
-    const ebsItems = responseJson.map(
-      (ebsResponseItemJson: {
-        VolumeId: string;
-        Size: number;
-        State: string;
-        VolumeType: string;
-        CreateTime: string;
-        AvailabilityZone: string;
-        Tags: any[];
-        C8rRegion: string|undefined;
-        C8rAccount: string|undefined;
-      }) => {
-        return new Ebs(
-          ebsResponseItemJson.VolumeId,
-          ebsResponseItemJson.Size,
-          ebsResponseItemJson.State,
-          ebsResponseItemJson.VolumeType,
-          ebsResponseItemJson.AvailabilityZone,
-          ebsResponseItemJson.CreateTime,
-          TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
-          ebsResponseItemJson.C8rRegion,
-          ebsResponseItemJson.C8rAccount
-        )
-      }
-    )
-    return new Response<Type>(ebsItems)
+    return new Response<Type>(data)
   }
 }

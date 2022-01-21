@@ -1,11 +1,19 @@
 import { CredentialProvider } from '@aws-sdk/types'
 import { Response } from '../../../responses/response'
-import { AwsClientType, CommandOutputType } from '../interfaces'
+import {
+  AwsClientCommandOutputTypeType,
+  AwsClientCommandType,
+  AwsClientImplementationType,
+  AwsClientType
+} from '../interfaces'
 import AwsEbsClient from './aws-ebs-client'
 import AwsEc2Client from './aws-ec2-client'
+import AwsEipClient from './aws-eip-client'
+import AwsElbClient from './aws-elb-client'
+import AwsRdsClient from './aws-rds-client'
 
 export default class AwsClient {
-  private awsClientInstance: AwsClientType;
+  private awsClientInstance: AwsClientImplementationType;
 
   constructor (subcommand: string) {
     this.awsClientInstance = AwsClient.getAwsClient(subcommand)
@@ -14,28 +22,30 @@ export default class AwsClient {
   getResources (credentialProvider: CredentialProvider, regions: string[]): Promise<any>[] {
     const promises = []
     for (const region of regions) {
-      const client = this.awsClientInstance.getClient(credentialProvider, region)
-      const command = this.awsClientInstance.getCommand()
+      const client: AwsClientType = this.awsClientInstance.getClient(credentialProvider, region)
+      const command: AwsClientCommandType = this.awsClientInstance.getCommand()
       // @ts-ignore
       promises.push(client.send(command))
     }
     return promises
   }
 
-  formatResponse (response: CommandOutputType): any {
-    return this.awsClientInstance.formatResponse(response)
+  formatResponse<Type> (response: AwsClientCommandOutputTypeType): Response<Type> {
+    return this.awsClientInstance.formatResponse<Type>(response)
   }
 
-  generateResponse<Type> (responseJson: any): Promise<Response<Type>> {
-    return this.awsClientInstance.generateResponse<Type>(responseJson)
-  }
-
-  private static getAwsClient (subcommand: string): AwsClientType {
+  private static getAwsClient (subcommand: string): AwsClientImplementationType {
     switch (subcommand) {
       case 'ec2':
         return new AwsEc2Client()
       case 'ebs':
         return new AwsEbsClient()
+      case 'elb':
+        return new AwsElbClient()
+      case 'eip':
+        return new AwsEipClient()
+      case 'rds':
+        return new AwsRdsClient()
       default:
         throw new Error('Test Error')
     }

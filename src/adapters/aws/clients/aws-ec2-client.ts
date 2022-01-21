@@ -21,56 +21,33 @@ export default class AwsEc2Client {
     return new DescribeInstancesCommand({ MaxResults: 1000 })
   }
 
-  formatResponse (response: DescribeInstancesCommandOutput[]): any {
-    return response.reduce((p: any, r: any) => {
-      if (Array.isArray(r.Reservations) && r.Reservations.length) {
-        const newInstances = r.Reservations.reduce((p1: any, c1: any) => {
-          if (Array.isArray(c1.Instances) && c1.Instances.length) {
-            return [...p1, ...c1.Instances]
-          } else {
-            return [...p1]
-          }
-        }, [])
-        return [...p, ...newInstances]
-      } else {
-        return [...p]
+  formatResponse<Type> (response: DescribeInstancesCommandOutput[]): Response<Type> {
+    const data: any[] = []
+    response.forEach((res) => {
+      if (!Array.isArray(res.Reservations) || res.Reservations.length === 0) {
+        return
       }
-    }, [])
-  }
-
-  async generateResponse<Type> (
-    responseJson: any
-  ): Promise<Response<Type>> {
-    const ec2Items = responseJson.map(
-      (ec2ResponseItemJson: {
-        InstanceId: string;
-        InstanceType: string;
-        ImageId: string;
-        SpotInstanceRequestId: string|undefined;
-        Cpu: string;
-        NetworkIn: string;
-        NetworkOut: string;
-        LaunchTime: string;
-        Tags: any[];
-        Placement: { Tenancy: string, AvailabilityZone: string };
-        PlatformDetails: string;
-        UsageOperation: string
-      }) => {
-        return new Ec2(
-          ec2ResponseItemJson.InstanceId,
-          ec2ResponseItemJson.ImageId,
-          ec2ResponseItemJson.InstanceType,
-          ec2ResponseItemJson.LaunchTime,
-          ec2ResponseItemJson.Placement.Tenancy,
-          ec2ResponseItemJson.Placement.AvailabilityZone,
-          ec2ResponseItemJson.SpotInstanceRequestId !== undefined,
-          ec2ResponseItemJson.PlatformDetails,
-          ec2ResponseItemJson.UsageOperation,
-          TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags)
-        )
-      }
-    )
-    return new Response<Type>(ec2Items)
+      res.Reservations.forEach((reservation) => {
+        if (!Array.isArray(reservation.Instances) || reservation.Instances.length === 0) {
+          return
+        }
+        reservation.Instances.forEach((instance) => {
+          data.push(new Ec2(
+            instance.InstanceId || '',
+            instance.ImageId || '',
+            instance.InstanceType || '',
+            instance.LaunchTime?.toISOString() || '',
+            instance.Placement?.Tenancy || '',
+            instance.Placement?.AvailabilityZone || '',
+            instance.SpotInstanceRequestId !== undefined,
+            instance.PlatformDetails,
+            instance.UsageOperation,
+            TagsHelper.getNameTagValue([])
+          ))
+        })
+      })
+    })
+    return new Response<Type>(data)
   }
 
   // @todo make explicit response
