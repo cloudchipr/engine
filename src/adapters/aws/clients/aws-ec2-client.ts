@@ -11,14 +11,13 @@ import { CredentialProvider } from '@aws-sdk/types'
 import { Ec2 } from '../../../domain/types/aws/ec2'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
+import { AwsClientInterface } from './aws-client-interface'
 
-export default class AwsEc2Client {
-  getClient (credentials: CredentialProvider, region: string): EC2Client {
-    return new EC2Client({ credentials, region })
-  }
-
-  getCommand (): DescribeInstancesCommand {
-    return new DescribeInstancesCommand({ MaxResults: 1000 })
+export default class AwsEc2Client implements AwsClientInterface {
+  getCommands (credentialProvider: CredentialProvider, region: string): any[] {
+    const commands = []
+    commands.push(this.getClient(credentialProvider, region).send(this.getCommand()))
+    return commands
   }
 
   formatResponse<Type> (response: DescribeInstancesCommandOutput[]): Response<Type> {
@@ -78,5 +77,13 @@ export default class AwsEc2Client {
     } catch (error) {
       console.log(error)
     }
+  }
+
+  private getClient (credentials: CredentialProvider, region: string): EC2Client {
+    return new EC2Client({ credentials, region })
+  }
+
+  private getCommand (): DescribeInstancesCommand {
+    return new DescribeInstancesCommand({ MaxResults: 1000 })
   }
 }

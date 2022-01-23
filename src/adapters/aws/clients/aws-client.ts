@@ -1,11 +1,9 @@
 import { CredentialProvider } from '@aws-sdk/types'
 import { Response } from '../../../responses/response'
 import {
-  AwsClientCommandOutputTypeType,
-  AwsClientCommandType,
-  AwsClientImplementationType,
-  AwsClientType
+  AwsClientCommandOutputTypeType
 } from '../interfaces'
+import { AwsClientInterface } from './aws-client-interface'
 import AwsEbsClient from './aws-ebs-client'
 import AwsEc2Client from './aws-ec2-client'
 import AwsEipClient from './aws-eip-client'
@@ -13,19 +11,16 @@ import AwsElbClient from './aws-elb-client'
 import AwsRdsClient from './aws-rds-client'
 
 export default class AwsClient {
-  private awsClientInstance: AwsClientImplementationType;
+  private awsClientInstance: AwsClientInterface;
 
   constructor (subcommand: string) {
     this.awsClientInstance = AwsClient.getAwsClient(subcommand)
   }
 
   getResources (credentialProvider: CredentialProvider, regions: string[]): Promise<any>[] {
-    const promises = []
+    let promises: any[] = []
     for (const region of regions) {
-      const client: AwsClientType = this.awsClientInstance.getClient(credentialProvider, region)
-      const command: AwsClientCommandType = this.awsClientInstance.getCommand()
-      // @ts-ignore
-      promises.push(client.send(command))
+      promises = [...promises, ...this.awsClientInstance.getCommands(credentialProvider, region)]
     }
     return promises
   }
@@ -34,7 +29,7 @@ export default class AwsClient {
     return this.awsClientInstance.formatResponse<Type>(response)
   }
 
-  private static getAwsClient (subcommand: string): AwsClientImplementationType {
+  private static getAwsClient (subcommand: string): AwsClientInterface {
     switch (subcommand) {
       case 'ec2':
         return new AwsEc2Client()
@@ -47,7 +42,7 @@ export default class AwsClient {
       case 'rds':
         return new AwsRdsClient()
       default:
-        throw new Error('Test Error')
+        throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }
   }
 }

@@ -7,14 +7,13 @@ import { CredentialProvider } from '@aws-sdk/types'
 import { Eip } from '../../../domain/types/aws/eip'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
+import { AwsClientInterface } from './aws-client-interface'
 
-export default class AwsEipClient {
-  getClient (credentials: CredentialProvider, region: string): EC2Client {
-    return new EC2Client({ credentials, region })
-  }
-
-  getCommand (): DescribeAddressesCommand {
-    return new DescribeAddressesCommand({})
+export default class AwsEipClient implements AwsClientInterface {
+  getCommands (credentialProvider: CredentialProvider, region: string): any[] {
+    const commands = []
+    commands.push(this.getClient(credentialProvider, region).send(this.getCommand()))
+    return commands
   }
 
   formatResponse<Type> (response: DescribeAddressesCommandOutput[]): Response<Type> {
@@ -32,5 +31,13 @@ export default class AwsEipClient {
       })
     })
     return new Response<Type>(data)
+  }
+
+  private getClient (credentials: CredentialProvider, region: string): EC2Client {
+    return new EC2Client({ credentials, region })
+  }
+
+  private getCommand (): DescribeAddressesCommand {
+    return new DescribeAddressesCommand({})
   }
 }

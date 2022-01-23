@@ -3,14 +3,13 @@ import { CredentialProvider } from '@aws-sdk/types'
 import { Ebs } from '../../../domain/types/aws/ebs'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
+import { AwsClientInterface } from './aws-client-interface'
 
-export default class AwsEbsClient {
-  getClient (credentials: CredentialProvider, region: string): EC2Client {
-    return new EC2Client({ credentials, region })
-  }
-
-  getCommand (): DescribeVolumesCommand {
-    return new DescribeVolumesCommand({ MaxResults: 1000 })
+export default class AwsEbsClient implements AwsClientInterface {
+  getCommands (credentialProvider: CredentialProvider, region: string): any[] {
+    const commands = []
+    commands.push(this.getClient(credentialProvider, region).send(this.getCommand()))
+    return commands
   }
 
   formatResponse<Type> (response: DescribeVolumesCommandOutput[]): Response<Type> {
@@ -32,5 +31,13 @@ export default class AwsEbsClient {
       })
     })
     return new Response<Type>(data)
+  }
+
+  private getClient (credentials: CredentialProvider, region: string): EC2Client {
+    return new EC2Client({ credentials, region })
+  }
+
+  private getCommand (): DescribeVolumesCommand {
+    return new DescribeVolumesCommand({ MaxResults: 1000 })
   }
 }
