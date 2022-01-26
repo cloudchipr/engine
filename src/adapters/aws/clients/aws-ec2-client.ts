@@ -8,6 +8,8 @@ import {
   EC2Client
 } from '@aws-sdk/client-ec2'
 import { CredentialProvider } from '@aws-sdk/types'
+import { Metric } from '../../../domain/metric'
+import { Statistics } from '../../../domain/statistics'
 import { Ec2 } from '../../../domain/types/aws/ec2'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
@@ -35,6 +37,9 @@ export default class AwsEc2Client implements AwsClientInterface {
             instance.InstanceId || '',
             instance.ImageId || '',
             instance.InstanceType || '',
+            new Metric(0, Statistics.Average, 'test'),
+            new Metric(0, Statistics.Average, 'test'),
+            new Metric(0, Statistics.Average, 'test'),
             instance.LaunchTime?.toISOString() || '',
             instance.Placement?.Tenancy || '',
             instance.Placement?.AvailabilityZone || '',
