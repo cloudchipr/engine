@@ -1,6 +1,5 @@
 import AwsPricingClient from './aws-pricing-client'
 import { Ec2 } from '../../domain/types/aws/ec2'
-import AwsEc2Client from './aws-ec2-client'
 import { Eip } from '../../domain/types/aws/eip'
 import { Ebs } from '../../domain/types/aws/ebs'
 import { Rds } from '../../domain/types/aws/rds'
@@ -8,9 +7,11 @@ import { Alb } from '../../domain/types/aws/alb'
 import { Elb } from '../../domain/types/aws/elb'
 import { Nlb } from '../../domain/types/aws/nlb'
 import { CredentialProvider } from '@aws-sdk/types'
+import AwsEc2Client from './clients/aws-ec2-client'
 
 export default class AwsPriceCalculator {
   private readonly client: AwsPricingClient
+  private readonly credentialProvider: CredentialProvider
   private readonly ec2Client: AwsEc2Client
 
   private static EC2_PLATFORM_DETAILS_TO_PRICING_NAMES = new Map([
@@ -106,7 +107,8 @@ export default class AwsPriceCalculator {
 
   constructor (credentialProvider: CredentialProvider) {
     this.client = new AwsPricingClient(credentialProvider)
-    this.ec2Client = new AwsEc2Client(credentialProvider)
+    this.credentialProvider = credentialProvider
+    this.ec2Client = new AwsEc2Client()
   }
 
   async putElbPrices (elbItems: Elb[]): Promise<void> {
@@ -337,7 +339,7 @@ export default class AwsPriceCalculator {
       }
 
       if (ec2Item.isSpotInstance) {
-        const spotPrice = await this.ec2Client.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, ec2Item.platformDetails)
+        const spotPrice = await this.ec2Client.getSpotInstancePrice(this.credentialProvider, ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, ec2Item.platformDetails)
         if (spotPrice !== undefined) {
           ec2Item.pricePerHour = parseFloat(spotPrice)
         }

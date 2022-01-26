@@ -1,10 +1,9 @@
 import {
-  DescribeImagesCommand,
-  DescribeImagesCommandInput,
   DescribeInstancesCommand,
   DescribeInstancesCommandOutput,
   DescribeSpotPriceHistoryCommand,
-  DescribeSpotPriceHistoryCommandInput, DescribeSpotPriceHistoryCommandOutput,
+  DescribeSpotPriceHistoryCommandInput,
+  DescribeSpotPriceHistoryCommandOutput,
   EC2Client
 } from '@aws-sdk/client-ec2'
 import { CredentialProvider } from '@aws-sdk/types'
@@ -44,27 +43,14 @@ export default class AwsEc2Client implements AwsClientInterface {
             instance.Placement?.Tenancy || '',
             instance.Placement?.AvailabilityZone || '',
             instance.SpotInstanceRequestId !== undefined,
-            instance.PlatformDetails,
-            instance.UsageOperation,
+            instance.PlatformDetails || '',
+            instance.UsageOperation || '',
             TagsHelper.getNameTagValue(instance.Tags || [])
           ))
         })
       })
     })
     return new Response<Type>(data)
-  }
-
-  // @todo make explicit response
-  async describeImages (credentials: CredentialProvider, imageIds: string[], region: string): Promise<any> {
-    try {
-      const command = new DescribeImagesCommand({
-        ImageIds: imageIds
-      } as DescribeImagesCommandInput)
-      return await this.getClient(credentials, region).send(command)
-      // process data.
-    } catch (error) {
-      console.log(error)
-    }
   }
 
   async getSpotInstancePrice (credentials: CredentialProvider, region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {
