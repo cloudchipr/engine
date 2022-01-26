@@ -13,6 +13,10 @@ export class Command {
     return this.command
   }
 
+  isClean (): boolean {
+    return this.command === Command.CLEAN_COMMAND
+  }
+
   static collect (): Command {
     return new Command(this.COLLECT_COMMAND)
   }
