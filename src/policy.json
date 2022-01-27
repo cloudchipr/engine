@@ -77,6 +77,19 @@
       }
     ]
   },
+  "nlb-collect-all": {
+    "policies": [
+      {
+        "name": "nlb-collect-all",
+        "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "network"
+          }
+        ]
+      }
+    ]
+  },
   "nlb-collect-by-instance": {
     "policies": [
       {
@@ -129,29 +142,42 @@
       }
     ]
   },
+  "alb-collect-all": {
+    "policies": [
+      {
+        "name": "alb-collect-all",
+        "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "application"
+          }
+        ]
+      }
+    ]
+  },
   "alb-collect-by-instance": {
-  "policies": [
-    {
-      "name": "alb-collect-by-instance",
-      "resource": "app-elb",
-      "filters": [
-        {
-          "Type": "application"
-        },
-        {
-          "and": [
-            {
-              "type": "value",
-              "key": "LoadBalancerArn",
-              "op": "in",
-              "value": ""
-            }
-          ]
-        }
-      ]
-    }
-  ]
-},
+    "policies": [
+      {
+        "name": "alb-collect-by-instance",
+        "resource": "app-elb",
+        "filters": [
+          {
+            "Type": "application"
+          },
+          {
+            "and": [
+              {
+                "type": "value",
+                "key": "LoadBalancerArn",
+                "op": "in",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "alb-clean": {
     "policies": [
       {

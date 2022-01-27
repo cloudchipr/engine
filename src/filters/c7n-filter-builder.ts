@@ -6,7 +6,7 @@ import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
 import { Statistics } from '../domain/statistics'
-import { Command } from '../command';
+import { Command } from '../command'
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
   private readonly command: Command
