@@ -2,14 +2,12 @@ import {
   DescribeLoadBalancersCommand as V3Command,
   DescribeTagsCommand as V3TagsCommand,
   DescribeLoadBalancersCommandOutput as V3CommandOutput,
-  DescribeTagsCommandOutput as V3TagCommandOutput,
   ElasticLoadBalancingClient as V3Client
 } from '@aws-sdk/client-elastic-load-balancing'
 import {
   DescribeLoadBalancersCommand as V2Command,
   DescribeTagsCommand as V2TagsCommand,
   DescribeLoadBalancersCommandOutput as V2CommandOutput,
-  DescribeTagsCommandOutput as V2TagCommandOutput,
   ElasticLoadBalancingV2Client as V2Client
 } from '@aws-sdk/client-elastic-load-balancing-v2'
 import { Elb } from '../../../domain/types/aws/elb'
@@ -45,15 +43,15 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       // @ts-ignore
       elb.type === 'classic' ? loadBalancerName.push(elb.loadBalancerName) : loadBalancerArn.push(elb.loadBalancerArn)
     })
-    let nameTagV3
-    let nameTagV2
+    const promises: any[] = []
     if (loadBalancerName.length) {
-      nameTagV3 = await this.getV3Client().send(this.getV3TagsCommand(loadBalancerName))
+      promises.push(this.getV3Client().send(this.getV3TagsCommand(loadBalancerName)))
     }
     if (loadBalancerArn.length) {
-      nameTagV2 = await this.getV2Client().send(this.getV2TagsCommand(loadBalancerArn))
+      promises.push(this.getV2Client().send(this.getV2TagsCommand(loadBalancerArn)))
     }
-    const formattedTags = this.formatNameTagResponse(nameTagV3, nameTagV2)
+    const nameTagResponse = await Promise.all(promises)
+    const formattedTags = this.formatNameTagResponse(nameTagResponse)
     response.items.map((elb) => {
       // @ts-ignore
       elb.nameTag = TagsHelper.getNameTagValue(formattedTags[elb.getIdentifierForNameTag()] ?? [])
@@ -98,16 +96,17 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return data
   }
 
-  private formatNameTagResponse (responseV3?: V3TagCommandOutput, responseV2?: V2TagCommandOutput): any {
+  private formatNameTagResponse (nameTagResponse: any[]): any {
     const data: any = {}
-    responseV3?.TagDescriptions?.forEach((t) => {
-      if (t.LoadBalancerName) {
-        data[t.LoadBalancerName] = t.Tags
-      }
-    })
-    responseV2?.TagDescriptions?.forEach((t) => {
-      if (t.ResourceArn) {
-        data[t.ResourceArn] = t.Tags
+    nameTagResponse.forEach((tag) => {
+      if ('TagDescriptions' in tag && Array.isArray(tag.TagDescriptions)) {
+        tag.TagDescriptions.forEach((t: any) => {
+          if ('LoadBalancerName' in t && t.LoadBalancerName) {
+            data[t.LoadBalancerName] = t.Tags
+          } else if ('ResourceArn' in t && t.ResourceArn) {
+            data[t.ResourceArn] = t.Tags
+          }
+        })
       }
     })
     return data
