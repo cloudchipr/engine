@@ -1,16 +1,16 @@
 import { DescribeDBInstancesCommand, DescribeDBInstancesCommandOutput, RDSClient } from '@aws-sdk/client-rds'
-import { CredentialProvider } from '@aws-sdk/types'
 import { Metric } from '../../../domain/metric'
 import { Statistics } from '../../../domain/statistics'
 import { Rds } from '../../../domain/types/aws/rds'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
+import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 
-export default class AwsRdsClient implements AwsClientInterface {
-  getCommands (credentialProvider: CredentialProvider, region: string): any[] {
+export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
+  getCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getClient(credentialProvider, region).send(this.getCommand()))
+    commands.push(this.getClient(region).send(this.getCommand()))
     return commands
   }
 
@@ -38,8 +38,8 @@ export default class AwsRdsClient implements AwsClientInterface {
     return new Response<Type>(data)
   }
 
-  private getClient (credentials: CredentialProvider, region: string): RDSClient {
-    return new RDSClient({ credentials, region })
+  private getClient (region: string): RDSClient {
+    return new RDSClient({ credentials: this.credentialProvider, region })
   }
 
   private getCommand (): DescribeDBInstancesCommand {

@@ -5,13 +5,21 @@ export class Elb extends ProviderResource {
   constructor (
         readonly loadBalancerName: string,
         readonly dnsName: string,
+        readonly loadBalancerArn: string,
         readonly age?: string,
         readonly type?: string,
-        readonly nameTag?: string,
+        public nameTag?: string,
         readonly _c8rRegion?: string,
         readonly _c8rAccount?: string
   ) {
     super()
+  }
+
+  getIdentifierForNameTag (): string {
+    if (this.type === 'classic') {
+      return this.loadBalancerName
+    }
+    return this.loadBalancerArn
   }
 
   getRegion (): string {

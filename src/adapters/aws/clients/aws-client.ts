@@ -13,14 +13,14 @@ import AwsRdsClient from './aws-rds-client'
 export default class AwsClient {
   private awsClientInstance: AwsClientInterface;
 
-  constructor (subcommand: string) {
-    this.awsClientInstance = AwsClient.getAwsClient(subcommand)
+  constructor (subcommand: string, credentialProvider: CredentialProvider) {
+    this.awsClientInstance = AwsClient.getAwsClient(subcommand, credentialProvider)
   }
 
-  getResources (credentialProvider: CredentialProvider, regions: string[]): Promise<any>[] {
+  getResources (regions: string[]): Promise<any>[] {
     let promises: any[] = []
     for (const region of regions) {
-      promises = [...promises, ...this.awsClientInstance.getCommands(credentialProvider, region)]
+      promises = [...promises, ...this.awsClientInstance.getCommands(region)]
     }
     return promises
   }
@@ -29,18 +29,22 @@ export default class AwsClient {
     return this.awsClientInstance.formatResponse<Type>(response)
   }
 
-  private static getAwsClient (subcommand: string): AwsClientInterface {
+  async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+    return this.awsClientInstance.getAdditionalDataForFormattedResponse<Type>(response)
+  }
+
+  private static getAwsClient (subcommand: string, credentialProvider: CredentialProvider): AwsClientInterface {
     switch (subcommand) {
       case 'ec2':
-        return new AwsEc2Client()
+        return new AwsEc2Client(credentialProvider)
       case 'ebs':
-        return new AwsEbsClient()
+        return new AwsEbsClient(credentialProvider)
       case 'elb':
-        return new AwsElbClient()
+        return new AwsElbClient(credentialProvider)
       case 'eip':
-        return new AwsEipClient()
+        return new AwsEipClient(credentialProvider)
       case 'rds':
-        return new AwsRdsClient()
+        return new AwsRdsClient(credentialProvider)
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

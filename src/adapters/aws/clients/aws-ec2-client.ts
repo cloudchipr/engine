@@ -6,18 +6,18 @@ import {
   DescribeSpotPriceHistoryCommandOutput,
   EC2Client
 } from '@aws-sdk/client-ec2'
-import { CredentialProvider } from '@aws-sdk/types'
 import { Metric } from '../../../domain/metric'
 import { Statistics } from '../../../domain/statistics'
 import { Ec2 } from '../../../domain/types/aws/ec2'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
+import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 
-export default class AwsEc2Client implements AwsClientInterface {
-  getCommands (credentialProvider: CredentialProvider, region: string): any[] {
+export default class AwsEc2Client extends AwsBaseClient implements AwsClientInterface {
+  getCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getClient(credentialProvider, region).send(this.getCommand()))
+    commands.push(this.getClient(region).send(this.getCommand()))
     return commands
   }
 
@@ -53,7 +53,7 @@ export default class AwsEc2Client implements AwsClientInterface {
     return new Response<Type>(data)
   }
 
-  async getSpotInstancePrice (credentials: CredentialProvider, region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {
+  async getSpotInstancePrice (region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {
     try {
       const command = new DescribeSpotPriceHistoryCommand({
         AvailabilityZone: availabilityZone,
@@ -62,7 +62,7 @@ export default class AwsEc2Client implements AwsClientInterface {
         StartTime: new Date()
       } as DescribeSpotPriceHistoryCommandInput)
 
-      const result: DescribeSpotPriceHistoryCommandOutput = await this.getClient(credentials, region).send(command)
+      const result: DescribeSpotPriceHistoryCommandOutput = await this.getClient(region).send(command)
 
       return result.SpotPriceHistory === undefined ? undefined : result.SpotPriceHistory[0].SpotPrice
     } catch (error) {
@@ -70,8 +70,8 @@ export default class AwsEc2Client implements AwsClientInterface {
     }
   }
 
-  private getClient (credentials: CredentialProvider, region: string): EC2Client {
-    return new EC2Client({ credentials, region })
+  private getClient (region: string): EC2Client {
+    return new EC2Client({ credentials: this.credentialProvider, region })
   }
 
   private getCommand (): DescribeInstancesCommand {

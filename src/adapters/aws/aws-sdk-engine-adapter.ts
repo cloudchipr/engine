@@ -16,9 +16,9 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
     async execute (request: EngineRequest): Promise<Response<Type>> {
       const subCommand = request.subCommand.getValue()
 
-      const awsClient = new AwsClient(subCommand)
-      const response = await Promise.all(awsClient.getResources(this.credentials, request.parameter.regions))
+      const awsClient = new AwsClient(subCommand, this.credentials)
+      const response = await Promise.all(awsClient.getResources(request.parameter.regions))
 
-      return awsClient.formatResponse<Type>(response)
+      return awsClient.getAdditionalDataForFormattedResponse(awsClient.formatResponse<Type>(response))
     }
 }
