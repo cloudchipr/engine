@@ -38,23 +38,33 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
-    const loadBalancerName: string[] = []
-    const loadBalancerArn: string[] = []
-    response.items.forEach((elb) => {
-      // @ts-ignore
-      elb.type === 'classic' ? loadBalancerName.push(elb.loadBalancerName) : loadBalancerArn.push(elb.loadBalancerArn)
+    const loadBalancerName: any = {}
+    const loadBalancerArn: any = {}
+    // @ts-ignore
+    response.items.forEach((elb: Elb) => {
+      if (elb.type === 'classic') {
+        if (!(elb.getRegion() in loadBalancerName)) {
+          loadBalancerName[elb.getRegion()] = []
+        }
+        loadBalancerName[elb.getRegion()].push(elb.loadBalancerName)
+      } else {
+        if (!(elb.getRegion() in loadBalancerArn)) {
+          loadBalancerArn[elb.getRegion()] = []
+        }
+        loadBalancerArn[elb.getRegion()].push(elb.loadBalancerArn)
+      }
     })
     const promises: any[] = []
-    if (loadBalancerName.length) {
-      promises.push(this.getV3Client().send(this.getV3TagsCommand(loadBalancerName)))
-    }
-    if (loadBalancerArn.length) {
-      promises.push(this.getV2Client().send(this.getV2TagsCommand(loadBalancerArn)))
-    }
+    Object.keys(loadBalancerName).forEach((region) => {
+      promises.push(this.getV3Client(region).send(this.getV3TagsCommand(loadBalancerName[region])))
+    })
+    Object.keys(loadBalancerArn).forEach((region) => {
+      promises.push(this.getV2Client(region).send(this.getV2TagsCommand(loadBalancerArn[region])))
+    })
     const nameTagResponse = await Promise.all(promises)
     const formattedTags = this.formatNameTagResponse(nameTagResponse)
-    response.items.map((elb) => {
-      // @ts-ignore
+    // @ts-ignore
+    response.items.map((elb: Elb) => {
       elb.nameTag = TagsHelper.getNameTagValue(formattedTags[elb.getIdentifierForNameTag()] ?? [])
       return elb
     })
@@ -113,14 +123,12 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return data
   }
 
-  private getV3Client (region?: string): V3Client {
-    const config = region === undefined ? { credentials: this.credentialProvider } : { credentials: this.credentialProvider, region }
-    return new V3Client(config)
+  private getV3Client (region: string): V3Client {
+    return new V3Client({ credentials: this.credentialProvider, region })
   }
 
-  private getV2Client (region?: string): V2Client {
-    const config = region === undefined ? { credentials: this.credentialProvider } : { credentials: this.credentialProvider, region }
-    return new V2Client(config)
+  private getV2Client (region: string): V2Client {
+    return new V2Client({ credentials: this.credentialProvider, region })
   }
 
   private getV3Command (): V3Command {
