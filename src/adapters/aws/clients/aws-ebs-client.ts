@@ -12,7 +12,7 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     return commands
   }
 
-  formatResponse<Type> (response: DescribeVolumesCommandOutput[]): Response<Type> {
+  async formatResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Volumes) || res.Volumes.length === 0) {
@@ -30,6 +30,7 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
         ))
       })
     })
+    await this.awsPriceCalculator.putEbsPrices(data)
     return new Response<Type>(data)
   }
 

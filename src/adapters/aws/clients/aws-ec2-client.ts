@@ -1,9 +1,6 @@
 import {
   DescribeInstancesCommand,
   DescribeInstancesCommandOutput,
-  DescribeSpotPriceHistoryCommand,
-  DescribeSpotPriceHistoryCommandInput,
-  DescribeSpotPriceHistoryCommandOutput,
   EC2Client
 } from '@aws-sdk/client-ec2'
 import { Metric } from '../../../domain/metric'
@@ -21,7 +18,7 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     return commands
   }
 
-  formatResponse<Type> (response: DescribeInstancesCommandOutput[]): Response<Type> {
+  async formatResponse<Type> (response: DescribeInstancesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Reservations) || res.Reservations.length === 0) {
@@ -50,24 +47,8 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
         })
       })
     })
+    await this.awsPriceCalculator.putEc2Prices(data)
     return new Response<Type>(data)
-  }
-
-  async getSpotInstancePrice (region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {
-    try {
-      const command = new DescribeSpotPriceHistoryCommand({
-        AvailabilityZone: availabilityZone,
-        InstanceTypes: [instanceType],
-        ProductDescriptions: [productDescription],
-        StartTime: new Date()
-      } as DescribeSpotPriceHistoryCommandInput)
-
-      const result: DescribeSpotPriceHistoryCommandOutput = await this.getClient(region).send(command)
-
-      return result.SpotPriceHistory === undefined ? undefined : result.SpotPriceHistory[0].SpotPrice
-    } catch (error) {
-      console.log(error)
-    }
   }
 
   private getClient (region: string): EC2Client {

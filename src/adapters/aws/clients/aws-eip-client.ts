@@ -16,7 +16,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
     return commands
   }
 
-  formatResponse<Type> (response: DescribeAddressesCommandOutput[]): Response<Type> {
+  async formatResponse<Type> (response: DescribeAddressesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Addresses) || res.Addresses.length === 0) {
@@ -30,6 +30,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
         ))
       })
     })
+    await this.awsPriceCalculator.putEipPrices(data)
     return new Response<Type>(data)
   }
 

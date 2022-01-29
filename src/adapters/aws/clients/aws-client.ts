@@ -25,7 +25,7 @@ export default class AwsClient {
     return promises
   }
 
-  formatResponse<Type> (response: AwsClientCommandOutputTypeType): Response<Type> {
+  async formatResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>> {
     return this.awsClientInstance.formatResponse<Type>(response)
   }
 

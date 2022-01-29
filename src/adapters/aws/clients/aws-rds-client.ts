@@ -14,7 +14,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     return commands
   }
 
-  formatResponse<Type> (response: DescribeDBInstancesCommandOutput[]): Response<Type> {
+  async formatResponse<Type> (response: DescribeDBInstancesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.DBInstances) || res.DBInstances.length === 0) {
@@ -35,6 +35,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
         ))
       })
     })
+    await this.awsPriceCalculator.putRdsPrices(data)
     return new Response<Type>(data)
   }
 

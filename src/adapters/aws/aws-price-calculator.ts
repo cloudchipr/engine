@@ -7,11 +7,16 @@ import { Alb } from '../../domain/types/aws/alb'
 import { Elb } from '../../domain/types/aws/elb'
 import { Nlb } from '../../domain/types/aws/nlb'
 import { CredentialProvider } from '@aws-sdk/types'
-import AwsEc2Client from './clients/aws-ec2-client'
+import {
+  DescribeSpotPriceHistoryCommand,
+  DescribeSpotPriceHistoryCommandInput,
+  DescribeSpotPriceHistoryCommandOutput,
+  EC2Client
+} from '@aws-sdk/client-ec2'
 
 export default class AwsPriceCalculator {
   private readonly client: AwsPricingClient
-  private readonly ec2Client: AwsEc2Client
+  private readonly credentialProvider: CredentialProvider
 
   private static EC2_PLATFORM_DETAILS_TO_PRICING_NAMES = new Map([
     ['SUSE Linux', 'SUSE'],
@@ -106,7 +111,7 @@ export default class AwsPriceCalculator {
 
   constructor (credentialProvider: CredentialProvider) {
     this.client = new AwsPricingClient(credentialProvider)
-    this.ec2Client = new AwsEc2Client(credentialProvider)
+    this.credentialProvider = credentialProvider
   }
 
   async putElbPrices (elbItems: Elb[]): Promise<void> {
@@ -123,11 +128,11 @@ export default class AwsPriceCalculator {
 
     let loadBalancerFilterMethodName = 'getElbFilter'
 
-    if (elbItems[0] instanceof Alb) {
+    if (elbItems[0] instanceof Alb || elbItems[0].type === 'application') {
       loadBalancerFilterMethodName = 'getAlbFilter'
     }
 
-    if (elbItems[0] instanceof Nlb) {
+    if (elbItems[0] instanceof Nlb || elbItems[0].type === 'network') {
       loadBalancerFilterMethodName = 'getNlbFilter'
     }
 
@@ -337,7 +342,7 @@ export default class AwsPriceCalculator {
       }
 
       if (ec2Item.isSpotInstance) {
-        const spotPrice = await this.ec2Client.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, ec2Item.platformDetails)
+        const spotPrice = await this.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, ec2Item.platformDetails)
         if (spotPrice !== undefined) {
           ec2Item.pricePerHour = parseFloat(spotPrice)
         }
@@ -384,6 +389,24 @@ export default class AwsPriceCalculator {
           }
         }
       }
+    }
+  }
+
+  async getSpotInstancePrice (region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<string|undefined> {
+    try {
+      const command = new DescribeSpotPriceHistoryCommand({
+        AvailabilityZone: availabilityZone,
+        InstanceTypes: [instanceType],
+        ProductDescriptions: [productDescription],
+        StartTime: new Date()
+      } as DescribeSpotPriceHistoryCommandInput)
+
+      const ec2Client = new EC2Client({ credentials: this.credentialProvider, region })
+      const result: DescribeSpotPriceHistoryCommandOutput = await ec2Client.send(command)
+
+      return result.SpotPriceHistory === undefined ? undefined : result.SpotPriceHistory[0].SpotPrice
+    } catch (error) {
+      console.log(error)
     }
   }
 

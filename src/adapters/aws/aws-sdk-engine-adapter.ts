@@ -7,7 +7,7 @@ import { AWSConfiguration } from './aws-configuration'
 import AwsClient from './clients/aws-client'
 
 export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
-    private readonly credentials: CredentialProvider;
+    private readonly credentials: CredentialProvider
 
     constructor (awsConfiguration?: AWSConfiguration) {
       this.credentials = awsConfiguration?.credentialProvider ?? fromIni()
@@ -19,6 +19,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
       const awsClient = new AwsClient(subCommand, this.credentials)
       const response = await Promise.all(awsClient.getResources(request.parameter.regions))
 
-      return awsClient.getAdditionalDataForFormattedResponse(awsClient.formatResponse<Type>(response))
+      const formattedResponse = await awsClient.formatResponse<Type>(response)
+      return awsClient.getAdditionalDataForFormattedResponse(formattedResponse)
     }
 }

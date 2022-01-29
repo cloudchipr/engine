@@ -24,7 +24,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return commands
   }
 
-  formatResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Response<Type> {
+  async formatResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Promise<Response<Type>> {
     let data: any[] = []
     response.forEach((res) => {
       if (this.instanceOfV3CommandOutput(res)) {
@@ -33,6 +33,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         data = [...data, ...this.formatV2Response(res)]
       }
     })
+    await this.awsPriceCalculator.putElbPrices(data)
     return new Response<Type>(data)
   }
 
