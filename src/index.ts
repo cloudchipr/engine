@@ -8,6 +8,7 @@ export * from './filters/c7n-filter-builder'
 export * from './filter-interface'
 
 export * from './adapters/aws/aws-shell-engine-adapter'
+export * from './adapters/aws/aws-sdk-engine-adapter'
 export * from './adapters/aws/aws-configuration'
 export * from './adapters/engine-interface'
 

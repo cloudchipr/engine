@@ -248,7 +248,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             return new Elb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
+              '',
               elbResponseItemJson.CreatedTime,
+              'classic',
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
@@ -276,7 +278,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             return new Nlb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
+              '',
               elbResponseItemJson.CreatedTime,
+              'network',
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
@@ -304,7 +308,9 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             return new Alb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
+              '',
               elbResponseItemJson.CreatedTime,
+              'application',
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount

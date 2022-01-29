@@ -5,20 +5,29 @@ export class Elb extends ProviderResource {
   constructor (
         readonly loadBalancerName: string,
         readonly dnsName: string,
+        readonly loadBalancerArn: string,
         readonly age?: string,
-        readonly nameTag?: string,
+        readonly type?: string,
+        public nameTag?: string,
         readonly _c8rRegion?: string,
         readonly _c8rAccount?: string
   ) {
     super()
   }
 
-  getRegion (): string {
-    const matches = this.dnsName.match(this.REGION_FETCH_REGEXP)
-    if (matches == null || matches[1] === undefined) {
-      console.log(matches)
-      throw new Error('Cannot fetch region from load balancers')
+  getIdentifierForNameTag (): string {
+    if (this.type === 'classic') {
+      return this.loadBalancerName
     }
-    return matches[1]
+    return this.loadBalancerArn
+  }
+
+  getRegion (): string {
+    const dnsAsArray = this.dnsName.split('.')
+    if (dnsAsArray.length < 2) {
+      throw new Error(`Cannot fetch region from load balancers ${this.dnsName}`)
+    }
+    const mergeResult = `${dnsAsArray[1]}.${dnsAsArray[2]}`
+    return mergeResult.replace('elb.', '').replace('.elb', '')
   }
 }

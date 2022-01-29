@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.0.62",
+  "version": "0.0.63",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -24,8 +24,11 @@
   "homepage": "https://github.com/cloudchipr/cloudchipr-engine#readme",
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.39.0",
+    "@aws-sdk/client-elastic-load-balancing": "^3.47.1",
+    "@aws-sdk/client-elastic-load-balancing-v2": "^3.47.1",
     "@aws-sdk/client-organizations": "^3.42.0",
     "@aws-sdk/client-pricing": "^3.39.0",
+    "@aws-sdk/client-rds": "^3.47.1",
     "@aws-sdk/credential-providers": "^3.41.0",
     "fs": "0.0.1-security",
     "js-yaml": "^4.1.0",
