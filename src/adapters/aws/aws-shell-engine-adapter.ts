@@ -100,14 +100,19 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       const targetGroups = <Array<TargetGroup>><unknown> await this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
 
-      const usedElb = new Set<string>()
+      const allElbPolicyName = request.subCommand.getValue() + '-collect-all'
+      const allElbPolicy: any = this.getPolicy(allElbPolicyName)
+
+      const allElb = <Array<{ LoadBalancerArn: string }>><unknown> await this.executeC7nPolicy(allElbPolicy, allElbPolicyName, request, currentAccount, accounts)
       const potentialGarbageELB = new Set<string>()
+
+      allElb.forEach(elb => {
+        potentialGarbageELB.add(elb.LoadBalancerArn)
+      })
+
       targetGroups.forEach(targetGroup => {
         targetGroup.LoadBalancerArns.forEach((elbArn: string) => {
-          if (targetGroup.TargetHealthDescriptions.length === 0 && !usedElb.has(elbArn)) {
-            potentialGarbageELB.add(elbArn)
-          } else {
-            usedElb.add(elbArn)
+          if (targetGroup.TargetHealthDescriptions.length !== 0) {
             potentialGarbageELB.delete(elbArn)
           }
         })
