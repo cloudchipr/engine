@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.0.64",
+  "version": "0.0.65",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/cloudchipr/cloudchipr-engine#readme",
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.49.0",
     "@aws-sdk/client-ec2": "^3.39.0",
     "@aws-sdk/client-elastic-load-balancing": "^3.47.1",
     "@aws-sdk/client-elastic-load-balancing-v2": "^3.47.1",
