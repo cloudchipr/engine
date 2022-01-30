@@ -221,6 +221,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.SpotInstanceRequestId !== undefined,
             ec2ResponseItemJson.PlatformDetails,
             ec2ResponseItemJson.UsageOperation,
+            undefined,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
             ec2ResponseItemJson.C8rRegion,
             ec2ResponseItemJson.C8rAccount
