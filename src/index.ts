@@ -20,6 +20,9 @@ export * from './domain/types/aws/alb'
 export * from './domain/types/aws/eip'
 export * from './domain/types/aws/rds'
 export * from './domain/types/provider-resource'
+export * from './domain/aws-ec2-metric'
+export * from './domain/aws-rds-metric'
+export * from './domain/aws-metric-details'
 
 export * from './responses/response'
 
