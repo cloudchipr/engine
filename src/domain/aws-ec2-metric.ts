@@ -1,6 +1,6 @@
 import { AwsMetricDetails } from './aws-metric-details'
 
-export class AwsMetric {
+export class AwsEc2Metric {
   constructor (
     public cpu: AwsMetricDetails[] = [],
     public networkIn: AwsMetricDetails[] = [],
@@ -16,7 +16,7 @@ export class AwsMetric {
       case 'NetworkOut':
         return 'networkOut'
       default:
-        throw new Error(`Invalid property name for AwsMetric was provided [${prop}]`)
+        throw new Error(`Invalid property name for AwsEc2Metric was provided [${prop}]`)
     }
   }
 }

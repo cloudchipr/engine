@@ -378,6 +378,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.MultiAZ,
               rdsResponseItemJson.InstanceCreateTime,
               rdsResponseItemJson.AvailabilityZone,
+              undefined,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),
               rdsResponseItemJson.C8rRegion,
               rdsResponseItemJson.C8rAccount

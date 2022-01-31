@@ -6,6 +6,14 @@ import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
+import {
+  CloudWatchClient,
+  GetMetricStatisticsCommand,
+  GetMetricStatisticsCommandOutput
+} from '@aws-sdk/client-cloudwatch'
+import moment from 'moment'
+import { AwsMetricDetails } from '../../../domain/aws-metric-details'
+import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
 
 export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
   getCommands (region: string): any[] {
@@ -31,6 +39,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
           db.MultiAZ || false,
           db.InstanceCreateTime?.toISOString() || '',
           db.AvailabilityZone || '',
+          undefined,
           TagsHelper.getNameTagValue(db.TagList || [])
         ))
       })
@@ -39,11 +48,69 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     return new Response<Type>(data)
   }
 
+  async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+    const promises: any[] = []
+    // @ts-ignore
+    response.items.forEach((rds: Rds) => {
+      promises.push(rds.id)
+      promises.push(this.getCloudWatchClient(rds.getRegion()).send(this.getMetricStatisticsCommand(rds.id, 'DatabaseConnections', 'Percent')))
+    })
+    const metricsResponse = await Promise.all(promises)
+    const formattedMetrics = this.formatMetricsResponse(metricsResponse)
+    // @ts-ignore
+    response.items.map((rds: Rds) => {
+      rds.metrics = formattedMetrics[rds.id]
+      return rds
+    })
+    return response
+  }
+
+  private formatMetricsResponse (metricsResponse: any[]): any {
+    const data: any = {}
+    let instanceIdentifier: string
+    metricsResponse.forEach((metric: GetMetricStatisticsCommandOutput | string) => {
+      if (typeof metric === 'string') {
+        instanceIdentifier = metric
+        data[instanceIdentifier] = new AwsRdsMetric()
+        return
+      }
+      if (metric.Label) {
+        data[instanceIdentifier][AwsRdsMetric.getPropertyNameFromString(metric.Label)] = metric.Datapoints?.map((datapoint) => {
+          return new AwsMetricDetails(
+            datapoint.Timestamp,
+            datapoint.Unit,
+            datapoint.Average,
+            datapoint.Minimum,
+            datapoint.Maximum
+          )
+        })
+      }
+    })
+    return data
+  }
+
   private getClient (region: string): RDSClient {
     return new RDSClient({ credentials: this.credentialProvider, region })
   }
 
+  private getCloudWatchClient (region: string): CloudWatchClient {
+    return new CloudWatchClient({ credentials: this.credentialProvider, region })
+  }
+
   private getCommand (): DescribeDBInstancesCommand {
     return new DescribeDBInstancesCommand({ MaxRecords: 100 })
+  }
+
+  private getMetricStatisticsCommand (instanceIdentifier: string, metricName: string, unit: string): GetMetricStatisticsCommand {
+    return new GetMetricStatisticsCommand({
+      Period: 86400,
+      StartTime: moment().subtract(30, 'days').toDate(),
+      EndTime: moment().toDate(),
+      Dimensions: [{ Name: 'DBInstanceIdentifier', Value: instanceIdentifier }],
+      MetricName: metricName,
+      Namespace: 'AWS/RDS',
+      Statistics: ['Maximum', 'Minimum', 'Average'],
+      Unit: unit
+    })
   }
 }

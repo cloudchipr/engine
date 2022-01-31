@@ -1,6 +1,6 @@
 import { ProviderResource } from '../provider-resource'
 import { Metric } from '../../metric'
-import { AwsMetric } from '../../aws-metric'
+import { AwsEc2Metric } from '../../aws-ec2-metric'
 
 // Elastic Compute Cloud
 export class Ec2 extends ProviderResource {
@@ -17,7 +17,7 @@ export class Ec2 extends ProviderResource {
     readonly isSpotInstance: boolean,
     readonly platformDetails: string,
     readonly usageOperation: string,
-    public metrics?: AwsMetric,
+    public metrics?: AwsEc2Metric,
     readonly nameTag?: string,
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string

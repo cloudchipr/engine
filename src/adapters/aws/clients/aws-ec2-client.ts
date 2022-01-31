@@ -16,16 +16,10 @@ import {
   GetMetricStatisticsCommandOutput
 } from '@aws-sdk/client-cloudwatch'
 import moment from 'moment'
-import { AwsMetric } from '../../../domain/aws-metric'
+import { AwsEc2Metric } from '../../../domain/aws-ec2-metric'
 import { AwsMetricDetails } from '../../../domain/aws-metric-details'
 
 export default class AwsEc2Client extends AwsBaseClient implements AwsClientInterface {
-  private readonly METRIC_NAMES = {
-    cpuUtilization: 'CpuUtilization', // Percent
-    networkIn: 'NetworkIn', // Bytes
-    networkOut: 'NetworkOut' // Bytes
-  }
-
   getCommands (region: string): any[] {
     const commands = []
     commands.push(this.getClient(region).send(this.getCommand()))
@@ -91,11 +85,11 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     metricsResponse.forEach((metric: GetMetricStatisticsCommandOutput | string) => {
       if (typeof metric === 'string') {
         instanceId = metric
-        data[instanceId] = new AwsMetric()
+        data[instanceId] = new AwsEc2Metric()
         return
       }
       if (metric.Label) {
-        data[instanceId][AwsMetric.getPropertyNameFromString(metric.Label)] = metric.Datapoints?.map((datapoint) => {
+        data[instanceId][AwsEc2Metric.getPropertyNameFromString(metric.Label)] = metric.Datapoints?.map((datapoint) => {
           return new AwsMetricDetails(
             datapoint.Timestamp,
             datapoint.Unit,
