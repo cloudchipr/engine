@@ -89,15 +89,17 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
         return
       }
       if (metric.Label) {
-        data[instanceId][AwsEc2Metric.getPropertyNameFromString(metric.Label)] = metric.Datapoints?.map((datapoint) => {
-          return new AwsMetricDetails(
-            datapoint.Timestamp,
-            datapoint.Unit,
-            datapoint.Average,
-            datapoint.Minimum,
-            datapoint.Maximum
-          )
-        })
+        data[instanceId][AwsEc2Metric.getPropertyNameFromString(metric.Label)] = metric.Datapoints
+          ?.sort((a: any, b: any) => b.Timestamp - a.Timestamp)
+          ?.map((datapoint) => {
+            return new AwsMetricDetails(
+              datapoint.Timestamp,
+              datapoint.Unit,
+              datapoint.Average,
+              datapoint.Minimum,
+              datapoint.Maximum
+            )
+          })
       }
     })
     return data
