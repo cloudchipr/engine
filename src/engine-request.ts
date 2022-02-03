@@ -7,7 +7,8 @@ export class EngineRequest {
     private readonly _command: Command,
     private readonly _subCommand: SubCommandInterface,
     private readonly _parameter: Parameter,
-    private readonly _isDebugMode: boolean
+    private readonly _isDebugMode: boolean,
+    private readonly _outputDirectory: string = './'
   ) {}
 
   get command (): Command {
@@ -24,5 +25,9 @@ export class EngineRequest {
 
   get isDebugMode (): boolean {
     return this._isDebugMode
+  }
+
+  get outputDirectory (): string {
+    return this._outputDirectory
   }
 }

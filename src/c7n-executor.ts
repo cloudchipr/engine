@@ -1,7 +1,5 @@
 import fs from 'fs'
 import yaml from 'js-yaml'
-import moment from 'moment'
-import { v4 } from 'uuid'
 import { CustodianError } from './exceptions/custodian-error'
 import { ShellHelper } from './helpers/shell-helper'
 import { AWSConfiguration } from './adapters/aws/aws-configuration'
@@ -22,10 +20,10 @@ export class C7nExecutor {
       currentAccount: string| undefined,
       accounts: string[],
       isDebugMode: boolean,
+      outputDirectory: string,
       awsConfiguration?: AWSConfiguration
     ) {
-      const id: string = `${moment().format('YYYY-MM-DD_HH:mm:ss')}_${v4()}`
-      const dir: string = `./.c8r/run/${id}/${policyName}/`
+      const dir: string = `${outputDirectory}/${policyName}/`
       try {
         try {
           await fs.promises.access(dir)
@@ -132,20 +130,25 @@ export class C7nExecutor {
 
         return result
       } catch (e: any) {
-        throw new CustodianError(e.message, id)
+        throw new CustodianError(e.message, outputDirectory)
       } finally {
         // remove temp files and folders
         if (!isDebugMode) {
-          await C7nExecutor.removeTempFoldersAndFiles(id)
+          await C7nExecutor.removeTempFoldersAndFiles(outputDirectory, policyName)
         }
       }
     }
 
-    private static async removeTempFoldersAndFiles (id: string) {
-      await fs.promises.rm(`./.c8r/run/${id}`, { recursive: true, force: true })
-      try {
-        await fs.promises.rmdir('./.c8r/run')
-      } catch (e) {}
+    private static async removeTempFoldersAndFiles (outputDirectory: string, policyName: string) {
+      await fs.promises.rm(`${outputDirectory}/${policyName}`, { recursive: true, force: true })
+      while (outputDirectory) {
+        try {
+          await fs.promises.rmdir(outputDirectory)
+        } catch (e) {
+          break
+        }
+        outputDirectory = outputDirectory.substring(0, outputDirectory.lastIndexOf('/'))
+      }
     }
 
     private static buildResourcePath (dir: string, policyName: string, account?: string, region?: string) {
