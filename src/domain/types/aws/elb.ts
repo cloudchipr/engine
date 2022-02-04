@@ -8,7 +8,7 @@ export class Elb extends ProviderResource {
     readonly loadBalancerArn: string,
     readonly age?: string,
     readonly type?: string,
-    public hasAttachment?: boolean,
+    public hasAttachments?: boolean,
     public nameTag?: string,
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string
