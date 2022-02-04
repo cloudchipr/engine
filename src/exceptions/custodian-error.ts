@@ -1,28 +1,22 @@
 import moment from 'moment'
 
 export class CustodianError extends Error {
-  private readonly id?: string
-  private readonly executionDetails?: string
+  private readonly outputDirectory?: string
   private readonly dateTime: string
 
-  constructor (message?: string, id?: string) {
+  constructor (message?: string, outputDirectory?: string) {
     super(message)
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, CustodianError)
     }
 
-    this.id = id
-    this.executionDetails = id !== undefined ? `./.c8r/run/${id}/` : ''
+    this.outputDirectory = outputDirectory
     this.dateTime = moment().format('dddd, MMMM Do YYYY, h:mm:ss A Z')
   }
 
-  getId (): string | undefined {
-    return this.id
-  }
-
-  getExecutionDetails (): string | undefined {
-    return this.executionDetails
+  getOutputDirectory (): string | undefined {
+    return this.outputDirectory
   }
 
   getDateTime (): string {
