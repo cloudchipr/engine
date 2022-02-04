@@ -97,7 +97,8 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
               datapoint.Unit,
               datapoint.Average,
               datapoint.Minimum,
-              datapoint.Maximum
+              datapoint.Maximum,
+              datapoint.Sum
             )
           })
       }
@@ -118,6 +119,7 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
   }
 
   private getMetricStatisticsCommand (instanceId: string, metricName: string, unit: string): GetMetricStatisticsCommand {
+    console.log(88888)
     return new GetMetricStatisticsCommand({
       Period: 86400,
       StartTime: moment().subtract(30, 'days').toDate(),
@@ -125,7 +127,7 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
       Dimensions: [{ Name: 'InstanceId', Value: instanceId }],
       MetricName: metricName,
       Namespace: 'AWS/EC2',
-      Statistics: ['Maximum', 'Minimum', 'Average'],
+      Statistics: ['Maximum', 'Minimum', 'Average', 'Sum'],
       Unit: unit
     })
   }
