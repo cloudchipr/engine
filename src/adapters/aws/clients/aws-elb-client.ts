@@ -7,6 +7,7 @@ import {
 import {
   DescribeLoadBalancersCommand as V2Command,
   DescribeTagsCommand as V2TagsCommand,
+  DescribeTargetGroupsCommand as V2TargetGroupsCommand,
   DescribeLoadBalancersCommandOutput as V2CommandOutput,
   ElasticLoadBalancingV2Client as V2Client
 } from '@aws-sdk/client-elastic-load-balancing-v2'
@@ -55,17 +56,27 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       }
     })
     const promises: any[] = []
+    // Get tags for network and application LBs
     Object.keys(loadBalancerName).forEach((region) => {
       promises.push(this.getV3Client(region).send(this.getV3TagsCommand(loadBalancerName[region])))
     })
     Object.keys(loadBalancerArn).forEach((region) => {
       promises.push(this.getV2Client(region).send(this.getV2TagsCommand(loadBalancerArn[region])))
     })
-    const nameTagResponse = await Promise.all(promises)
-    const formattedTags = this.formatNameTagResponse(nameTagResponse)
+    // Get target groups for network and application LBs
+    Object.keys(loadBalancerArn).forEach((region) => {
+      promises.push(this.getV2Client(region).send(this.getV2TargetGroupsCommand()))
+    })
+
+    const extraResponse = await Promise.all(promises)
+
+    const formattedExtraResponse = this.formatNameTagResponse(extraResponse)
     // @ts-ignore
     response.items.map((elb: Elb) => {
-      elb.nameTag = TagsHelper.getNameTagValue(formattedTags[elb.getIdentifierForNameTag()] ?? [])
+      elb.nameTag = TagsHelper.getNameTagValue(formattedExtraResponse[elb.getIdentifierForNameTag()] ?? [])
+      if (elb.hasAttachment === undefined) {
+        elb.hasAttachment = elb.loadBalancerArn in formattedExtraResponse.targetGroups
+      }
       return elb
     })
     return response
@@ -83,6 +94,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         '',
         lb.CreatedTime?.toISOString() || '',
         'classic',
+        !!lb.Instances?.length,
         TagsHelper.getNameTagValue([])
       ))
     })
@@ -101,22 +113,31 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         lb.LoadBalancerArn || '',
         lb.CreatedTime?.toISOString() || '',
         lb.Type || '',
+        undefined,
         TagsHelper.getNameTagValue([])
       ))
     })
     return data
   }
 
-  private formatNameTagResponse (nameTagResponse: any[]): any {
-    const data: any = {}
-    nameTagResponse.forEach((tag) => {
-      if ('TagDescriptions' in tag && Array.isArray(tag.TagDescriptions)) {
-        tag.TagDescriptions.forEach((t: any) => {
+  private formatNameTagResponse (response: any[]): any {
+    const data: any = {
+      targetGroups: {}
+    }
+    response.forEach((r) => {
+      if ('TagDescriptions' in r && Array.isArray(r.TagDescriptions)) {
+        r.TagDescriptions.forEach((t: any) => {
           if ('LoadBalancerName' in t && t.LoadBalancerName) {
             data[t.LoadBalancerName] = t.Tags
           } else if ('ResourceArn' in t && t.ResourceArn) {
             data[t.ResourceArn] = t.Tags
           }
+        })
+      } else if ('TargetGroups' in r && Array.isArray(r.TargetGroups)) {
+        r.TargetGroups.forEach((t: any) => {
+          t.LoadBalancerArns.forEach((l: any) => {
+            data.targetGroups[l] = true
+          })
         })
       }
     })
@@ -145,6 +166,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
 
   private getV2TagsCommand (resourceArns: string[]): V2TagsCommand {
     return new V2TagsCommand({ ResourceArns: resourceArns })
+  }
+
+  private getV2TargetGroupsCommand (): V2TargetGroupsCommand {
+    return new V2TargetGroupsCommand({})
   }
 
   private instanceOfV3CommandOutput (data: any): data is V3CommandOutput {
