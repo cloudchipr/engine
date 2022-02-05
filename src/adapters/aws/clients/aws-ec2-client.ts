@@ -119,7 +119,6 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
   }
 
   private getMetricStatisticsCommand (instanceId: string, metricName: string, unit: string): GetMetricStatisticsCommand {
-    console.log(88888)
     return new GetMetricStatisticsCommand({
       Period: 86400,
       StartTime: moment().subtract(30, 'days').toDate(),
