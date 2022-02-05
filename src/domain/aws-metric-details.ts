@@ -4,6 +4,7 @@ export class AwsMetricDetails {
     readonly unit?: string,
     readonly average?: number,
     readonly minimum?: number,
-    readonly maximum?: number
+    readonly maximum?: number,
+    readonly sum?: number
   ) {}
 }

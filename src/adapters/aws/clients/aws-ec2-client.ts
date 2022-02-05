@@ -97,7 +97,8 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
               datapoint.Unit,
               datapoint.Average,
               datapoint.Minimum,
-              datapoint.Maximum
+              datapoint.Maximum,
+              datapoint.Sum
             )
           })
       }
@@ -125,7 +126,7 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
       Dimensions: [{ Name: 'InstanceId', Value: instanceId }],
       MetricName: metricName,
       Namespace: 'AWS/EC2',
-      Statistics: ['Maximum', 'Minimum', 'Average'],
+      Statistics: ['Maximum', 'Minimum', 'Average', 'Sum'],
       Unit: unit
     })
   }
