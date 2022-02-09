@@ -177,6 +177,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.State,
             ebsResponseItemJson.VolumeType,
             ebsResponseItemJson.AvailabilityZone,
+            false,
             ebsResponseItemJson.CreateTime,
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
             ebsResponseItemJson.C8rRegion,

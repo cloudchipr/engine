@@ -25,6 +25,7 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
           volume.State || '',
           volume.VolumeType || '',
           volume.AvailabilityZone || '',
+          (volume.Attachments !== undefined && volume.Attachments.length > 0),
           volume.CreateTime?.toISOString() || '',
           TagsHelper.getNameTagValue(volume.Tags || [])
         ))

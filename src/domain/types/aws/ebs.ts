@@ -7,6 +7,7 @@ export class Ebs extends ProviderResource {
       readonly state: string,
       readonly type: string,
       readonly availabilityZone: string,
+      readonly hasAttachments: boolean,
       readonly age?: string,
       readonly nameTag?: string,
       readonly _c8rRegion?: string,
