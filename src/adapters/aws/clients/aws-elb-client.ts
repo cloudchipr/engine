@@ -2,13 +2,18 @@ import {
   DescribeLoadBalancersCommand as V3Command,
   DescribeTagsCommand as V3TagsCommand,
   DescribeLoadBalancersCommandOutput as V3CommandOutput,
+  DescribeTagsCommandOutput as V3TagsCommandOutput,
   ElasticLoadBalancingClient as V3Client
 } from '@aws-sdk/client-elastic-load-balancing'
 import {
   DescribeLoadBalancersCommand as V2Command,
   DescribeTagsCommand as V2TagsCommand,
   DescribeTargetGroupsCommand as V2TargetGroupsCommand,
+  DescribeTargetHealthCommand as V2TargetHealthCommand,
   DescribeLoadBalancersCommandOutput as V2CommandOutput,
+  DescribeTagsCommandOutput as V2TagsCommandOutput,
+  DescribeTargetGroupsCommandOutput as V2TargetGroupsCommandOutput,
+  DescribeTargetHealthCommandOutput as V2TargetHealthCommandOutput,
   ElasticLoadBalancingV2Client as V2Client
 } from '@aws-sdk/client-elastic-load-balancing-v2'
 import { Elb } from '../../../domain/types/aws/elb'
@@ -39,43 +44,41 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
-    const loadBalancerName: any = {}
-    const loadBalancerArn: any = {}
-    // @ts-ignore
-    response.items.forEach((elb: Elb) => {
-      if (elb.type === 'classic') {
-        if (!(elb.getRegion() in loadBalancerName)) {
-          loadBalancerName[elb.getRegion()] = []
-        }
-        loadBalancerName[elb.getRegion()].push(elb.loadBalancerName)
-      } else {
-        if (!(elb.getRegion() in loadBalancerArn)) {
-          loadBalancerArn[elb.getRegion()] = []
-        }
-        loadBalancerArn[elb.getRegion()].push(elb.loadBalancerArn)
-      }
-    })
-    const promises: any[] = []
+    const { loadBalancerNameByRegion, loadBalancerArnByRegion } = this.groupLoadBalancersByRegion(response)
+    let promises: any[] = []
     // Get tags for network and application LBs
-    Object.keys(loadBalancerName).forEach((region) => {
-      promises.push(this.getV3Client(region).send(this.getV3TagsCommand(loadBalancerName[region])))
+    Object.keys(loadBalancerNameByRegion).forEach((region) => {
+      promises.push(this.getV3Client(region).send(this.getV3TagsCommand(loadBalancerNameByRegion[region])))
     })
-    Object.keys(loadBalancerArn).forEach((region) => {
-      promises.push(this.getV2Client(region).send(this.getV2TagsCommand(loadBalancerArn[region])))
+    Object.keys(loadBalancerArnByRegion).forEach((region) => {
+      promises.push(this.getV2Client(region).send(this.getV2TagsCommand(loadBalancerArnByRegion[region])))
     })
     // Get target groups for network and application LBs
-    Object.keys(loadBalancerArn).forEach((region) => {
+    Object.keys(loadBalancerArnByRegion).forEach((region) => {
       promises.push(this.getV2Client(region).send(this.getV2TargetGroupsCommand()))
     })
+    const tagsAndTargetGroupsResponse = await Promise.all(promises)
+    const formattedTagsAndTargetGroupsResponse = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
 
-    const extraResponse = await Promise.all(promises)
+    const targetGroupsArnByRegion = this.groupTargetGroupArnsByRegion(loadBalancerArnByRegion, formattedTagsAndTargetGroupsResponse.loadBalancerArns)
 
-    const formattedExtraResponse = this.formatNameTagResponse(extraResponse)
+    // Get target health for network and application LBs
+    promises = []
+    Object.keys(targetGroupsArnByRegion).forEach((region) => {
+      targetGroupsArnByRegion[region].forEach((targetGroupArn: string) => {
+        promises.push(targetGroupArn)
+        promises.push(this.getV2Client(region).send(this.getV2TargetHealthCommand(targetGroupArn)))
+      })
+    })
+    const targetHealthResponse = await Promise.all(promises)
+    const formattedTargetHealthResponse = this.formatTargetHealthResponse(targetHealthResponse)
+
     // @ts-ignore
     response.items.map((elb: Elb) => {
-      elb.nameTag = TagsHelper.getNameTagValue(formattedExtraResponse[elb.getIdentifierForNameTag()] ?? [])
+      elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
       if (elb.hasAttachments === undefined) {
-        elb.hasAttachments = elb.loadBalancerArn in formattedExtraResponse.targetGroups
+        elb.hasAttachments = elb.loadBalancerArn in formattedTagsAndTargetGroupsResponse.loadBalancerArns &&
+          formattedTagsAndTargetGroupsResponse.loadBalancerArns[elb.loadBalancerArn] in formattedTargetHealthResponse
       }
       return elb
     })
@@ -120,26 +123,79 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return data
   }
 
-  private formatNameTagResponse (response: any[]): any {
+  private formatTagsAndTargetGroupsResponse (response: any[]): any {
     const data: any = {
-      targetGroups: {}
+      tags: {},
+      loadBalancerArns: {}
     }
-    response.forEach((r) => {
-      if ('TagDescriptions' in r && Array.isArray(r.TagDescriptions)) {
-        r.TagDescriptions.forEach((t: any) => {
-          if ('LoadBalancerName' in t && t.LoadBalancerName) {
-            data[t.LoadBalancerName] = t.Tags
-          } else if ('ResourceArn' in t && t.ResourceArn) {
-            data[t.ResourceArn] = t.Tags
-          }
-        })
-      } else if ('TargetGroups' in r && Array.isArray(r.TargetGroups)) {
-        r.TargetGroups.forEach((t: any) => {
-          t.LoadBalancerArns.forEach((l: any) => {
-            data.targetGroups[l] = true
+    response.forEach((r: V3TagsCommandOutput | V2TagsCommandOutput | V2TargetGroupsCommandOutput) => {
+      if (this.instanceOfV2TargetGroupsCommandOutput(r)) {
+        r.TargetGroups?.forEach((t) => {
+          t.LoadBalancerArns?.forEach((l) => {
+            data.loadBalancerArns[l] = t.TargetGroupArn
           })
         })
+      } else {
+        r.TagDescriptions?.forEach((t) => {
+          if ('LoadBalancerName' in t && t.LoadBalancerName) {
+            data.tags[t.LoadBalancerName] = t.Tags
+          } else if ('ResourceArn' in t && t.ResourceArn) {
+            data.tags[t.ResourceArn] = t.Tags
+          }
+        })
       }
+    })
+    return data
+  }
+
+  private formatTargetHealthResponse (response: any[]): any {
+    const data: any = {}
+    let instanceIdentifier: string
+    response.forEach((r: V2TargetHealthCommandOutput | string) => {
+      if (typeof r === 'string') {
+        instanceIdentifier = r
+        return
+      }
+      if (r.TargetHealthDescriptions?.length) {
+        data[instanceIdentifier] = true
+      }
+    })
+    return data
+  }
+
+  private groupLoadBalancersByRegion<Type> (response: Response<Type>): any {
+    const data: any = {
+      loadBalancerNameByRegion: {},
+      loadBalancerArnByRegion: {}
+    }
+    // @ts-ignore
+    response.items.forEach((elb: Elb) => {
+      if (elb.type === 'classic') {
+        if (!(elb.getRegion() in data.loadBalancerNameByRegion)) {
+          data.loadBalancerNameByRegion[elb.getRegion()] = []
+        }
+        data.loadBalancerNameByRegion[elb.getRegion()].push(elb.loadBalancerName)
+      } else {
+        if (!(elb.getRegion() in data.loadBalancerArnByRegion)) {
+          data.loadBalancerArnByRegion[elb.getRegion()] = []
+        }
+        data.loadBalancerArnByRegion[elb.getRegion()].push(elb.loadBalancerArn)
+      }
+    })
+    return data
+  }
+
+  private groupTargetGroupArnsByRegion (loadBalancerArnByRegion: any, loadBalancerArn: any): any {
+    const data: any = {}
+    Object.keys(loadBalancerArnByRegion).forEach((region) => {
+      loadBalancerArnByRegion[region].forEach((arn: string) => {
+        if (!(region in data)) {
+          data[region] = []
+        }
+        if (arn in loadBalancerArn) {
+          data[region].push(loadBalancerArn[arn])
+        }
+      })
     })
     return data
   }
@@ -172,7 +228,15 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return new V2TargetGroupsCommand({})
   }
 
+  private getV2TargetHealthCommand (arn: string): V2TargetHealthCommand {
+    return new V2TargetHealthCommand({ TargetGroupArn: arn })
+  }
+
   private instanceOfV3CommandOutput (data: any): data is V3CommandOutput {
     return 'LoadBalancerDescriptions' in data
+  }
+
+  private instanceOfV2TargetGroupsCommandOutput (data: any): data is V2TargetGroupsCommandOutput {
+    return 'TargetGroups' in data
   }
 }
