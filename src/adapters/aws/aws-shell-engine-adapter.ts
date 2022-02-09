@@ -254,6 +254,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               '',
               elbResponseItemJson.CreatedTime,
               'classic',
+              false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
@@ -284,6 +285,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               '',
               elbResponseItemJson.CreatedTime,
               'network',
+              false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
@@ -314,6 +316,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               '',
               elbResponseItemJson.CreatedTime,
               'application',
+              false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
