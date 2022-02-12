@@ -194,10 +194,18 @@
       }
     ]
   },
-  "target-group-collect": {
+  "target-group-alb-collect": {
     "policies": [
       {
-        "name": "target-group-collect",
+        "name": "target-group-alb-collect",
+        "resource": "app-elb-target-group"
+      }
+    ]
+  },
+  "target-group-nlb-collect": {
+    "policies": [
+      {
+        "name": "target-group-nlb-collect",
         "resource": "app-elb-target-group"
       }
     ]

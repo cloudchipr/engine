@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.0.71",
+  "version": "0.0.72",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

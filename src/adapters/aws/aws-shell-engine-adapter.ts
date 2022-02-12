@@ -96,7 +96,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     private async getElbPolicy (request: EngineRequest, currentAccount: string| undefined, accounts: string[]) : Promise<[string, any]> {
-      const policyName = 'target-group-collect'
+      const policyName = `target-group-${request.subCommand.getValue()}-collect`
       const policy: any = this.getPolicy(policyName)
 
       const targetGroups = <Array<TargetGroup>><unknown> await this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
