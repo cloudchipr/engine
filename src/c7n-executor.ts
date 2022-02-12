@@ -19,7 +19,6 @@ export class C7nExecutor {
       regions: string[],
       currentAccount: string| undefined,
       accounts: string[],
-      isDebugMode: boolean,
       outputDirectory: string,
       awsConfiguration?: AWSConfiguration
     ) {
@@ -131,23 +130,6 @@ export class C7nExecutor {
         return result
       } catch (e: any) {
         throw new CustodianError(e.message, outputDirectory)
-      } finally {
-        // remove temp files and folders
-        if (!isDebugMode) {
-          await C7nExecutor.removeTempFoldersAndFiles(outputDirectory, policyName)
-        }
-      }
-    }
-
-    private static async removeTempFoldersAndFiles (outputDirectory: string, policyName: string) {
-      await fs.promises.rm(`${outputDirectory}/${policyName}`, { recursive: true, force: true })
-      while (outputDirectory) {
-        try {
-          await fs.promises.rmdir(outputDirectory)
-        } catch (e) {
-          break
-        }
-        outputDirectory = outputDirectory.substring(0, outputDirectory.lastIndexOf('/'))
       }
     }
 
