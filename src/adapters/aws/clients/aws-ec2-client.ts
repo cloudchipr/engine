@@ -20,13 +20,13 @@ import { AwsEc2Metric } from '../../../domain/aws-ec2-metric'
 import { AwsMetricDetails } from '../../../domain/aws-metric-details'
 
 export default class AwsEc2Client extends AwsBaseClient implements AwsClientInterface {
-  getCommands (region: string): any[] {
+  getCollectCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getClient(region).send(this.getCommand()))
+    commands.push(this.getClient(region).send(AwsEc2Client.getDescribeInstancesCommand()))
     return commands
   }
 
-  async formatResponse<Type> (response: DescribeInstancesCommandOutput[]): Promise<Response<Type>> {
+  async formatCollectResponse<Type> (response: DescribeInstancesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Reservations) || res.Reservations.length === 0) {
@@ -60,14 +60,14 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     return new Response<Type>(data)
   }
 
-  async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
     const promises: any[] = []
     // @ts-ignore
     response.items.forEach((ec2: Ec2) => {
       promises.push(ec2.id)
-      promises.push(this.getCloudWatchClient(ec2.getRegion()).send(this.getMetricStatisticsCommand(ec2.id, 'CPUUtilization', 'Percent')))
-      promises.push(this.getCloudWatchClient(ec2.getRegion()).send(this.getMetricStatisticsCommand(ec2.id, 'NetworkIn', 'Bytes')))
-      promises.push(this.getCloudWatchClient(ec2.getRegion()).send(this.getMetricStatisticsCommand(ec2.id, 'NetworkOut', 'Bytes')))
+      promises.push(this.getCloudWatchClient(ec2.getRegion()).send(AwsEc2Client.getMetricStatisticsCommand(ec2.id, 'CPUUtilization', 'Percent')))
+      promises.push(this.getCloudWatchClient(ec2.getRegion()).send(AwsEc2Client.getMetricStatisticsCommand(ec2.id, 'NetworkIn', 'Bytes')))
+      promises.push(this.getCloudWatchClient(ec2.getRegion()).send(AwsEc2Client.getMetricStatisticsCommand(ec2.id, 'NetworkOut', 'Bytes')))
     })
     const metricsResponse = await Promise.all(promises)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
@@ -114,11 +114,11 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     return new CloudWatchClient({ credentials: this.credentialProvider, region })
   }
 
-  private getCommand (): DescribeInstancesCommand {
+  private static getDescribeInstancesCommand (): DescribeInstancesCommand {
     return new DescribeInstancesCommand({ MaxResults: 1000 })
   }
 
-  private getMetricStatisticsCommand (instanceId: string, metricName: string, unit: string): GetMetricStatisticsCommand {
+  private static getMetricStatisticsCommand (instanceId: string, metricName: string, unit: string): GetMetricStatisticsCommand {
     return new GetMetricStatisticsCommand({
       Period: 86400,
       StartTime: moment().subtract(30, 'days').toDate(),

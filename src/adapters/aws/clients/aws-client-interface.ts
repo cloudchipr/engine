@@ -2,9 +2,9 @@ import { Response } from '../../../responses/response'
 import { AwsClientCommandOutputTypeType } from '../interfaces'
 
 export interface AwsClientInterface {
-  getCommands (region: string): any[]
+  getCollectCommands (region: string): any[]
 
-  formatResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>>
+  formatCollectResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>>
 
-  getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>>
+  getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>>
 }

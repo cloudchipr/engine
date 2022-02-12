@@ -5,6 +5,7 @@ import { Response } from '../../responses/response'
 import { EngineInterface } from '../engine-interface'
 import { AWSConfiguration } from './aws-configuration'
 import AwsClient from './clients/aws-client'
+import { Command } from '../../command'
 
 export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly credentials: CredentialProvider
@@ -14,12 +15,14 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {
-      const subCommand = request.subCommand.getValue()
-
-      const awsClient = new AwsClient(subCommand, this.credentials)
-      const response = await Promise.all(awsClient.getResources(request.parameter.regions))
-
-      const formattedResponse = await awsClient.formatResponse<Type>(response)
-      return awsClient.getAdditionalDataForFormattedResponse(formattedResponse)
+      const awsClient = new AwsClient(request.subCommand.getValue(), this.credentials)
+      switch (request.command.getValue()) {
+        case Command.COLLECT_COMMAND:
+          return awsClient.collectResources(request.parameter.regions)
+        case Command.CLEAN_COMMAND:
+          return awsClient.collectResources(request.parameter.regions)
+        default:
+          throw new Error(`Invalid command ${request.command.getValue()} provided.`)
+      }
     }
 }

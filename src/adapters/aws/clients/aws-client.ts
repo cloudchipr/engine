@@ -1,8 +1,5 @@
 import { CredentialProvider } from '@aws-sdk/types'
 import { Response } from '../../../responses/response'
-import {
-  AwsClientCommandOutputTypeType
-} from '../interfaces'
 import { AwsClientInterface } from './aws-client-interface'
 import AwsEbsClient from './aws-ebs-client'
 import AwsEc2Client from './aws-ec2-client'
@@ -17,20 +14,18 @@ export default class AwsClient {
     this.awsClientInstance = AwsClient.getAwsClient(subcommand, credentialProvider)
   }
 
-  getResources (regions: string[]): Promise<any>[] {
+  async collectResources<Type> (regions: string[]): Promise<Response<Type>> {
     let promises: any[] = []
     for (const region of regions) {
-      promises = [...promises, ...this.awsClientInstance.getCommands(region)]
+      promises = [...promises, ...this.awsClientInstance.getCollectCommands(region)]
     }
-    return promises
+    const response = await Promise.all(promises)
+    const formattedResponse = await this.awsClientInstance.formatCollectResponse<Type>(response)
+    return this.awsClientInstance.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
   }
 
-  async formatResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>> {
-    return this.awsClientInstance.formatResponse<Type>(response)
-  }
-
-  async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
-    return this.awsClientInstance.getAdditionalDataForFormattedResponse<Type>(response)
+  async cleanResources<Type> (regions: string[]): Promise<Response<Type>> {
+    return this.awsClientInstance.getAdditionalDataForFormattedCollectResponse<Type>(new Response<Type>([]))
   }
 
   private static getAwsClient (subcommand: string, credentialProvider: CredentialProvider): AwsClientInterface {

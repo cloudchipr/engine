@@ -16,13 +16,13 @@ import { AwsMetricDetails } from '../../../domain/aws-metric-details'
 import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
 
 export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
-  getCommands (region: string): any[] {
+  getCollectCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getClient(region).send(this.getCommand()))
+    commands.push(this.getClient(region).send(AwsRdsClient.getDescribeDBInstancesCommand()))
     return commands
   }
 
-  async formatResponse<Type> (response: DescribeDBInstancesCommandOutput[]): Promise<Response<Type>> {
+  async formatCollectResponse<Type> (response: DescribeDBInstancesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.DBInstances) || res.DBInstances.length === 0) {
@@ -48,12 +48,12 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     return new Response<Type>(data)
   }
 
-  async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
     const promises: any[] = []
     // @ts-ignore
     response.items.forEach((rds: Rds) => {
       promises.push(rds.id)
-      promises.push(this.getCloudWatchClient(rds.getRegion()).send(this.getMetricStatisticsCommand(rds.id, 'DatabaseConnections', 'Percent')))
+      promises.push(this.getCloudWatchClient(rds.getRegion()).send(AwsRdsClient.getMetricStatisticsCommand(rds.id, 'DatabaseConnections', 'Percent')))
     })
     const metricsResponse = await Promise.all(promises)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
@@ -99,11 +99,11 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     return new CloudWatchClient({ credentials: this.credentialProvider, region })
   }
 
-  private getCommand (): DescribeDBInstancesCommand {
+  private static getDescribeDBInstancesCommand (): DescribeDBInstancesCommand {
     return new DescribeDBInstancesCommand({ MaxRecords: 100 })
   }
 
-  private getMetricStatisticsCommand (instanceIdentifier: string, metricName: string, unit: string): GetMetricStatisticsCommand {
+  private static getMetricStatisticsCommand (instanceIdentifier: string, metricName: string, unit: string): GetMetricStatisticsCommand {
     return new GetMetricStatisticsCommand({
       Period: 86400,
       StartTime: moment().subtract(30, 'days').toDate(),

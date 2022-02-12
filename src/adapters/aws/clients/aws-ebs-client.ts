@@ -1,4 +1,9 @@
-import { DescribeVolumesCommand, DescribeVolumesCommandOutput, EC2Client } from '@aws-sdk/client-ec2'
+import {
+  DeleteVolumeCommand,
+  DescribeVolumesCommand,
+  DescribeVolumesCommandOutput,
+  EC2Client
+} from '@aws-sdk/client-ec2'
 import { Ebs } from '../../../domain/types/aws/ebs'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
@@ -6,13 +11,13 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 
 export default class AwsEbsClient extends AwsBaseClient implements AwsClientInterface {
-  getCommands (region: string): any[] {
+  getCollectCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getClient(region).send(this.getCommand()))
+    commands.push(this.getClient(region).send(AwsEbsClient.getDescribeVolumesCommand()))
     return commands
   }
 
-  async formatResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
+  async formatCollectResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Volumes) || res.Volumes.length === 0) {
@@ -39,7 +44,11 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     return new EC2Client({ credentials: this.credentialProvider, region })
   }
 
-  private getCommand (): DescribeVolumesCommand {
+  private static getDescribeVolumesCommand (): DescribeVolumesCommand {
     return new DescribeVolumesCommand({ MaxResults: 1000 })
+  }
+
+  private static getDeleteVolumeCommand (volumeId: string): DeleteVolumeCommand {
+    return new DeleteVolumeCommand({ VolumeId: volumeId })
   }
 }

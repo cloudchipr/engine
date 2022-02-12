@@ -10,13 +10,13 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 
 export default class AwsEipClient extends AwsBaseClient implements AwsClientInterface {
-  getCommands (region: string): any[] {
+  getCollectCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getClient(region).send(this.getCommand()))
+    commands.push(this.getClient(region).send(AwsEipClient.getDescribeAddressesCommand()))
     return commands
   }
 
-  async formatResponse<Type> (response: DescribeAddressesCommandOutput[]): Promise<Response<Type>> {
+  async formatCollectResponse<Type> (response: DescribeAddressesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Addresses) || res.Addresses.length === 0) {
@@ -38,7 +38,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
     return new EC2Client({ credentials: this.credentialProvider, region })
   }
 
-  private getCommand (): DescribeAddressesCommand {
+  private static getDescribeAddressesCommand (): DescribeAddressesCommand {
     return new DescribeAddressesCommand({})
   }
 }

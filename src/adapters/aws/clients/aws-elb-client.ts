@@ -23,17 +23,17 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
-  getCommands (region: string): any[] {
+  getCollectCommands (region: string): any[] {
     const commands = []
-    commands.push(this.getV3Client(region).send(this.getV3Command()))
-    commands.push(this.getV2Client(region).send(this.getV2Command()))
+    commands.push(this.getV3Client(region).send(AwsElbClient.getV3Command()))
+    commands.push(this.getV2Client(region).send(AwsElbClient.getV2Command()))
     return commands
   }
 
-  async formatResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Promise<Response<Type>> {
+  async formatCollectResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Promise<Response<Type>> {
     let data: any[] = []
     response.forEach((res) => {
-      if (this.instanceOfV3CommandOutput(res)) {
+      if (AwsElbClient.instanceOfV3CommandOutput(res)) {
         data = [...data, ...this.formatV3Response(res)]
       } else {
         data = [...data, ...this.formatV2Response(res)]
@@ -43,19 +43,19 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return new Response<Type>(data)
   }
 
-  async getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
     const { loadBalancerNameByRegion, loadBalancerArnByRegion } = this.groupLoadBalancersByRegion(response)
     let promises: any[] = []
     // Get tags for network and application LBs
     Object.keys(loadBalancerNameByRegion).forEach((region) => {
-      promises.push(this.getV3Client(region).send(this.getV3TagsCommand(loadBalancerNameByRegion[region])))
+      promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(loadBalancerNameByRegion[region])))
     })
     Object.keys(loadBalancerArnByRegion).forEach((region) => {
-      promises.push(this.getV2Client(region).send(this.getV2TagsCommand(loadBalancerArnByRegion[region])))
+      promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(loadBalancerArnByRegion[region])))
     })
     // Get target groups for network and application LBs
     Object.keys(loadBalancerArnByRegion).forEach((region) => {
-      promises.push(this.getV2Client(region).send(this.getV2TargetGroupsCommand()))
+      promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetGroupsCommand()))
     })
     const tagsAndTargetGroupsResponse = await Promise.all(promises)
     const formattedTagsAndTargetGroupsResponse = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
@@ -67,7 +67,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     Object.keys(targetGroupsArnByRegion).forEach((region) => {
       targetGroupsArnByRegion[region].forEach((targetGroupArn: string) => {
         promises.push(targetGroupArn)
-        promises.push(this.getV2Client(region).send(this.getV2TargetHealthCommand(targetGroupArn)))
+        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetHealthCommand(targetGroupArn)))
       })
     })
     const targetHealthResponse = await Promise.all(promises)
@@ -129,7 +129,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       loadBalancerArns: {}
     }
     response.forEach((r: V3TagsCommandOutput | V2TagsCommandOutput | V2TargetGroupsCommandOutput) => {
-      if (this.instanceOfV2TargetGroupsCommandOutput(r)) {
+      if (AwsElbClient.instanceOfV2TargetGroupsCommandOutput(r)) {
         r.TargetGroups?.forEach((t) => {
           t.LoadBalancerArns?.forEach((l) => {
             data.loadBalancerArns[l] = t.TargetGroupArn
@@ -208,35 +208,35 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return new V2Client({ credentials: this.credentialProvider, region })
   }
 
-  private getV3Command (): V3Command {
+  private static getV3Command (): V3Command {
     return new V3Command({ PageSize: 400 })
   }
 
-  private getV3TagsCommand (loadBalancerNames: string[]): V3TagsCommand {
+  private static getV3TagsCommand (loadBalancerNames: string[]): V3TagsCommand {
     return new V3TagsCommand({ LoadBalancerNames: loadBalancerNames })
   }
 
-  private getV2Command (): V2Command {
+  private static getV2Command (): V2Command {
     return new V2Command({ PageSize: 400 })
   }
 
-  private getV2TagsCommand (resourceArns: string[]): V2TagsCommand {
+  private static getV2TagsCommand (resourceArns: string[]): V2TagsCommand {
     return new V2TagsCommand({ ResourceArns: resourceArns })
   }
 
-  private getV2TargetGroupsCommand (): V2TargetGroupsCommand {
+  private static getV2TargetGroupsCommand (): V2TargetGroupsCommand {
     return new V2TargetGroupsCommand({})
   }
 
-  private getV2TargetHealthCommand (arn: string): V2TargetHealthCommand {
+  private static getV2TargetHealthCommand (arn: string): V2TargetHealthCommand {
     return new V2TargetHealthCommand({ TargetGroupArn: arn })
   }
 
-  private instanceOfV3CommandOutput (data: any): data is V3CommandOutput {
+  private static instanceOfV3CommandOutput (data: any): data is V3CommandOutput {
     return 'LoadBalancerDescriptions' in data
   }
 
-  private instanceOfV2TargetGroupsCommandOutput (data: any): data is V2TargetGroupsCommandOutput {
+  private static instanceOfV2TargetGroupsCommandOutput (data: any): data is V2TargetGroupsCommandOutput {
     return 'TargetGroups' in data
   }
 }
