@@ -80,7 +80,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         request.parameter.regions,
         currentAccount,
         accounts,
-        request.isDebugMode,
         request.outputDirectory,
         this.awsConfiguration
       )
