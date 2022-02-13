@@ -54,7 +54,6 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
             TagsHelper.getNameTagValue(instance.Tags || []),
             TagsHelper.formatTags(instance.Tags)
           ))
-          console.log(instance.Tags)
         })
       })
     })
