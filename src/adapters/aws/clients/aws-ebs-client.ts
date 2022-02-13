@@ -12,9 +12,21 @@ import { AwsClientInterface } from './aws-client-interface'
 
 export default class AwsEbsClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
-    const commands = []
-    commands.push(this.getClient(region).send(AwsEbsClient.getDescribeVolumesCommand()))
-    return commands
+    return [
+      this.getClient(region).send(AwsEbsClient.getDescribeVolumesCommand())
+    ]
+  }
+
+  getCleanCommands (id: string): any {
+    return new Promise((resolve, reject) => {
+      this.getClient().send(AwsEbsClient.getDeleteVolumeCommand(id))
+        .then(() => {
+          resolve(id)
+        })
+        .catch((e) => {
+          reject(e.message)
+        })
+    })
   }
 
   async formatCollectResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
@@ -40,8 +52,9 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     return new Response<Type>(data)
   }
 
-  private getClient (region: string): EC2Client {
-    return new EC2Client({ credentials: this.credentialProvider, region })
+  private getClient (region?: string): EC2Client {
+    const config = region ? { credentials: this.credentialProvider, region } : { credentials: this.credentialProvider }
+    return new EC2Client(config)
   }
 
   private static getDescribeVolumesCommand (): DescribeVolumesCommand {

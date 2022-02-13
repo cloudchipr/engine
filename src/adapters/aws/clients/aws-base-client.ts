@@ -11,6 +11,10 @@ export default class AwsBaseClient {
     this.awsPriceCalculator = new AwsPriceCalculator(credentialProvider)
   }
 
+  getCleanCommands (id: string): any {
+    return []
+  }
+
   async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
     return response
   }
