@@ -1,6 +1,7 @@
 import { ProviderResource } from '../provider-resource'
 import { Metric } from '../../metric'
 import { AwsRdsMetric } from '../../aws-rds-metric'
+import { Tag } from '../../tag'
 
 export class Rds extends ProviderResource {
   constructor (
@@ -15,6 +16,7 @@ export class Rds extends ProviderResource {
     readonly availabilityZone: string,
     public metrics?: AwsRdsMetric,
     readonly nameTag?: string,
+    readonly tags?: Tag[],
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string
   ) {

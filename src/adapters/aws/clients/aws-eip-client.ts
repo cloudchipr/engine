@@ -26,7 +26,8 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
         data.push(new Eip(
           address.PublicIp || '',
           address.NetworkBorderGroup || '',
-          TagsHelper.getNameTagValue(address.Tags || [])
+          TagsHelper.getNameTagValue(address.Tags || []),
+          TagsHelper.formatTags(address.Tags)
         ))
       })
     })

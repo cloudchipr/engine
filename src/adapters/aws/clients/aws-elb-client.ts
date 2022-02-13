@@ -76,6 +76,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     // @ts-ignore
     response.items.map((elb: Elb) => {
       elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
+      elb.tags = TagsHelper.formatTags(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
       if (elb.hasAttachments === undefined) {
         elb.hasAttachments = elb.loadBalancerArn in formattedTagsAndTargetGroupsResponse.loadBalancerArns &&
           formattedTagsAndTargetGroupsResponse.loadBalancerArns[elb.loadBalancerArn] in formattedTargetHealthResponse
