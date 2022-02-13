@@ -1,4 +1,5 @@
 import { ProviderResource } from '../provider-resource'
+import { Tag } from '../../tag'
 
 export class Elb extends ProviderResource {
   protected readonly REGION_FETCH_REGEXP = /.*\.(.*)\.elb\.amazonaws\.com/;
@@ -10,6 +11,7 @@ export class Elb extends ProviderResource {
     readonly type?: string,
     public hasAttachments?: boolean,
     public nameTag?: string,
+    public tags?: Tag[],
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string
   ) {

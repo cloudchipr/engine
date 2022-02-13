@@ -40,7 +40,8 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
           db.InstanceCreateTime?.toISOString() || '',
           db.AvailabilityZone || '',
           undefined,
-          TagsHelper.getNameTagValue(db.TagList || [])
+          TagsHelper.getNameTagValue(db.TagList || []),
+          TagsHelper.formatTags(db.TagList)
         ))
       })
     })

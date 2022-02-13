@@ -179,6 +179,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             false,
             ebsResponseItemJson.CreateTime,
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
+            [],
             ebsResponseItemJson.C8rRegion,
             ebsResponseItemJson.C8rAccount
           )
@@ -224,6 +225,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.UsageOperation,
             undefined,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
+            [],
             ec2ResponseItemJson.C8rRegion,
             ec2ResponseItemJson.C8rAccount
           )
@@ -255,6 +257,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               'classic',
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              [],
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
@@ -286,6 +289,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               'network',
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              [],
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
@@ -317,6 +321,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               'application',
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              [],
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
@@ -344,6 +349,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               eipResponseItemJson.PublicIp,
               eipResponseItemJson.NetworkBorderGroup,
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
+              [],
               eipResponseItemJson.C8rRegion,
               eipResponseItemJson.C8rAccount
             )
@@ -384,6 +390,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.AvailabilityZone,
               undefined,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),
+              [],
               rdsResponseItemJson.C8rRegion,
               rdsResponseItemJson.C8rAccount
             )

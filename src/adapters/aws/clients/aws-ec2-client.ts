@@ -51,7 +51,8 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
             instance.PlatformDetails || '',
             instance.UsageOperation || '',
             undefined,
-            TagsHelper.getNameTagValue(instance.Tags || [])
+            TagsHelper.getNameTagValue(instance.Tags || []),
+            TagsHelper.formatTags(instance.Tags)
           ))
         })
       })
