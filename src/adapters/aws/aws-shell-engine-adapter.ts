@@ -349,6 +349,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               eipResponseItemJson.PublicIp,
               eipResponseItemJson.NetworkBorderGroup,
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
+              undefined,
+              undefined,
               [],
               eipResponseItemJson.C8rRegion,
               eipResponseItemJson.C8rAccount

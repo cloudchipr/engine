@@ -5,6 +5,8 @@ export class Eip extends ProviderResource {
   constructor (
     readonly ip: string,
     readonly region: string,
+    readonly allocationId?: string,
+    readonly associationId?: string,
     readonly nameTag?: string,
     readonly tags?: Tag[],
     readonly _c8rRegion?: string,
