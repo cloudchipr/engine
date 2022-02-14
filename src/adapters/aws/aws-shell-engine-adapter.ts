@@ -351,6 +351,8 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
               undefined,
               undefined,
+              undefined,
+              undefined,
               [],
               eipResponseItemJson.C8rRegion,
               eipResponseItemJson.C8rAccount

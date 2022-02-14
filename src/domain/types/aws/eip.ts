@@ -7,6 +7,8 @@ export class Eip extends ProviderResource {
     readonly region: string,
     readonly allocationId?: string,
     readonly associationId?: string,
+    readonly domain?: string,
+    readonly instanceId?: string,
     readonly nameTag?: string,
     readonly tags?: Tag[],
     readonly _c8rRegion?: string,

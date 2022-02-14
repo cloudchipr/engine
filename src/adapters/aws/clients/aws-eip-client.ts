@@ -28,6 +28,8 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
           address.NetworkBorderGroup || '',
           address.AllocationId,
           address.AssociationId,
+          address.Domain,
+          address.InstanceId,
           TagsHelper.getNameTagValue(address.Tags || []),
           TagsHelper.formatTags(address.Tags)
         ))
