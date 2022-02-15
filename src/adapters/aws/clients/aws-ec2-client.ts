@@ -1,5 +1,6 @@
 import {
   DescribeInstancesCommand,
+  TerminateInstancesCommand,
   DescribeInstancesCommandOutput,
   EC2Client
 } from '@aws-sdk/client-ec2'
@@ -18,12 +19,21 @@ import {
 import moment from 'moment'
 import { AwsEc2Metric } from '../../../domain/aws-ec2-metric'
 import { AwsMetricDetails } from '../../../domain/aws-metric-details'
+import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
 
 export default class AwsEc2Client extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
     const commands = []
     commands.push(this.getClient(region).send(AwsEc2Client.getDescribeInstancesCommand()))
     return commands
+  }
+
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.getClient(request.region).send(AwsEc2Client.getTerminateInstancesCommand(request.id))
+        .then(() => resolve(request.id))
+        .catch((e) => reject(e.message))
+    })
   }
 
   async formatCollectResponse<Type> (response: DescribeInstancesCommandOutput[]): Promise<Response<Type>> {
@@ -116,6 +126,10 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
 
   private static getDescribeInstancesCommand (): DescribeInstancesCommand {
     return new DescribeInstancesCommand({ MaxResults: 1000 })
+  }
+
+  private static getTerminateInstancesCommand (instanceId: string): TerminateInstancesCommand {
+    return new TerminateInstancesCommand({ InstanceIds: [instanceId] })
   }
 
   private static getMetricStatisticsCommand (instanceId: string, metricName: string, unit: string): GetMetricStatisticsCommand {

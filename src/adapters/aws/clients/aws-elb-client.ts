@@ -1,4 +1,5 @@
 import {
+  DeleteLoadBalancerCommand as V3DeleteCommand,
   DescribeLoadBalancersCommand as V3Command,
   DescribeTagsCommand as V3TagsCommand,
   DescribeLoadBalancersCommandOutput as V3CommandOutput,
@@ -6,6 +7,7 @@ import {
   ElasticLoadBalancingClient as V3Client
 } from '@aws-sdk/client-elastic-load-balancing'
 import {
+  DeleteLoadBalancerCommand as V2DeleteCommand,
   DescribeLoadBalancersCommand as V2Command,
   DescribeTagsCommand as V2TagsCommand,
   DescribeTargetGroupsCommand as V2TargetGroupsCommand,
@@ -21,6 +23,8 @@ import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
+import { CleanElbMetadataInterface } from '../../../request/clean/interface/clean-request-resource-metadata-interface'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -28,6 +32,31 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     commands.push(this.getV3Client(region).send(AwsElbClient.getV3Command()))
     commands.push(this.getV2Client(region).send(AwsElbClient.getV2Command()))
     return commands
+  }
+
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    const metadata = request.metadata as CleanElbMetadataInterface
+    if (metadata.type === 'classic') {
+      return new Promise((resolve, reject) => {
+        this.getV3Client(request.region).send(AwsElbClient.getV3DeleteCommand(request.id))
+          .then(() => resolve(request.id))
+          .catch((e) => reject(e.message))
+      })
+    } else {
+      return new Promise((resolve, reject) => {
+        this.getV2Client(request.region).send(AwsElbClient.getV2DeleteCommand(metadata.loadBalancerArn as string))
+          .then(() => resolve(request.id))
+          .catch((e) => reject(e.message))
+      })
+    }
+  }
+
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request)) {
+      return false
+    }
+    const metadata = request.metadata as CleanElbMetadataInterface
+    return metadata.type === 'classic' || metadata.loadBalancerArn !== undefined
   }
 
   async formatCollectResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Promise<Response<Type>> {
@@ -77,8 +106,8 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     response.items.map((elb: Elb) => {
       elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
       if (elb.hasAttachments === undefined) {
-        elb.hasAttachments = elb.loadBalancerArn in formattedTagsAndTargetGroupsResponse.loadBalancerArns &&
-          formattedTagsAndTargetGroupsResponse.loadBalancerArns[elb.loadBalancerArn] in formattedTargetHealthResponse
+        elb.hasAttachments = (elb.loadBalancerArn ?? '') in formattedTagsAndTargetGroupsResponse.loadBalancerArns &&
+          formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] in formattedTargetHealthResponse
       }
       return elb
     })
@@ -94,7 +123,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
-        '',
+        undefined,
         lb.CreatedTime?.toISOString() || '',
         'classic',
         !!lb.Instances?.length,
@@ -216,12 +245,20 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return new V3TagsCommand({ LoadBalancerNames: loadBalancerNames })
   }
 
+  private static getV3DeleteCommand (loadBalancerName: string): V3DeleteCommand {
+    return new V3DeleteCommand({ LoadBalancerName: loadBalancerName })
+  }
+
   private static getV2Command (): V2Command {
     return new V2Command({ PageSize: 400 })
   }
 
   private static getV2TagsCommand (resourceArns: string[]): V2TagsCommand {
     return new V2TagsCommand({ ResourceArns: resourceArns })
+  }
+
+  private static getV2DeleteCommand (loadBalancerArn: string): V2DeleteCommand {
+    return new V2DeleteCommand({ LoadBalancerArn: loadBalancerArn })
   }
 
   private static getV2TargetGroupsCommand (): V2TargetGroupsCommand {

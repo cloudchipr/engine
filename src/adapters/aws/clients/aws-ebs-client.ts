@@ -9,6 +9,7 @@ import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
 
 export default class AwsEbsClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -17,15 +18,11 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     ]
   }
 
-  getCleanCommands (id: string): any {
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.getClient().send(AwsEbsClient.getDeleteVolumeCommand(id))
-        .then(() => {
-          resolve(id)
-        })
-        .catch((e) => {
-          reject(e.message)
-        })
+      this.getClient(request.region).send(AwsEbsClient.getDeleteVolumeCommand(request.id))
+        .then(() => resolve(request.id))
+        .catch((e) => reject(e.message))
     })
   }
 
@@ -52,9 +49,8 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     return new Response<Type>(data)
   }
 
-  private getClient (region?: string): EC2Client {
-    const config = region ? { credentials: this.credentialProvider, region } : { credentials: this.credentialProvider }
-    return new EC2Client(config)
+  private getClient (region: string): EC2Client {
+    return new EC2Client({ credentials: this.credentialProvider, region })
   }
 
   private static getDescribeVolumesCommand (): DescribeVolumesCommand {

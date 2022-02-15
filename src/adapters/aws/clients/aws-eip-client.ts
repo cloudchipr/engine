@@ -1,19 +1,44 @@
 import {
   DescribeAddressesCommand,
   DescribeAddressesCommandOutput,
-  EC2Client
+  EC2Client, ReleaseAddressCommand
 } from '@aws-sdk/client-ec2'
 import { Eip } from '../../../domain/types/aws/eip'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
+import { CleanRequest } from '../../../request/clean/clean-request'
+import {
+  CleanEipMetadataInterface,
+  CleanElbMetadataInterface
+} from '../../../request/clean/interface/clean-request-resource-metadata-interface'
 
 export default class AwsEipClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
     const commands = []
     commands.push(this.getClient(region).send(AwsEipClient.getDescribeAddressesCommand()))
     return commands
+  }
+
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const metadata = request.metadata as CleanEipMetadataInterface
+      const id = metadata.domain === 'classic' ? request.id : metadata.allocationId
+      this.getClient(request.region)
+        .send(AwsEipClient.getReleaseAddressCommand(id as string))
+        .then(() => resolve(request.id))
+        .catch((e) => reject(e.message))
+    })
+  }
+
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request)) {
+      return false
+    }
+    const metadata = request.metadata as CleanEipMetadataInterface
+    return metadata.domain === 'classic' || metadata.allocationId !== undefined
   }
 
   async formatCollectResponse<Type> (response: DescribeAddressesCommandOutput[]): Promise<Response<Type>> {
@@ -40,5 +65,9 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
 
   private static getDescribeAddressesCommand (): DescribeAddressesCommand {
     return new DescribeAddressesCommand({})
+  }
+
+  private static getReleaseAddressCommand (publicIp: string): ReleaseAddressCommand {
+    return new ReleaseAddressCommand({ PublicIp: publicIp })
   }
 }

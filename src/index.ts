@@ -1,5 +1,7 @@
 export * from './parameter'
 export * from './engine-request'
+export * from './request/clean/clean-request'
+export * from './request/clean/clean-request-resource'
 export * from './engine-response'
 
 export * from './filters/filter-builder'
