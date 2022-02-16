@@ -6,7 +6,7 @@ export class Elb extends ProviderResource {
   constructor (
     readonly loadBalancerName: string,
     readonly dnsName: string,
-    readonly loadBalancerArn: string,
+    readonly loadBalancerArn?: string,
     readonly age?: string,
     readonly type?: string,
     public hasAttachments?: boolean,
@@ -22,7 +22,7 @@ export class Elb extends ProviderResource {
     if (this.type === 'classic') {
       return this.loadBalancerName
     }
-    return this.loadBalancerArn
+    return this.loadBalancerArn ?? ''
   }
 
   getRegion (): string {

@@ -1,10 +1,15 @@
 import { Response } from '../../../responses/response'
 import { AwsClientCommandOutputTypeType } from '../interfaces'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export interface AwsClientInterface {
-  getCommands (region: string): any[]
+  getCollectCommands (region: string): any[]
 
-  formatResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>>
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any>
 
-  getAdditionalDataForFormattedResponse<Type> (response: Response<Type>): Promise<Response<Type>>
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean
+
+  formatCollectResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>>
+
+  getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>>
 }

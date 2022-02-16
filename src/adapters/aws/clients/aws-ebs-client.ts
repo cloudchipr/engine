@@ -1,18 +1,32 @@
-import { DescribeVolumesCommand, DescribeVolumesCommandOutput, EC2Client } from '@aws-sdk/client-ec2'
+import {
+  DeleteVolumeCommand,
+  DescribeVolumesCommand,
+  DescribeVolumesCommandOutput,
+  EC2Client
+} from '@aws-sdk/client-ec2'
 import { Ebs } from '../../../domain/types/aws/ebs'
 import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export default class AwsEbsClient extends AwsBaseClient implements AwsClientInterface {
-  getCommands (region: string): any[] {
-    const commands = []
-    commands.push(this.getClient(region).send(this.getCommand()))
-    return commands
+  getCollectCommands (region: string): any[] {
+    return [
+      this.getClient(region).send(AwsEbsClient.getDescribeVolumesCommand())
+    ]
   }
 
-  async formatResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.getClient(request.region).send(AwsEbsClient.getDeleteVolumeCommand(request.id))
+        .then(() => resolve(request.id))
+        .catch((e) => reject(e.message))
+    })
+  }
+
+  async formatCollectResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Volumes) || res.Volumes.length === 0) {
@@ -40,7 +54,11 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     return new EC2Client({ credentials: this.credentialProvider, region })
   }
 
-  private getCommand (): DescribeVolumesCommand {
+  private static getDescribeVolumesCommand (): DescribeVolumesCommand {
     return new DescribeVolumesCommand({ MaxResults: 1000 })
+  }
+
+  private static getDeleteVolumeCommand (volumeId: string): DeleteVolumeCommand {
+    return new DeleteVolumeCommand({ VolumeId: volumeId })
   }
 }

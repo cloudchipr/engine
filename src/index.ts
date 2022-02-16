@@ -1,5 +1,8 @@
 export * from './parameter'
 export * from './engine-request'
+export * from './request/clean/clean-request-interface'
+export * from './request/clean/clean-request-resource-interface'
+export * from './request/clean/clean-request-resource-metadata-interface'
 export * from './engine-response'
 
 export * from './filters/filter-builder'

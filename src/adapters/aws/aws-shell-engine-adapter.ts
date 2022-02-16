@@ -252,7 +252,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             return new Elb(
               elbResponseItemJson.LoadBalancerName,
               elbResponseItemJson.DNSName,
-              '',
+              undefined,
               elbResponseItemJson.CreatedTime,
               'classic',
               false,
