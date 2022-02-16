@@ -23,7 +23,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
       const metadata = request.metadata as CleanEipMetadataInterface
       const id = metadata.domain === 'classic' ? request.id : metadata.allocationId
       this.getClient(request.region)
-        .send(AwsEipClient.getReleaseAddressCommand(id as string))
+        .send(AwsEipClient.getReleaseAddressCommand(id as string, metadata.domain))
         .then(() => resolve(request.id))
         .catch((e) => reject(e.message))
     })
@@ -68,7 +68,8 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
     return new DescribeAddressesCommand({})
   }
 
-  private static getReleaseAddressCommand (publicIp: string): ReleaseAddressCommand {
-    return new ReleaseAddressCommand({ PublicIp: publicIp })
+  private static getReleaseAddressCommand (id: string, domain: string): ReleaseAddressCommand {
+    const config = domain === 'classic' ? { PublicIp: id } : { AllocationId: id }
+    return new ReleaseAddressCommand(config)
   }
 }
