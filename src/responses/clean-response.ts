@@ -1,14 +1,13 @@
-import { SubCommandInterface } from '../sub-command-interface'
 import { CleanFailureResponse } from './clean-failure-response'
 
 export class CleanResponse {
   constructor (
-    private readonly _subCommand: SubCommandInterface,
+    private readonly _subCommand: string,
     private _success: string[] = [],
     private _failure: CleanFailureResponse[] = []
   ) {}
 
-  get subCommand (): SubCommandInterface {
+  get subCommand (): string {
     return this._subCommand
   }
 

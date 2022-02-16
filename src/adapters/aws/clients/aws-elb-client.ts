@@ -23,8 +23,8 @@ import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
-import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
-import { CleanElbMetadataInterface } from '../../../request/clean/interface/clean-request-resource-metadata-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CleanElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -52,11 +52,11 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
-    if (!('metadata' in request)) {
+    if (!('metadata' in request) || request.metadata === undefined) {
       return false
     }
     const metadata = request.metadata as CleanElbMetadataInterface
-    return metadata.type === 'classic' || metadata.loadBalancerArn !== undefined
+    return metadata.type === 'classic' || (['network', 'application'].includes(metadata.type) && metadata.loadBalancerArn !== undefined)
   }
 
   async formatCollectResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Promise<Response<Type>> {

@@ -8,12 +8,8 @@ import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
-import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
-import { CleanRequest } from '../../../request/clean/clean-request'
-import {
-  CleanEipMetadataInterface,
-  CleanElbMetadataInterface
-} from '../../../request/clean/interface/clean-request-resource-metadata-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CleanEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class AwsEipClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -34,11 +30,11 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
-    if (!('metadata' in request)) {
+    if (!('metadata' in request) || request.metadata === undefined) {
       return false
     }
     const metadata = request.metadata as CleanEipMetadataInterface
-    return metadata.domain === 'classic' || metadata.allocationId !== undefined
+    return metadata.domain === 'classic' || (metadata.domain === 'vpc' && metadata.allocationId !== undefined)
   }
 
   async formatCollectResponse<Type> (response: DescribeAddressesCommandOutput[]): Promise<Response<Type>> {

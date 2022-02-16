@@ -5,8 +5,8 @@ import { Response } from '../../responses/response'
 import { EngineInterface } from '../engine-interface'
 import { AWSConfiguration } from './aws-configuration'
 import AwsClient from './clients/aws-client'
-import { CleanRequest } from '../../request/clean/clean-request'
 import { CleanResponse } from '../../responses/clean-response'
+import { CleanRequestInterface } from '../../request/clean/clean-request-interface'
 
 export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly credentials: CredentialProvider
@@ -20,7 +20,7 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
       return awsClient.collectResources<Type>(request)
     }
 
-    clean (request: CleanRequest): Promise<CleanResponse> {
+    clean (request: CleanRequestInterface): Promise<CleanResponse> {
       const awsClient = new AwsClient(request.subCommand.getValue(), this.credentials)
       return awsClient.cleanResources(request)
     }

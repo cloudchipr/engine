@@ -1,5 +1,5 @@
-import { CleanRequestResourceMetadataInterface } from './interface/clean-request-resource-metadata-interface'
-import { CleanRequestResourceInterface } from './interface/clean-request-resource-interface'
+import { CleanRequestResourceMetadataInterface } from './clean-request-resource-metadata-interface'
+import { CleanRequestResourceInterface } from './clean-request-resource-interface'
 
 export class CleanRequestResource implements CleanRequestResourceInterface {
   constructor (

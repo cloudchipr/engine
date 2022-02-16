@@ -1,11 +1,11 @@
 export interface CleanElbMetadataInterface {
   loadBalancerArn?: string;
-  type: 'classic' | 'network' | 'application';
+  type: string;
 }
 
 export interface CleanEipMetadataInterface {
   allocationId?: string
-  domain: 'classic' | 'vpc';
+  domain: string;
 }
 
 export type CleanRequestResourceMetadataInterface =

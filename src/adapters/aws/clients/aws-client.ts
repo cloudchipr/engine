@@ -9,8 +9,8 @@ import AwsRdsClient from './aws-rds-client'
 import { AwsSubCommand } from '../../../aws-sub-command'
 import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
-import { CleanRequest } from '../../../request/clean/clean-request'
 import { EngineRequest } from '../../../engine-request'
+import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 
 export default class AwsClient {
   private awsClientInstance: AwsClientInterface;
@@ -29,18 +29,22 @@ export default class AwsClient {
     return this.awsClientInstance.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
   }
 
-  async cleanResources (request: CleanRequest): Promise<CleanResponse> {
+  async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
+    const response = new CleanResponse(request.subCommand.getValue())
     const promises: any[] = []
     for (const resource of request.resources) {
       if (this.awsClientInstance.isCleanRequestValid(resource)) {
         promises.push(this.awsClientInstance.getCleanCommands(resource))
+      } else {
+        response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
       }
     }
-    const response = new CleanResponse(request.subCommand)
-    const result = await Promise.allSettled(promises)
-    for (let i = 0; i < result.length; i++) {
-      // @ts-ignore
-      result[i].status === 'fulfilled' ? response.addSuccess(result[i].value) : response.addFailure(new CleanFailureResponse(request.resources[i].id, result[i].reason))
+    if (promises.length > 0) {
+      const result = await Promise.allSettled(promises)
+      for (let i = 0; i < result.length; i++) {
+        // @ts-ignore
+        result[i].status === 'fulfilled' ? response.addSuccess(result[i].value) : response.addFailure(new CleanFailureResponse(request.resources[i].id, result[i].reason))
+      }
     }
     return response
   }

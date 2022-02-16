@@ -1,6 +1,6 @@
 import { Response } from '../../../responses/response'
 import { AwsClientCommandOutputTypeType } from '../interfaces'
-import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export interface AwsClientInterface {
   getCollectCommands (region: string): any[]

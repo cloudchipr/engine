@@ -1,6 +1,6 @@
 import { SubCommandInterface } from '../../sub-command-interface'
-import { CleanRequestInterface } from './interface/clean-request-interface'
-import { CleanRequestResourceInterface } from './interface/clean-request-resource-interface'
+import { CleanRequestInterface } from './clean-request-interface'
+import { CleanRequestResourceInterface } from './clean-request-resource-interface'
 
 export class CleanRequest implements CleanRequestInterface {
   constructor (

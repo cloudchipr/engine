@@ -9,7 +9,7 @@ import { TagsHelper } from '../../../helpers/tags-helper'
 import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
-import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export default class AwsEbsClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {

@@ -19,7 +19,7 @@ import {
 import moment from 'moment'
 import { AwsMetricDetails } from '../../../domain/aws-metric-details'
 import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
-import { CleanRequestResourceInterface } from '../../../request/clean/interface/clean-request-resource-interface'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
