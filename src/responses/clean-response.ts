@@ -2,36 +2,16 @@ import { CleanFailureResponse } from './clean-failure-response'
 
 export class CleanResponse {
   constructor (
-    private readonly _subCommand: string,
-    private _success: string[] = [],
-    private _failure: CleanFailureResponse[] = []
+    readonly subCommand: string,
+    readonly success: string[] = [],
+    readonly failure: CleanFailureResponse[] = []
   ) {}
 
-  get subCommand (): string {
-    return this._subCommand
-  }
-
-  get success (): string[] {
-    return this._success
-  }
-
-  set success (success: string[]) {
-    this._success = success
-  }
-
   addSuccess (success: string): void {
-    this._success.push(success)
-  }
-
-  get failure (): CleanFailureResponse[] {
-    return this._failure
-  }
-
-  set failure (failure: CleanFailureResponse[]) {
-    this._failure = failure
+    this.success.push(success)
   }
 
   addFailure (failure: CleanFailureResponse): void {
-    this._failure.push(failure)
+    this.failure.push(failure)
   }
 }
