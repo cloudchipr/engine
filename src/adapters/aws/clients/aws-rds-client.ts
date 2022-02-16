@@ -119,7 +119,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
   }
 
   private static getDeleteDBInstanceCommand (instanceIdentifier: string): DeleteDBInstanceCommand {
-    return new DeleteDBInstanceCommand({ DBInstanceIdentifier: instanceIdentifier })
+    return new DeleteDBInstanceCommand({ DBInstanceIdentifier: instanceIdentifier, SkipFinalSnapshot: true })
   }
 
   private static getMetricStatisticsCommand (instanceIdentifier: string, metricName: string, unit: string): GetMetricStatisticsCommand {
