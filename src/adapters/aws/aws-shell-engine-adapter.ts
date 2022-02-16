@@ -80,7 +80,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
         request.parameter.regions,
         currentAccount,
         accounts,
-        request.isDebugMode,
         request.outputDirectory,
         this.awsConfiguration
       )
@@ -96,7 +95,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     private async getElbPolicy (request: EngineRequest, currentAccount: string| undefined, accounts: string[]) : Promise<[string, any]> {
-      const policyName = 'target-group-collect'
+      const policyName = `target-group-${request.subCommand.getValue()}-collect`
       const policy: any = this.getPolicy(policyName)
 
       const targetGroups = <Array<TargetGroup>><unknown> await this.executeC7nPolicy(policy, policyName, request, currentAccount, accounts)
@@ -180,6 +179,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             false,
             ebsResponseItemJson.CreateTime,
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
+            [],
             ebsResponseItemJson.C8rRegion,
             ebsResponseItemJson.C8rAccount
           )
@@ -225,6 +225,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ec2ResponseItemJson.UsageOperation,
             undefined,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
+            [],
             ec2ResponseItemJson.C8rRegion,
             ec2ResponseItemJson.C8rAccount
           )
@@ -256,6 +257,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               'classic',
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              [],
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
@@ -287,6 +289,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               'network',
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              [],
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
@@ -318,6 +321,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               'application',
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
+              [],
               elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
@@ -345,6 +349,11 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               eipResponseItemJson.PublicIp,
               eipResponseItemJson.NetworkBorderGroup,
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              [],
               eipResponseItemJson.C8rRegion,
               eipResponseItemJson.C8rAccount
             )
@@ -385,6 +394,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               rdsResponseItemJson.AvailabilityZone,
               undefined,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),
+              [],
               rdsResponseItemJson.C8rRegion,
               rdsResponseItemJson.C8rAccount
             )

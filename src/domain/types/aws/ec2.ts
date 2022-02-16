@@ -1,6 +1,7 @@
 import { ProviderResource } from '../provider-resource'
 import { Metric } from '../../metric'
 import { AwsEc2Metric } from '../../aws-ec2-metric'
+import { Tag } from '../../tag'
 
 // Elastic Compute Cloud
 export class Ec2 extends ProviderResource {
@@ -19,6 +20,7 @@ export class Ec2 extends ProviderResource {
     readonly usageOperation: string,
     public metrics?: AwsEc2Metric,
     readonly nameTag?: string,
+    readonly tags?: Tag[],
     readonly _c8rRegion?: string,
     readonly _c8rAccount?: string
   ) { super() }
