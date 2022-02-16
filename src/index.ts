@@ -28,6 +28,8 @@ export * from './domain/aws-rds-metric'
 export * from './domain/aws-metric-details'
 
 export * from './responses/response'
+export * from './responses/clean-response'
+export * from './responses/clean-failure-response'
 
 export * from './command'
 export * from './sub-command-interface'
