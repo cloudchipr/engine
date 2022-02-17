@@ -151,14 +151,16 @@ export default class AwsPriceCalculator {
     for (const regionKey of Object.keys(filters)) {
       const filter = filters[regionKey].filter
       const priceData = await this.client.getPrice('AWSELB', filter)
-
-      const onDemand = priceData.terms.OnDemand
-      const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
-      const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
-
+      let price: number
+      if (priceData !== undefined && priceData.terms !== undefined) {
+        const onDemand = priceData.terms.OnDemand
+        const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+        const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
+        price = pricePerUnit.USD
+      }
       const elbItems = filters[regionKey].elbItems
       elbItems.forEach(elb => {
-        elb.pricePerHour = pricePerUnit.USD
+        elb.pricePerHour = price
         return elb
       })
     }
@@ -204,14 +206,16 @@ export default class AwsPriceCalculator {
           for (const multiAZKey of Object.keys(filters[regionKey][instanceTypeKey][dbTypeKey])) {
             const filter = filters[regionKey][instanceTypeKey][dbTypeKey][multiAZKey].filter
             const priceData = await this.client.getPrice('AmazonRDS', filter)
-
-            const onDemand = priceData.terms.OnDemand
-            const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
-            const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
-
+            let price: number
+            if (priceData !== undefined && priceData.terms !== undefined) {
+              const onDemand = priceData.terms.OnDemand
+              const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+              const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
+              price = pricePerUnit.USD
+            }
             const rdsItems = filters[regionKey][instanceTypeKey][dbTypeKey][multiAZKey].rdsItems
             rdsItems.forEach(rds => {
-              rds.pricePerHour = pricePerUnit.USD
+              rds.pricePerHour = price
               return rds
             })
           }
@@ -251,14 +255,16 @@ export default class AwsPriceCalculator {
       for (const volumeTypeKey of Object.keys(filters[regionKey])) {
         const filter = filters[regionKey][volumeTypeKey].filter
         const priceData = await this.client.getPrice('AmazonEC2', filter)
-
-        const onDemand = priceData.terms.OnDemand
-        const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
-        const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
-
+        let price: number
+        if (priceData !== undefined && priceData.terms !== undefined) {
+          const onDemand = priceData.terms.OnDemand
+          const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+          const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
+          price = pricePerUnit.USD
+        }
         const ebsItems = filters[regionKey][volumeTypeKey].ebsItems
         ebsItems.forEach(ebs => {
-          ebs.pricePerMonthGB = pricePerUnit.USD
+          ebs.pricePerMonthGB = price
           return ebs
         })
       }
@@ -291,10 +297,11 @@ export default class AwsPriceCalculator {
     for (const regionKey of Object.keys(filters)) {
       const filter = filters[regionKey].filter
       const priceData = await this.client.getPrice('AmazonEC2', filter)
-
-      const onDemand = priceData.terms.OnDemand
-      const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
-
+      let priceDimensions: any = {}
+      if (priceData !== undefined && priceData.terms !== undefined) {
+        const onDemand = priceData.terms.OnDemand
+        priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+      }
       let priceFound: boolean = false
       for (const priceDimensionItemKey of Object.keys(priceDimensions)) {
         const priceDimensionItem = priceDimensions[priceDimensionItemKey]
@@ -376,13 +383,16 @@ export default class AwsPriceCalculator {
             for (const tenancyKey of Object.keys(filters[regionKey][typeKey][platformKey][usageOperationKey])) {
               const filter = filters[regionKey][typeKey][platformKey][usageOperationKey][tenancyKey].filter
               const priceData = await this.client.getPrice('AmazonEC2', filter)
-              const onDemand = priceData.terms.OnDemand
-              const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
-              const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
-
+              let price: number
+              if (priceData !== undefined && priceData.terms !== undefined) {
+                const onDemand = priceData.terms.OnDemand
+                const priceDimensions = onDemand[Object.keys(onDemand)[0]].priceDimensions
+                const pricePerUnit = priceDimensions[Object.keys(priceDimensions)[0]].pricePerUnit
+                price = pricePerUnit.USD
+              }
               const ec2Items = filters[regionKey][typeKey][platformKey][usageOperationKey][tenancyKey].ec2Items
               ec2Items.forEach(ec2 => {
-                ec2.pricePerHour = pricePerUnit.USD
+                ec2.pricePerHour = price
                 return ec2
               })
             }
