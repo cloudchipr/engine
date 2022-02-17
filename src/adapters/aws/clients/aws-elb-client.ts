@@ -52,7 +52,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
-    if (!('metadata' in request) || request.metadata === undefined) {
+    if (!('metadata' in request) || !request.metadata) {
       return false
     }
     const metadata = request.metadata as CleanElbMetadataInterface
