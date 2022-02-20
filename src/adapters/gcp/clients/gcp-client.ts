@@ -3,6 +3,7 @@ import { EngineRequest } from '../../../engine-request'
 import { GcpClientInterface } from './gcp-client-interface'
 import GcpVmClient from './gcp-vm-client'
 import { GcpSubCommand } from '../gcp-sub-command'
+import GcpLbClient from './gcp-lb-client'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -12,11 +13,7 @@ export default class GcpClient {
   }
 
   async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
-    let promises: any[] = []
-    for (const region of request.parameter.regions) {
-      promises = [...promises, ...this.gcpClientInterface.getCollectCommands(region)]
-    }
-    const response = await Promise.all(promises)
+    const response = await Promise.all(this.gcpClientInterface.getCollectCommands(request.parameter.regions))
     return await this.gcpClientInterface.formatCollectResponse<Type>(response)
   }
 
@@ -24,6 +21,8 @@ export default class GcpClient {
     switch (subcommand) {
       case GcpSubCommand.VM_SUBCOMMAND:
         return new GcpVmClient()
+      case GcpSubCommand.LB_SUBCOMMAND:
+        return new GcpLbClient()
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

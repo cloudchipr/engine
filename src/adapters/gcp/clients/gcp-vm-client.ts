@@ -5,10 +5,12 @@ import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 
 export default class GcpVmClient implements GcpClientInterface {
-  getCollectCommands (region: string): any[] {
-    return [
-      GcpVmClient.getClient().list({ project: 'cloud-test-340820', zone: region })
-    ]
+  getCollectCommands (regions: string[]): any[] {
+    const promises: any[] = []
+    for (const region of regions) {
+      promises.push(GcpVmClient.getClient().list({ project: 'cloud-test-340820', zone: region }))
+    }
+    return promises
   }
 
   async formatCollectResponse<Type> (response: any[]): Promise<Response<Type>> {
