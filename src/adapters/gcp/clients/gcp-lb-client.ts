@@ -2,6 +2,7 @@ import { GcpClientInterface } from './gcp-client-interface'
 import { GlobalForwardingRulesClient, ForwardingRulesClient } from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { Lb } from '../../../domain/types/gcp/lb'
+import { StringHelper } from '../../../helpers/string-hepler'
 
 export default class GcpLbClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -21,7 +22,7 @@ export default class GcpLbClient implements GcpClientInterface {
           data.push(new Lb(
             i.name,
             i.IPProtocol,
-            i.region
+            StringHelper.splitAndGetAtIndex(i.region ?? '', '/', -1)
           ))
         })
       })
