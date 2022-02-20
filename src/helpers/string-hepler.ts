@@ -8,6 +8,6 @@ export class StringHelper {
     if (index < 0) {
       index = array.length + index
     }
-    return array[index]
+    return array[index] ?? ''
   }
 }
