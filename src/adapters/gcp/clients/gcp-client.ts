@@ -2,7 +2,7 @@ import { Response } from '../../../responses/response'
 import { EngineRequest } from '../../../engine-request'
 import { GcpClientInterface } from './gcp-client-interface'
 import GcpVmClient from './gcp-vm-client'
-import { InstancesClient } from '@google-cloud/compute'
+import { GcpSubCommand } from '../gcp-sub-command'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -11,26 +11,18 @@ export default class GcpClient {
     this.gcpClientInterface = GcpClient.getAwsClient(subcommand)
   }
 
-  async collectResources (): Promise<any> {
-    const resources = await (new InstancesClient()).aggregatedListAsync({ project: 'cloud-test-340820', maxResults: 1000 })
-    console.log('Instances found:')
-    console.log(resources)
-    console.log('================================================')
-    for await (const [zone, instancesObject] of resources) {
-      const instances = instancesObject.instances
-      if (instances && instances.length > 0) {
-        console.log(` ${zone}`)
-        for (const instance of instances) {
-          console.log(` - ${instance.name} (${instance.machineType})`)
-        }
-      }
+  async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
+    let promises: any[] = []
+    for (const region of request.parameter.regions) {
+      promises = [...promises, ...this.gcpClientInterface.getCollectCommands(region)]
     }
-    return resources
+    const response = await Promise.all(promises)
+    return await this.gcpClientInterface.formatCollectResponse<Type>(response)
   }
 
   private static getAwsClient (subcommand: string): GcpClientInterface {
     switch (subcommand) {
-      case 'vm':
+      case GcpSubCommand.VM_SUBCOMMAND:
         return new GcpVmClient()
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
