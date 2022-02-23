@@ -5,6 +5,7 @@ import GcpVmClient from './gcp-vm-client'
 import { GcpSubCommand } from '../gcp-sub-command'
 import GcpLbClient from './gcp-lb-client'
 import GcpDisksClient from './gcp-disks-client'
+import GcpEipClient from './gcp-eip-client'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -26,6 +27,8 @@ export default class GcpClient {
         return new GcpLbClient()
       case GcpSubCommand.DISKS_SUBCOMMAND:
         return new GcpDisksClient()
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return new GcpEipClient()
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

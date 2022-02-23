@@ -1,5 +1,7 @@
 export class Eip {
   constructor (
-    readonly id: string
+    readonly ip: string,
+    readonly name?: string,
+    readonly region?: string
   ) {}
 }
