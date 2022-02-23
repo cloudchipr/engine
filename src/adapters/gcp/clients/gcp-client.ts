@@ -6,6 +6,7 @@ import { GcpSubCommand } from '../gcp-sub-command'
 import GcpLbClient from './gcp-lb-client'
 import GcpDisksClient from './gcp-disks-client'
 import GcpEipClient from './gcp-eip-client'
+import GcpCloudSqlClient from './gcp-cloud-sql-client'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -29,6 +30,8 @@ export default class GcpClient {
         return new GcpDisksClient()
       case GcpSubCommand.EIP_SUBCOMMAND:
         return new GcpEipClient()
+      case GcpSubCommand.CLOUD_SQL_SUBCOMMAND:
+        return new GcpCloudSqlClient()
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }
