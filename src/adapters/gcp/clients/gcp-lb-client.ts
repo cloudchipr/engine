@@ -3,6 +3,7 @@ import { GlobalForwardingRulesClient, ForwardingRulesClient } from '@google-clou
 import { Response } from '../../../responses/response'
 import { Lb } from '../../../domain/types/gcp/lb'
 import { StringHelper } from '../../../helpers/string-hepler'
+import { Label } from '../../../domain/types/gcp/shared/label'
 
 export default class GcpLbClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -18,11 +19,15 @@ export default class GcpLbClient implements GcpClientInterface {
     const data: any[] = []
     response.forEach((res) => {
       res.forEach((r: any) => {
-        r?.forEach((i: any) => {
+        r?.forEach((instance: any) => {
           data.push(new Lb(
-            i.name,
-            i.IPProtocol,
-            StringHelper.splitAndGetAtIndex(i.region ?? '', '/', -1)
+            instance.name,
+            instance.IPProtocol,
+            undefined, // @todo scope
+            instance.creationTimestamp,
+            StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
+            undefined,
+            Label.createInstances(instance.labels)
           ))
         })
       })
