@@ -3,6 +3,7 @@ import { InstancesClient } from '@google-cloud/compute'
 import { Vm } from '../../../domain/types/gcp/vm'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
+import { Label } from '../../../domain/types/gcp/shared/label'
 
 export default class GcpVmClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -20,8 +21,14 @@ export default class GcpVmClient implements GcpClientInterface {
         r?.forEach((instance: any) => {
           data.push(new Vm(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1),
+            instance.creationTimestamp,
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1),
-            StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1)
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            Label.createInstances(instance.labels)
           ))
         })
       })

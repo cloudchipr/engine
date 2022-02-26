@@ -3,6 +3,7 @@ import { AddressesClient, GlobalAddressesClient } from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Eip } from '../../../domain/types/gcp/eip'
+import { Label } from '../../../domain/types/gcp/shared/label'
 
 export default class GcpEipClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -22,7 +23,9 @@ export default class GcpEipClient implements GcpClientInterface {
           data.push(new Eip(
             instance.address,
             instance.name,
-            StringHelper.splitAndGetAtIndex(instance.region, '/', -1)
+            StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
+            undefined,
+            Label.createInstances(instance.labels) // @todo label is not available here
           ))
         })
       })

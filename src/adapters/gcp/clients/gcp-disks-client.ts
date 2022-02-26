@@ -3,6 +3,7 @@ import { DisksClient } from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Disks } from '../../../domain/types/gcp/disks'
+import { Label } from '../../../domain/types/gcp/shared/label'
 
 export default class GcpDisksClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -20,7 +21,13 @@ export default class GcpDisksClient implements GcpClientInterface {
         r?.forEach((instance: any) => {
           data.push(new Disks(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.type, '/', -1),
+            instance.status,
+            instance.sizeGb,
+            instance.creationTimestamp,
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1),
+            undefined,
+            Label.createInstances(instance.labels)
           ))
         })
       })
