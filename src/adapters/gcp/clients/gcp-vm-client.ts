@@ -10,6 +10,13 @@ import GcpBaseClient from './gcp-base-client'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
+  static readonly METRIC_NETWORK_IN_NAME: string = 'compute.googleapis.com/instance/network/received_bytes_count'
+  static readonly METRIC_NETWORK_OUT_NAME: string = 'compute.googleapis.com/instance/network/sent_bytes_count'
+  static readonly METRIC_NAME_MAPPING = {
+    [GcpVmClient.METRIC_CPU_NAME]: 'cpu',
+    [GcpVmClient.METRIC_NETWORK_IN_NAME]: 'networkIn',
+    [GcpVmClient.METRIC_NETWORK_OUT_NAME]: 'networkOut'
+  }
 
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
@@ -44,15 +51,21 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     const promises: any[] = []
     // @ts-ignore
     response.items.forEach((item: Vm) => {
-      promises.push(
-        // @ts-ignore
-        client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_CPU_NAME, item.name, 'ALIGN_MAX')))
+      // @ts-ignore
+      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_CPU_NAME, item.name, 'ALIGN_MAX')))
+      // @ts-ignore
+      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_IN_NAME, item.name, 'ALIGN_SUM')))
+      // @ts-ignore
+      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_OUT_NAME, item.name, 'ALIGN_SUM')))
     })
     const metricsResponse = await Promise.all(promises)
+    console.log(metricsResponse)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
     // @ts-ignore
     response.items.map((item: Vm) => {
-      item.metrics = formattedMetrics[item.name]
+      if (item.name in formattedMetrics) {
+        item.metrics = formattedMetrics[item.name]
+      }
       return item
     })
     return response
@@ -67,12 +80,14 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
         }
         data.forEach(d => {
           const instanceName = d.metric.labels.instance_name
-          const metricName = StringHelper.splitAndGetAtIndex(d.metric.type, '/', -2) as string
-          formattedData[instanceName] = new VmMetric()
+          const metricName = GcpVmClient.METRIC_NAME_MAPPING[d.metric.type]
+          if (!(instanceName in formattedData)) {
+            formattedData[instanceName] = new VmMetric()
+          }
           formattedData[instanceName][metricName] = d.points.map((p: any) => {
             return new VmMetricDetails(
               moment.unix(parseInt(p.interval.startTime.seconds)).utc().format(),
-              p.value.doubleValue,
+              p.value.doubleValue ?? p.value.int64Value,
               metricName
             )
           })

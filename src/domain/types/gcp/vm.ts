@@ -34,6 +34,11 @@ export class VmMetricDetails {
         this.unit = 'Percent'
         this.valueType = 'Average'
         break
+      case 'networkIn':
+      case 'networkOut':
+        this.unit = 'Bytes'
+        this.valueType = 'Sum'
+        break
     }
   }
 }
