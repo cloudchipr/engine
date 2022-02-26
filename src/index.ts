@@ -31,7 +31,7 @@ export { CloudSql as GcpCloudSql } from './domain/types/gcp/cloud-sql'
 export { Disks as GcpDisks } from './domain/types/gcp/disks'
 export { Eip as GcpEip } from './domain/types/gcp/eip'
 export { Lb as GcpLb } from './domain/types/gcp/lb'
-export { Vm as GcpVm } from './domain/types/gcp/vm'
+export { Vm as GcpVm, VmMetric as GcpVmMetric, VmMetricDetails as GcpVmMetricDetails } from './domain/types/gcp/vm'
 
 export * from './responses/response'
 export * from './responses/clean-response'
