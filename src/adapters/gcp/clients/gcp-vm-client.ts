@@ -60,7 +60,6 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
       promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_OUT_NAME, item.name, 'ALIGN_SUM')))
     })
     const metricsResponse = await Promise.all(promises)
-    console.log(metricsResponse)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
     // @ts-ignore
     response.items.map((item: Vm) => {
