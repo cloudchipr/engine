@@ -17,7 +17,7 @@ import {
   GetMetricStatisticsCommandOutput
 } from '@aws-sdk/client-cloudwatch'
 import moment from 'moment'
-import { AwsMetricDetails } from '../../../domain/aws-metric-details'
+import { MetricDetails } from '../../../domain/metric-details'
 import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
@@ -93,7 +93,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
         data[instanceIdentifier][AwsRdsMetric.getPropertyNameFromString(metric.Label)] = metric.Datapoints
           ?.sort((a: any, b: any) => b.Timestamp - a.Timestamp)
           ?.map((datapoint) => {
-            return new AwsMetricDetails(
+            return new MetricDetails(
               datapoint.Timestamp,
               datapoint.Unit,
               datapoint.Average,

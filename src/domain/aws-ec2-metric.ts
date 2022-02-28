@@ -1,10 +1,10 @@
-import { AwsMetricDetails } from './aws-metric-details'
+import { MetricDetails } from './metric-details'
 
 export class AwsEc2Metric {
   constructor (
-    public cpu: AwsMetricDetails[] = [],
-    public networkIn: AwsMetricDetails[] = [],
-    public networkOut: AwsMetricDetails[] = []
+    public cpu: MetricDetails[] = [],
+    public networkIn: MetricDetails[] = [],
+    public networkOut: MetricDetails[] = []
   ) {}
 
   static getPropertyNameFromString (prop: string): string {

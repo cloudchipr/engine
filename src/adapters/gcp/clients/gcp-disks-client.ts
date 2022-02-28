@@ -4,8 +4,9 @@ import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Label } from '../../../domain/types/gcp/shared/label'
+import GcpBaseClient from './gcp-base-client'
 
-export default class GcpDisksClient implements GcpClientInterface {
+export default class GcpDisksClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {

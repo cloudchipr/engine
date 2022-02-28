@@ -1,8 +1,8 @@
-import { AwsMetricDetails } from './aws-metric-details'
+import { MetricDetails } from './metric-details'
 
 export class AwsRdsMetric {
   constructor (
-    public databaseConnections: AwsMetricDetails[] = []
+    public databaseConnections: MetricDetails[] = []
   ) {}
 
   static getPropertyNameFromString (prop: string): string {
