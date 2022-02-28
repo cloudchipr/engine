@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.0.86",
+  "version": "0.0.87",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -33,6 +33,7 @@
     "@aws-sdk/credential-providers": "^3.41.0",
     "@google-cloud/billing": "^2.3.0",
     "@google-cloud/compute": "^3.1.2",
+    "@google-cloud/monitoring": "^2.3.5",
     "fs": "0.0.1-security",
     "js-yaml": "^4.1.0",
     "moment": "^2.29.1",

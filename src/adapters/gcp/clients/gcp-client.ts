@@ -16,7 +16,8 @@ export default class GcpClient {
 
   async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
     const response = await Promise.all(this.gcpClientInterface.getCollectCommands(request.parameter.regions))
-    return await this.gcpClientInterface.formatCollectResponse<Type>(response)
+    const formattedResponse = await this.gcpClientInterface.formatCollectResponse<Type>(response)
+    return await this.gcpClientInterface.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
   }
 
   private static getAwsClient (subcommand: string): GcpClientInterface {

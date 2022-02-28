@@ -1,4 +1,5 @@
 import { Label } from './shared/label'
+import { MetricDetails } from '../../metric-details'
 
 export class Vm {
   constructor (
@@ -6,10 +7,16 @@ export class Vm {
     readonly machineType?: string,
     readonly age?: string,
     readonly zone?: string,
-    readonly cpu?: any,
-    readonly networkIn?: any,
-    readonly networkOut?: any,
+    public metrics?: VmMetric,
     readonly pricePerMonth?: number,
     readonly labels?: Label[]
+  ) {}
+}
+
+export class VmMetric {
+  constructor (
+    public cpu: MetricDetails[] = [],
+    public networkIn: MetricDetails[] = [],
+    public networkOut: MetricDetails[] = []
   ) {}
 }
