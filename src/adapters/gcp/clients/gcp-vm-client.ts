@@ -1,12 +1,13 @@
 import { GcpClientInterface } from './gcp-client-interface'
 import { InstancesClient } from '@google-cloud/compute'
-import { Vm, VmMetric, VmMetricDetails } from '../../../domain/types/gcp/vm'
+import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Label } from '../../../domain/types/gcp/shared/label'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
 import GcpBaseClient from './gcp-base-client'
+import { MetricDetails } from '../../../domain/metric-details'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -85,8 +86,8 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
             formattedData[instanceName] = new VmMetric()
           }
           formattedData[instanceName][metricName] = d.points.map((p: any) => {
-            return new VmMetricDetails(
-              moment.unix(parseInt(p.interval.startTime.seconds)).utc().format(),
+            return MetricDetails.createInstance(
+              new Date(parseInt(p.interval.startTime.seconds)),
               p.value.doubleValue ?? p.value.int64Value,
               metricName
             )

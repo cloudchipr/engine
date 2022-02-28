@@ -1,4 +1,5 @@
 import { Label } from './shared/label'
+import { MetricDetails } from '../../metric-details'
 
 export class Vm {
   constructor (
@@ -14,31 +15,8 @@ export class Vm {
 
 export class VmMetric {
   constructor (
-    public cpu: VmMetricDetails[] = [],
-    public networkIn: VmMetricDetails[] = [],
-    public networkOut: VmMetricDetails[] = []
+    public cpu: MetricDetails[] = [],
+    public networkIn: MetricDetails[] = [],
+    public networkOut: MetricDetails[] = []
   ) {}
-}
-
-export class VmMetricDetails {
-  readonly timestamp: string
-  readonly unit?: string
-  readonly value: number
-  readonly valueType?: string
-
-  constructor (timestamp: string, value: number, target: string) {
-    this.timestamp = timestamp
-    this.value = value
-    switch (target) {
-      case 'cpu':
-        this.unit = 'Percent'
-        this.valueType = 'Average'
-        break
-      case 'networkIn':
-      case 'networkOut':
-        this.unit = 'Bytes'
-        this.valueType = 'Sum'
-        break
-    }
-  }
 }
