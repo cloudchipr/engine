@@ -18,7 +18,7 @@ import {
 } from '@aws-sdk/client-cloudwatch'
 import moment from 'moment'
 import { AwsEc2Metric } from '../../../domain/aws-ec2-metric'
-import { AwsMetricDetails } from '../../../domain/aws-metric-details'
+import { MetricDetails } from '../../../domain/metric-details'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export default class AwsEc2Client extends AwsBaseClient implements AwsClientInterface {
@@ -103,7 +103,7 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
         data[instanceId][AwsEc2Metric.getPropertyNameFromString(metric.Label)] = metric.Datapoints
           ?.sort((a: any, b: any) => b.Timestamp - a.Timestamp)
           ?.map((datapoint) => {
-            return new AwsMetricDetails(
+            return new MetricDetails(
               datapoint.Timestamp,
               datapoint.Unit,
               datapoint.Average,
