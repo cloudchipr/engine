@@ -11,10 +11,10 @@ export class MetricDetails {
   public static createInstance (timestamp: Date, value: number, target: string): MetricDetails {
     switch (target) {
       case 'cpu':
-        return new MetricDetails(timestamp, 'Percent', 0, 0, value, 0)
+        return new MetricDetails(timestamp, 'Percent', undefined, undefined, value, undefined)
       case 'networkIn':
       case 'networkOut':
-        return new MetricDetails(timestamp, 'Bytes', 0, 0, 0, value)
+        return new MetricDetails(timestamp, 'Bytes', undefined, undefined, undefined, value)
     }
     return new MetricDetails()
   }
