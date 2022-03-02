@@ -252,5 +252,14 @@
         ]
       }
     ]
+  },
+  "vm-collect": {
+    "policies": [
+      {
+        "name": "vm-collect",
+        "resource": "gcp.instance",
+        "filters": []
+      }
+    ]
   }
 }

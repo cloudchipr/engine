@@ -17,6 +17,7 @@ export class FilterValidator {
     }
 
     public validate (filters: Filters) {
+        return // @todo Serg plpease remove this
       if (!filters.and) {
         throw new Error('Filter validation failed : The root element must either be `and` or `or`')
       }

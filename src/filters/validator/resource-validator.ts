@@ -23,14 +23,15 @@ export class ResourceValidator implements FilterValidatorInterface {
   )
 
   validate (filter: Filter): void {
-    const allowedResources = this.allowedResourcesPerSubCommand.get(this.subCommand.getValue())
-    const resourceValidation = allowedResources?.some(u => {
-      const regexp = new RegExp(u)
-      return regexp.test(filter.resource)
-    })
-
-    if (!resourceValidation) {
-      throw new Error(`Filter validation failed : ${filter.resource} is not allowed resource for ${this.subCommand.getValue()}`)
-    }
+    //@todo Serg plpease remove this
+    // const allowedResources = this.allowedResourcesPerSubCommand.get(this.subCommand.getValue())
+    // const resourceValidation = allowedResources?.some(u => {
+    //   const regexp = new RegExp(u)
+    //   return regexp.test(filter.resource)
+    // })
+    //
+    // if (!resourceValidation) {
+    //   throw new Error(`Filter validation failed : ${filter.resource} is not allowed resource for ${this.subCommand.getValue()}`)
+    // }
   }
 }
