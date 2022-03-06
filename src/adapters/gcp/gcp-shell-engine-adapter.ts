@@ -11,6 +11,9 @@ import { Eip } from '../../domain/types/aws/eip'
 import { Rds } from '../../domain/types/aws/rds'
 import { TagsHelper } from '../../helpers/tags-helper'
 import { MetricsHelper } from '../../helpers/metrics-helper'
+import { Vm } from '../../domain/types/gcp/vm'
+import { StringHelper } from '../../helpers/string-hepler'
+import { Label } from '../../domain/types/gcp/shared/label'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -24,22 +27,20 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const generateResponseMethodName = GcpShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
+      // let policyName: string, policy: any
+      const [policyName, policy] = this.getDefaultPolicy(request)
+      const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.command, request.subCommand))
 
-        let policyName: string, policy: any
-        [policyName, policy] = this.getDefaultPolicy(request)
-        const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.command, request.subCommand))
-
-        if (filters && Object.keys(filters).length) {
-          if (typeof policy.policies[0].filters === 'undefined') {
-            policy.policies[0].filters = []
-          }
-          policy.policies[0].filters.push(filters)
+      if (filters && Object.keys(filters).length) {
+        if (typeof policy.policies[0].filters === 'undefined') {
+          policy.policies[0].filters = []
         }
-
+        policy.policies[0].filters.push(filters)
+      }
 
       // execute custodian command and return response
       const response = await this.executeC7nPolicy(policy, policyName, request, 'cloud-test-340820')
-      return (this as any)[generateResponseMethodName]([])
+      return (this as any)[generateResponseMethodName](response)
     }
 
     private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest, currentAccount: string| undefined) {
@@ -54,7 +55,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     private getDefaultPolicy (request: EngineRequest) : [string, any] {
-      const policyName = `${request.subCommand.getValue()}-${request.command.getValue()}`
+      const policyName = `gcp-${request.subCommand.getValue()}-${request.command.getValue()}`
 
       const policy: any = this.getPolicy(policyName)
       GcpShellEngineAdapter.validatePolicyName(policyName)
@@ -85,36 +86,27 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateVmResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const ebsItems = responseJson.map(
-        (ebsResponseItemJson: {
-                VolumeId: string;
-                Size: number;
-                State: string;
-                VolumeType: string;
-                CreateTime: string;
-                AvailabilityZone: string;
-                Tags: any[];
-                C8rRegion: string|undefined;
-                C8rAccount: string|undefined;
+      const vmItems = responseJson.map(
+        (vmResponseItemJson: {
+                name: string;
+                machineType?: string;
+                creationTimestamp?: string;
+                zone?: string;
+                labels?: any
             }) => {
-          return new Ebs(
-            ebsResponseItemJson.VolumeId,
-            ebsResponseItemJson.Size,
-            ebsResponseItemJson.State,
-            ebsResponseItemJson.VolumeType,
-            ebsResponseItemJson.AvailabilityZone,
-            false,
-            ebsResponseItemJson.CreateTime,
-            TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
-            [],
-            ebsResponseItemJson.C8rRegion,
-            ebsResponseItemJson.C8rAccount
+          return new Vm(
+            vmResponseItemJson.name,
+            StringHelper.splitAndGetAtIndex(vmResponseItemJson.machineType, '/', -1),
+            vmResponseItemJson.creationTimestamp,
+            StringHelper.splitAndGetAtIndex(vmResponseItemJson.zone, '/', -1),
+            undefined,
+            undefined,
+            Label.createInstances(vmResponseItemJson.labels)
           )
         }
       )
-
-      //await this.awsPriceCalculator.putEbsPrices(ebsItems)
-      return new Response<Type>(ebsItems)
+      // await this.awsPriceCalculator.putEbsPrices(ebsItems)
+      return new Response<Type>(vmItems)
     }
 
     private async generateDisksResponse (

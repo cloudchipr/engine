@@ -11,6 +11,12 @@ export class Vm {
     readonly pricePerMonth?: number,
     readonly labels?: Label[]
   ) {}
+
+  getRegionFromZone (): string | undefined {
+    const zoneArray = this.zone?.split('-')
+    zoneArray?.pop()
+    return zoneArray?.join('-')
+  }
 }
 
 export class VmMetric {
