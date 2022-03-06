@@ -145,6 +145,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   private buildLaunchTime (expression: FilterExpression): object {
     switch (this.subCommand.getValue()) {
       case GcpSubCommand.VM_SUBCOMMAND:
+      case GcpSubCommand.DISKS_SUBCOMMAND:
         return {
           type: 'value',
           key: 'creationTimestamp',

@@ -265,7 +265,7 @@
   "gcp-disks-collect": {
     "policies": [
       {
-        "name": "disks-collect",
+        "name": "gcp-disks-collect",
         "resource": "gcp.disk",
         "filters": []
       }
@@ -274,16 +274,16 @@
   "gcp-lb-collect": {
     "policies": [
       {
-        "name": "lb-collect",
+        "name": "gcp-lb-collect",
         "resource": "gcp.disk",
         "filters": []
       }
     ]
   },
-  "gcp-cloud-sql-collect": {
+  "gcp-sql-collect": {
     "policies": [
       {
-        "name": "lb-collect",
+        "name": "gcp-sql-collect",
         "resource": "gcp.disk",
         "filters": []
       }
@@ -292,7 +292,7 @@
   "gcp-eip-collect": {
     "policies": [
       {
-        "name": "lb-collect",
+        "name": "gcp-eip-collect",
         "resource": "gcp.disk",
         "filters": []
       }
