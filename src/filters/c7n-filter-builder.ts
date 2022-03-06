@@ -7,6 +7,8 @@ import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
 import { Statistics } from '../domain/statistics'
 import { Command } from '../command'
+import { GcpSubCommand } from '../adapters/gcp/gcp-sub-command'
+import moment from 'moment'
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
   private readonly command: Command
@@ -141,19 +143,29 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   }
 
   private buildLaunchTime (expression: FilterExpression): object {
-    return this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND
-      ? {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'creationTimestamp',
+          value: moment().subtract(Number(expression.value), 'd').format(),
+          op: expression.operator
+        }
+      case AwsSubCommand.RDS_SUBCOMMAND:
+        return {
           type: 'value',
           value_type: 'age',
           key: 'InstanceCreateTime',
           value: Number(expression.value),
           op: expression.operator
         }
-      : {
+      default:
+        return {
           type: 'instance-age',
           op: expression.operator,
           days: Number(expression.value)
         }
+    }
   }
 
   private static buildInstanceIds (expression: FilterExpression): object {

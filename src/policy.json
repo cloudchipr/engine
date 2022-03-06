@@ -252,5 +252,50 @@
         ]
       }
     ]
+  },
+  "gcp-vm-collect": {
+    "policies": [
+      {
+        "name": "gcp-vm-collect",
+        "resource": "gcp.instance",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-disks-collect": {
+    "policies": [
+      {
+        "name": "disks-collect",
+        "resource": "gcp.disk",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-lb-collect": {
+    "policies": [
+      {
+        "name": "lb-collect",
+        "resource": "gcp.disk",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-cloud-sql-collect": {
+    "policies": [
+      {
+        "name": "lb-collect",
+        "resource": "gcp.disk",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-eip-collect": {
+    "policies": [
+      {
+        "name": "lb-collect",
+        "resource": "gcp.disk",
+        "filters": []
+      }
+    ]
   }
 }
