@@ -8,6 +8,7 @@ import { Vm } from '../../domain/types/gcp/vm'
 import { StringHelper } from '../../helpers/string-hepler'
 import { Label } from '../../domain/types/gcp/shared/label'
 import { Disks } from '../../domain/types/gcp/disks'
+import { Sql } from '../../domain/types/gcp/sql'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -106,6 +107,22 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
         undefined,
         Label.createInstances(item.labels)
+      ))
+      // await this.awsPriceCalculator.putEbsPrices(ebsItems)
+      return new Response<Type>(items)
+    }
+
+    private async generateSqlResponse (
+      responseJson: any
+    ): Promise<Response<Type>> {
+      const items = responseJson.map((item: any) => new Sql(
+        item.name,
+        item.databaseVersion,
+        'secondaryGceZone' in item,
+        item.region,
+        undefined,
+        Label.createInstances(item.settings?.userLabels),
+        item.project
       ))
       // await this.awsPriceCalculator.putEbsPrices(ebsItems)
       return new Response<Type>(items)

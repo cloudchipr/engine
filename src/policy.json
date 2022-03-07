@@ -284,7 +284,7 @@
     "policies": [
       {
         "name": "gcp-sql-collect",
-        "resource": "gcp.disk",
+        "resource": "gcp.sql-instance",
         "filters": []
       }
     ]

@@ -23,7 +23,7 @@ export class ResourceValidator implements FilterValidatorInterface {
     [AwsSubCommand.RDS_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS, FilterResourceRegex.DB_INSTANCE_IDENTIFIER, FilterResourceRegex.TAG]],
     // GCP
     [GcpSubCommand.VM_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.CPU, FilterResourceRegex.NETWORK_IN, FilterResourceRegex.NETWORK_OUT]],
-    [GcpSubCommand.CLOUD_SQL_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS]],
+    [GcpSubCommand.SQL_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS]],
     [GcpSubCommand.LB_SUBCOMMAND, [FilterResourceRegex.INSTANCES]],
     [GcpSubCommand.DISKS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.LAUNCH_TIME]],
     [GcpSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.INSTANCE_IDS, FilterResourceRegex.ASSOCIATION_IDS]]
