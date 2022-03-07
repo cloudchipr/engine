@@ -1,19 +1,13 @@
 import { EngineInterface } from '../engine-interface'
 import * as policies from '../../policy.json'
-import { Ebs } from '../../domain/types/aws/ebs'
 import { EngineRequest } from '../../engine-request'
 import { C7nFilterBuilder } from '../../filters/c7n-filter-builder'
 import { C7nExecutor } from '../../c7n-executor'
 import { Response } from '../../responses/response'
-import { Ec2 } from '../../domain/types/aws/ec2'
-import { Elb } from '../../domain/types/aws/elb'
-import { Eip } from '../../domain/types/aws/eip'
-import { Rds } from '../../domain/types/aws/rds'
-import { TagsHelper } from '../../helpers/tags-helper'
-import { MetricsHelper } from '../../helpers/metrics-helper'
 import { Vm } from '../../domain/types/gcp/vm'
 import { StringHelper } from '../../helpers/string-hepler'
 import { Label } from '../../domain/types/gcp/shared/label'
+import { Disks } from '../../domain/types/gcp/disks'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -86,27 +80,35 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateVmResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const vmItems = responseJson.map(
-        (vmResponseItemJson: {
-                name: string;
-                machineType?: string;
-                creationTimestamp?: string;
-                zone?: string;
-                labels?: any
-            }) => {
-          return new Vm(
-            vmResponseItemJson.name,
-            StringHelper.splitAndGetAtIndex(vmResponseItemJson.machineType, '/', -1),
-            vmResponseItemJson.creationTimestamp,
-            StringHelper.splitAndGetAtIndex(vmResponseItemJson.zone, '/', -1),
-            undefined,
-            undefined,
-            Label.createInstances(vmResponseItemJson.labels)
-          )
-        }
-      )
+      const items = responseJson.map((item: any) => new Vm(
+        item.name,
+        StringHelper.splitAndGetAtIndex(item.machineType, '/', -1),
+        item.creationTimestamp,
+        StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
+        undefined,
+        undefined,
+        Label.createInstances(item.labels)
+      ))
       // await this.awsPriceCalculator.putEbsPrices(ebsItems)
-      return new Response<Type>(vmItems)
+      return new Response<Type>(items)
+    }
+
+    private async generateDisksResponse (
+      responseJson: any
+    ): Promise<Response<Type>> {
+      const items = responseJson.map((item: any) => new Disks(
+        item.name,
+        StringHelper.splitAndGetAtIndex(item.type, '/', -1),
+        item.users?.length > 0,
+        item.status,
+        (parseFloat(item.sizeGb) | 0) * 1073741824,
+        item.creationTimestamp,
+        StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
+        undefined,
+        Label.createInstances(item.labels)
+      ))
+      // await this.awsPriceCalculator.putEbsPrices(ebsItems)
+      return new Response<Type>(items)
     }
 
     private getPolicy (policyName: string) {
