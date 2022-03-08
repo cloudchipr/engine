@@ -275,7 +275,7 @@
     "policies": [
       {
         "name": "gcp-lb-collect",
-        "resource": "gcp.disk",
+        "resource": "gcp.loadbalancer-forwarding-rule",
         "filters": []
       }
     ]
@@ -293,7 +293,7 @@
     "policies": [
       {
         "name": "gcp-eip-collect",
-        "resource": "gcp.disk",
+        "resource": "gcp.loadbalancer-address",
         "filters": []
       }
     ]
