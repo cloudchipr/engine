@@ -152,6 +152,13 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
           value: moment().subtract(Number(expression.value), 'd').format(),
           op: expression.operator
         }
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'createTime',
+          value: moment().subtract(Number(expression.value), 'd').format(),
+          op: expression.operator
+        }
       case AwsSubCommand.RDS_SUBCOMMAND:
         return {
           type: 'value',
