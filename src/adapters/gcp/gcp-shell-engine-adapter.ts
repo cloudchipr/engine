@@ -11,6 +11,7 @@ import { Disks } from '../../domain/types/gcp/disks'
 import { Sql } from '../../domain/types/gcp/sql'
 import { Lb } from '../../domain/types/gcp/lb'
 import { Eip } from '../../domain/types/gcp/eip'
+import { MetricsHelper } from '../../helpers/metrics-helper'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -88,6 +89,9 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         StringHelper.splitAndGetAtIndex(item.machineType, '/', -1),
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
+        MetricsHelper.getGcpCpuUtilization(item),
+        MetricsHelper.getGcpNetworkIn(item),
+        MetricsHelper.getGcpNetworkOut(item),
         undefined,
         undefined,
         Label.createInstances(item.labels)

@@ -39,6 +39,9 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1),
             undefined,
             undefined,
+            undefined,
+            undefined,
+            undefined,
             Label.createInstances(instance.labels)
           ))
         })

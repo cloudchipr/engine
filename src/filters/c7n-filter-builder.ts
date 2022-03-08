@@ -5,7 +5,7 @@ import { Operators } from './operators'
 import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
-import { Statistics } from '../domain/statistics'
+import { getGcpStatistics, Statistics } from '../domain/statistics'
 import { Command } from '../command'
 import { GcpSubCommand } from '../adapters/gcp/gcp-sub-command'
 import moment from 'moment'
@@ -69,11 +69,11 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case 'volume-age':
         return C7nFilterBuilder.buildVolumeAge(expression)
       case 'cpu':
-        return C7nFilterBuilder.buildCpu(expression)
+        return this.buildCpu(expression)
       case 'network-in':
-        return C7nFilterBuilder.buildNetworkIn(expression)
+        return this.buildNetworkIn(expression)
       case 'network-out':
-        return C7nFilterBuilder.buildNetworkOut(expression)
+        return this.buildNetworkOut(expression)
       case 'launch-time':
         return this.buildLaunchTime(expression)
       case 'instance-ids':
@@ -83,7 +83,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case 'dns-name':
         return C7nFilterBuilder.buildDnsName(expression)
       case 'database-connections':
-        return C7nFilterBuilder.buildDatabaseConnections(expression)
+        return this.buildDatabaseConnections(expression)
       case 'volume-id':
         return C7nFilterBuilder.buildVolumeId(expression)
       case 'instance-id':
@@ -109,36 +109,72 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildCpu (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'CPUUtilization',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      op: expression.operator,
-      value: Number(expression.value)
+  private buildCpu (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'compute.googleapis.com/instance/cpu/utilization',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'CPUUtilization',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
     }
   }
 
-  private static buildNetworkIn (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'NetworkIn',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      op: expression.operator,
-      value: Number(expression.value)
+  private buildNetworkIn (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'compute.googleapis.com/instance/network/received_bytes_count',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'NetworkIn',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
     }
   }
 
-  private static buildNetworkOut (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'NetworkOut',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      op: expression.operator,
-      value: Number(expression.value)
+  private buildNetworkOut (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'compute.googleapis.com/instance/network/sent_bytes_count',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'NetworkOut',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
     }
   }
 
@@ -239,14 +275,26 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildDatabaseConnections (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'DatabaseConnections',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      value: Number(expression.value),
-      op: expression.operator
+  private buildDatabaseConnections (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'cloudsql.googleapis.com/database/network/connections',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'DatabaseConnections',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          value: Number(expression.value),
+          op: expression.operator
+        }
     }
   }
 
@@ -314,7 +362,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
   }
 
   private pushDefaultMetricFilterExpressions (filterList: FilterList) {
-    if (this.subCommand.getValue() === AwsSubCommand.EC2_SUBCOMMAND) {
+    if ([AwsSubCommand.EC2_SUBCOMMAND, GcpSubCommand.VM_SUBCOMMAND].includes(this.subCommand.getValue())) {
       const isCPUFilterProvided = filterList.andList.some(filter => {
         return (filter instanceof FilterExpression && filter.resource === 'cpu')
       })
@@ -337,7 +385,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         C7nFilterBuilder.pushDefaultFilterExpression('network-out', filterList)
       }
     }
-    if (this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND) {
+    if ([AwsSubCommand.RDS_SUBCOMMAND, GcpSubCommand.SQL_SUBCOMMAND].includes(this.subCommand.getValue())) {
       const isDatabaseConnectionsFilterProvided = filterList.andList.some(filter => {
         return (filter instanceof FilterExpression && filter.resource === 'database-connections')
       })
