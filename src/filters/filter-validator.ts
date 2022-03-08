@@ -18,7 +18,8 @@ export class FilterValidator {
 
     public validate (filters: Filters) {
       if (!filters.and) {
-        throw new Error('Filter validation failed : The root element must either be `and` or `or`')
+        filters.and = [] // @todo remove this line and uncomment the next line once the filters work for GCP
+        // throw new Error('Filter validation failed : The root element must either be `and` or `or`')
       }
 
       filters.and.forEach(filter => {

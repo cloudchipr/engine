@@ -96,7 +96,6 @@ export class FilterBuilder {
 
   load (filters: Filters): FilterBuilder {
     this.filterValidator.validate(filters)
-    filters.and = []
     for (const filter of filters.and) {
       this.addToList(
         new FilterExpression(
