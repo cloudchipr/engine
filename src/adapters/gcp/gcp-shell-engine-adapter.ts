@@ -9,6 +9,8 @@ import { StringHelper } from '../../helpers/string-hepler'
 import { Label } from '../../domain/types/gcp/shared/label'
 import { Disks } from '../../domain/types/gcp/disks'
 import { Sql } from '../../domain/types/gcp/sql'
+import { Lb } from '../../domain/types/gcp/lb'
+import { Eip } from '../../domain/types/gcp/eip'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -90,7 +92,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         undefined,
         Label.createInstances(item.labels)
       ))
-      // await this.awsPriceCalculator.putEbsPrices(ebsItems)
       return new Response<Type>(items)
     }
 
@@ -108,7 +109,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         undefined,
         Label.createInstances(item.labels)
       ))
-      // await this.awsPriceCalculator.putEbsPrices(ebsItems)
       return new Response<Type>(items)
     }
 
@@ -124,7 +124,34 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.settings?.userLabels),
         item.project
       ))
-      // await this.awsPriceCalculator.putEbsPrices(ebsItems)
+      return new Response<Type>(items)
+    }
+
+    private async generateLbResponse (
+      responseJson: any
+    ): Promise<Response<Type>> {
+      const items = responseJson.map((item: any) => new Lb(
+        item.name,
+        item.IPProtocol,
+        undefined,
+        item.creationTimestamp,
+        StringHelper.splitAndGetAtIndex(item.region, '/', -1),
+        undefined,
+        Label.createInstances(item.settings?.userLabels)
+      ))
+      return new Response<Type>(items)
+    }
+
+    private async generateEipResponse (
+      responseJson: any
+    ): Promise<Response<Type>> {
+      const items = responseJson.map((item: any) => new Eip(
+        item.address,
+        item.name,
+        StringHelper.splitAndGetAtIndex(item.region, '/', -1),
+        undefined,
+        Label.createInstances(item.settings?.userLabels)
+      ))
       return new Response<Type>(items)
     }
 
