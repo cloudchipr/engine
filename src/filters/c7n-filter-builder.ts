@@ -52,9 +52,9 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
 
   buildFilterExpression (expression: FilterExpression): object {
     if (expression.operator === Operators.IsEmpty) {
-      return C7nFilterBuilder.buildEmpty(expression)
+      return this.buildEmpty(expression)
     } else if (expression.operator === Operators.IsNotEmpty) {
-      return C7nFilterBuilder.buildNotEmpty(expression)
+      return this.buildNotEmpty(expression)
     } else if (expression.operator === Operators.IsAbsent) {
       return C7nFilterBuilder.buildAbsent(expression)
     } else if (expression.operator === Operators.IsNotAbsent) {
@@ -247,19 +247,41 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildEmpty (expression: FilterExpression): object {
-    return {
-      [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+  private buildEmpty (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.DISKS_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.Equal
+        }
+      default:
+        return {
+          [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+        }
     }
   }
 
-  private static buildNotEmpty (expression: FilterExpression): object {
-    return {
-      not: [
-        {
-          [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+  private buildNotEmpty (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.DISKS_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.GreaterThan
         }
-      ]
+      default:
+        return {
+          not: [
+            {
+              [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+            }
+          ]
+        }
     }
   }
 
