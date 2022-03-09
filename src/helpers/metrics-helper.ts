@@ -18,7 +18,9 @@ export class MetricsHelper {
     return MetricsHelper.getGcpMetric(object, 'compute.googleapis.com/instance/cpu/utilization')
   }
 
-  static getNetworkIn (object: any): Metric
+  static getNetworkIn (object: any): Metric {
+    return MetricsHelper.getMetric(object, 'AWS/EC2.NetworkIn')
+  }
 
   static getGcpNetworkIn (object: any): Metric {
     return MetricsHelper.getGcpMetric(object, 'compute.googleapis.com/instance/network/received_bytes_count')
