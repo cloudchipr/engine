@@ -56,9 +56,9 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     } else if (expression.operator === Operators.IsNotEmpty) {
       return this.buildNotEmpty(expression)
     } else if (expression.operator === Operators.IsAbsent) {
-      return C7nFilterBuilder.buildAbsent(expression)
+      return this.buildAbsent(expression)
     } else if (expression.operator === Operators.IsNotAbsent) {
-      return C7nFilterBuilder.buildNotAbsent(expression)
+      return this.buildNotAbsent(expression)
     }
 
     if (/^tag:.{1,128}$/.test(expression.resource)) {
@@ -239,11 +239,22 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildAbsent (expression: FilterExpression): object {
-    return {
-      type: 'value',
-      key: this.mapResourceName(expression.resource),
-      value: 'absent'
+  private buildAbsent (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.Equal
+        }
+      default:
+        return {
+          type: 'value',
+          key: C7nFilterBuilder.mapResourceName(expression.resource),
+          value: 'absent'
+        }
     }
   }
 
@@ -285,15 +296,26 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildNotAbsent (expression: FilterExpression): object {
-    return {
-      not: [
-        {
+  private buildNotAbsent (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return {
           type: 'value',
-          key: C7nFilterBuilder.mapResourceName(expression.resource),
-          value: 'absent'
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.GreaterThan
         }
-      ]
+      default:
+        return {
+          not: [
+            {
+              type: 'value',
+              key: C7nFilterBuilder.mapResourceName(expression.resource),
+              value: 'absent'
+            }
+          ]
+        }
     }
   }
 
