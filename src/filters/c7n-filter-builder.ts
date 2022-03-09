@@ -1,7 +1,7 @@
 import { FilterBuilderInterface } from '../filter-builder-interface'
 import { FilterList } from './filter-list'
 import { FilterExpression } from './filter-expression'
-import { Operators } from './operators'
+import { getOppositeOperator, Operators } from './operators'
 import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
@@ -186,14 +186,14 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
           type: 'value',
           key: 'creationTimestamp',
           value: moment().subtract(Number(expression.value), 'd').format(),
-          op: expression.operator
+          op: getOppositeOperator(expression.operator)
         }
       case GcpSubCommand.SQL_SUBCOMMAND:
         return {
           type: 'value',
           key: 'createTime',
           value: moment().subtract(Number(expression.value), 'd').format(),
-          op: expression.operator
+          op: getOppositeOperator(expression.operator)
         }
       case AwsSubCommand.RDS_SUBCOMMAND:
         return {
