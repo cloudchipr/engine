@@ -258,7 +258,11 @@
       {
         "name": "gcp-vm-collect",
         "resource": "gcp.instance",
-        "filters": []
+        "filters": [
+          {
+            "status": "RUNNING"
+          }
+        ]
       }
     ]
   },
