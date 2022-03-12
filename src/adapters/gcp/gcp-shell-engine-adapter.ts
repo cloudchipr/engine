@@ -123,6 +123,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.name,
         item.databaseVersion,
         'secondaryGceZone' in item,
+        MetricsHelper.getGcpDatabaseConnections(item),
         item.region,
         undefined,
         Label.createInstances(item.settings?.userLabels),
@@ -141,7 +142,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,
-        Label.createInstances(item.settings?.userLabels)
+        Label.createInstances(item.settings?.labels)
       ))
       return new Response<Type>(items)
     }
@@ -154,7 +155,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.name,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,
-        Label.createInstances(item.settings?.userLabels)
+        Label.createInstances(undefined)
       ))
       return new Response<Type>(items)
     }

@@ -9,6 +9,8 @@ import { getGcpStatistics, Statistics } from '../domain/statistics'
 import { Command } from '../command'
 import { GcpSubCommand } from '../adapters/gcp/gcp-sub-command'
 import moment from 'moment'
+import { FilterResourceRegex } from './filter-resource-regex'
+import { FilterResource } from './filter-resource'
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
   private readonly command: Command
@@ -61,38 +63,41 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       return this.buildNotAbsent(expression)
     }
 
-    if (/^tag:.{1,128}$/.test(expression.resource)) {
+    if ((new RegExp(FilterResourceRegex.TAG)).test(expression.resource)) {
       return C7nFilterBuilder.buildTag(expression)
+    }
+    if ((new RegExp(FilterResourceRegex.LABEL)).test(expression.resource)) {
+      return this.buildLabel(expression)
     }
 
     switch (expression.resource) {
-      case 'volume-age':
+      case FilterResource.VOLUME_AGE:
         return C7nFilterBuilder.buildVolumeAge(expression)
-      case 'cpu':
+      case FilterResource.CPU:
         return this.buildCpu(expression)
-      case 'network-in':
+      case FilterResource.NETWORK_IN:
         return this.buildNetworkIn(expression)
-      case 'network-out':
+      case FilterResource.NETWORK_OUT:
         return this.buildNetworkOut(expression)
-      case 'launch-time':
+      case FilterResource.LAUNCH_TIME:
         return this.buildLaunchTime(expression)
-      case 'instance-ids':
+      case FilterResource.INSTANCE_IDS:
         return C7nFilterBuilder.buildInstanceIds(expression)
-      case 'association-ids':
+      case FilterResource.ASSOCIATION_IDS:
         return C7nFilterBuilder.buildAssociationId(expression)
-      case 'dns-name':
+      case FilterResource.DNS_NAME:
         return C7nFilterBuilder.buildDnsName(expression)
-      case 'database-connections':
+      case FilterResource.DATABASE_CONNECTIONS:
         return this.buildDatabaseConnections(expression)
-      case 'volume-id':
+      case FilterResource.VOLUME_ID:
         return C7nFilterBuilder.buildVolumeId(expression)
-      case 'instance-id':
+      case FilterResource.INSTANCE_ID:
         return C7nFilterBuilder.buildInstanceId(expression)
-      case 'db-instance-identifier':
+      case FilterResource.DB_INSTANCE_IDENTIFIER:
         return C7nFilterBuilder.buildDBInstanceIdentifier(expression)
-      case 'public-ip':
+      case FilterResource.PUBLIC_IP:
         return C7nFilterBuilder.buildPublicIP(expression)
-      case 'load-balancer-name':
+      case FilterResource.LOAD_BALANCER_NAME:
         return C7nFilterBuilder.buildLoadBalancerName(expression)
       default:
         throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
@@ -374,9 +379,9 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
 
   private static mapResourceName (name: string): string {
     switch (name) {
-      case 'instance-ids':
+      case FilterResource.INSTANCE_IDS:
         return 'InstanceId'
-      case 'association-ids':
+      case FilterResource.ASSOCIATION_IDS:
         return 'AssociationId'
       default:
         return StringHelper.capitalizeFirstLetter(name)
@@ -402,6 +407,43 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
           key: expression.resource,
           value: expression.value
         }
+    }
+  }
+
+  private buildLabel (expression: FilterExpression): object {
+    const key = this.mapLabelKey(expression.resource)
+    switch (expression.operator) {
+      case Operators.Exists:
+        return {
+          type: 'value',
+          key: key,
+          value: 0,
+          value_type: 'size',
+          op: Operators.GreaterThan
+        }
+      case Operators.Contains:
+        return {
+          type: 'value',
+          key: key,
+          op: 'regex',
+          value: `(.*${expression.value}.*)`
+        }
+      default:
+        return {
+          type: 'value',
+          key: key,
+          value: expression.value,
+          op: expression.operator
+        }
+    }
+  }
+
+  private mapLabelKey (key: string): string {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return key.replace('label:', 'settings.userLabels.')
+      default:
+        return key.replace('label:', 'labels.')
     }
   }
 
