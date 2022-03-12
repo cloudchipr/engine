@@ -17,6 +17,7 @@ export class OperatorsValidator implements FilterValidatorInterface {
     [FilterResource.ASSOCIATION_IDS, new Set([Operators.IsAbsent, Operators.IsNotAbsent])],
     [FilterResource.DATABASE_CONNECTIONS, new Set([Operators.Equal, Operators.GreaterThan, Operators.GreaterThanEqualTo, Operators.LessThan, Operators.LessThanEqualTo])],
     [FilterResource.TAG, new Set([Operators.Equal, Operators.Exists, Operators.Contains])],
+    [FilterResource.LABEL, new Set([Operators.Equal, Operators.Exists, Operators.Contains])],
     [FilterResource.VOLUME_ID, new Set([Operators.Equal])],
     [FilterResource.INSTANCE_ID, new Set([Operators.Equal])],
     [FilterResource.DB_INSTANCE_IDENTIFIER, new Set([Operators.Equal])],
@@ -34,6 +35,10 @@ export class OperatorsValidator implements FilterValidatorInterface {
 
     if ((new RegExp(FilterResourceRegex.TAG)).test(resource)) {
       resource = FilterResource.TAG
+    }
+
+    if ((new RegExp(FilterResourceRegex.LABEL)).test(resource)) {
+      resource = FilterResource.LABEL
     }
 
     const allowedOperators = this.allowedOperatorsPerResource.get(resource)

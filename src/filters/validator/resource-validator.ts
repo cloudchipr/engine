@@ -22,10 +22,10 @@ export class ResourceValidator implements FilterValidatorInterface {
     [AwsSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.INSTANCE_IDS, FilterResourceRegex.ASSOCIATION_IDS, FilterResourceRegex.PUBLIC_IP, FilterResourceRegex.TAG]],
     [AwsSubCommand.RDS_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS, FilterResourceRegex.DB_INSTANCE_IDENTIFIER, FilterResourceRegex.TAG]],
     // GCP
-    [GcpSubCommand.VM_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.CPU, FilterResourceRegex.NETWORK_IN, FilterResourceRegex.NETWORK_OUT]],
-    [GcpSubCommand.SQL_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS]],
-    [GcpSubCommand.LB_SUBCOMMAND, [FilterResourceRegex.INSTANCES]],
-    [GcpSubCommand.DISKS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.LAUNCH_TIME]],
+    [GcpSubCommand.VM_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.CPU, FilterResourceRegex.NETWORK_IN, FilterResourceRegex.NETWORK_OUT, FilterResourceRegex.LABEL]],
+    [GcpSubCommand.SQL_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS, FilterResourceRegex.LABEL]],
+    [GcpSubCommand.LB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.LABEL]],
+    [GcpSubCommand.DISKS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.LABEL]],
     [GcpSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.ASSOCIATION_IDS]]
   ]
   )

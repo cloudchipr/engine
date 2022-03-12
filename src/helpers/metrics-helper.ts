@@ -6,6 +6,10 @@ export class MetricsHelper {
     return MetricsHelper.getMetric(object, 'AWS/RDS.DatabaseConnections')
   }
 
+  static getGcpDatabaseConnections (object: any): Metric {
+    return MetricsHelper.getGcpMetric(object, 'cloudsql.googleapis.com/database/network/connections')
+  }
+
   static getDatabaseIOPS (object: any): Metric {
     return MetricsHelper.getMetric(object, 'AWS/RDS.IOPS')
   }
