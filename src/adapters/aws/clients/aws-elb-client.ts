@@ -77,10 +77,18 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     let promises: any[] = []
     // Get tags for network and application LBs
     Object.keys(loadBalancerNameByRegion).forEach((region) => {
-      promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(loadBalancerNameByRegion[region])))
+      // split into chunks
+      for (let i = 0; i < loadBalancerNameByRegion[region].length; i += 20) {
+        const chunk = loadBalancerNameByRegion[region].slice(i, i + 20)
+        promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(chunk)))
+      }
     })
     Object.keys(loadBalancerArnByRegion).forEach((region) => {
-      promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(loadBalancerArnByRegion[region])))
+      // split into chunks
+      for (let i = 0; i < loadBalancerArnByRegion[region].length; i += 20) {
+        const chunk = loadBalancerArnByRegion[region].slice(i, i + 20)
+        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(chunk)))
+      }
     })
     // Get target groups for network and application LBs
     Object.keys(loadBalancerArnByRegion).forEach((region) => {
