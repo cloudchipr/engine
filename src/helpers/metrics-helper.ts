@@ -7,7 +7,10 @@ export class MetricsHelper {
   }
 
   static getGcpDatabaseConnections (object: any): Metric {
-    return MetricsHelper.getGcpMetric(object, 'cloudsql.googleapis.com/database/network/connections')
+    return MetricsHelper.getGcpMetric(object, [
+      'cloudsql.googleapis.com/database/network/connections',
+      'cloudsql.googleapis.com/database/postgresql/num_backends'
+    ])
   }
 
   static getDatabaseIOPS (object: any): Metric {
@@ -19,7 +22,9 @@ export class MetricsHelper {
   }
 
   static getGcpCpuUtilization (object: any): Metric {
-    return MetricsHelper.getGcpMetric(object, 'compute.googleapis.com/instance/cpu/utilization')
+    return MetricsHelper.getGcpMetric(object, [
+      'compute.googleapis.com/instance/cpu/utilization'
+    ])
   }
 
   static getNetworkIn (object: any): Metric {
@@ -27,7 +32,9 @@ export class MetricsHelper {
   }
 
   static getGcpNetworkIn (object: any): Metric {
-    return MetricsHelper.getGcpMetric(object, 'compute.googleapis.com/instance/network/received_bytes_count')
+    return MetricsHelper.getGcpMetric(object, [
+      'compute.googleapis.com/instance/network/received_bytes_count'
+    ])
   }
 
   static getNetworkOut (object: any): Metric {
@@ -35,7 +42,9 @@ export class MetricsHelper {
   }
 
   static getGcpNetworkOut (object: any): Metric {
-    return MetricsHelper.getGcpMetric(object, 'compute.googleapis.com/instance/network/sent_bytes_count')
+    return MetricsHelper.getGcpMetric(object, [
+      'compute.googleapis.com/instance/network/sent_bytes_count'
+    ])
   }
 
   private static getMetric (object: any, key: string): Metric {
@@ -51,16 +60,19 @@ export class MetricsHelper {
     )
   }
 
-  private static getGcpMetric (object: any, key: string): Metric {
-    const metricObject = object?.['c7n.metrics']?.[this.getMetricKey(object, key)] ?? {}
-    if (!('points' in metricObject)) {
-      return new Metric(0, this.getMetricType({}, ''), '')
+  private static getGcpMetric (object: any, keys: string[]): Metric {
+    for (const key of keys) {
+      const metricObject = object?.['c7n.metrics']?.[this.getMetricKey(object, key)] ?? {}
+      if (!('points' in metricObject)) {
+        continue
+      }
+      const points = metricObject.points
+      const interval = points[0].interval
+      const value = points[0].value.doubleValue ?? points[0].value.int64Value ?? 0
+      const days = Math.abs((new Date(interval.startTime)).getTime() - (new Date(interval.endTime)).getTime()) / (1000 * 3600 * 24)
+      return new Metric(value / (days || 1), this.getMetricType(object, key), '')
     }
-    const points = metricObject.points
-    const interval = points[0].interval
-    const value = points[0].value.doubleValue ?? points[0].value.int64Value ?? 0
-    const days = Math.abs((new Date(interval.startTime)).getTime() - (new Date(interval.endTime)).getTime()) / (1000 * 3600 * 24)
-    return new Metric(value / (days || 1), this.getMetricType(object, key), '')
+    return new Metric(0, this.getMetricType({}, ''), '')
   }
 
   private static getMetricType (object: any, key: string): Statistics {
