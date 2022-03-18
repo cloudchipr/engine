@@ -96,8 +96,8 @@ export class FilterBuilder {
 
   load (filters: Filters): FilterBuilder {
     this.filterValidator.validate(filters)
-    for (const filter of filters.and) {
-      this.addToList(
+    filters.and?.forEach(filter => {
+      this.and().addToList(
         new FilterExpression(
           filter.resource,
           (Operators as any)[filter.op],
@@ -106,7 +106,18 @@ export class FilterBuilder {
           (Statistics as any)[filter.statistics] ?? null
         )
       )
-    }
+    })
+    filters.or?.forEach(filter => {
+      this.or().addToList(
+        new FilterExpression(
+          filter.resource,
+          (Operators as any)[filter.op],
+          filter.value ?? null,
+          filter.since ?? null,
+          (Statistics as any)[filter.statistics] ?? null
+        )
+      )
+    })
 
     return this
   }
