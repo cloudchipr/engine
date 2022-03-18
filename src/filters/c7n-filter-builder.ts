@@ -328,12 +328,24 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     switch (this.subCommand.getValue()) {
       case GcpSubCommand.SQL_SUBCOMMAND:
         return {
-          type: 'metrics',
-          name: 'cloudsql.googleapis.com/database/network/connections',
-          aligner: getGcpStatistics(expression.statistics as string),
-          days: Number(expression.since),
-          op: expression.operator,
-          value: Number(expression.value)
+          or: [
+            {
+              type: 'metrics',
+              name: 'cloudsql.googleapis.com/database/network/connections',
+              aligner: getGcpStatistics(expression.statistics as string),
+              days: Number(expression.since),
+              op: expression.operator,
+              value: Number(expression.value)
+            },
+            {
+              type: 'metrics',
+              name: 'cloudsql.googleapis.com/database/postgresql/num_backends',
+              aligner: getGcpStatistics(expression.statistics as string),
+              days: Number(expression.since),
+              op: expression.operator,
+              value: Number(expression.value)
+            }
+          ]
         }
       default:
         return {
