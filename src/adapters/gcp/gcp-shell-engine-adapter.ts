@@ -12,6 +12,12 @@ import { Sql } from '../../domain/types/gcp/sql'
 import { Lb } from '../../domain/types/gcp/lb'
 import { Eip } from '../../domain/types/gcp/eip'
 import { MetricsHelper } from '../../helpers/metrics-helper'
+import { FilterInterface } from '../../filter-interface'
+import { FilterResource } from '../../filters/filter-resource'
+import { Command } from '../../command'
+import { GcpSubCommand } from './gcp-sub-command'
+import { FilterExpression } from '../../filters/filter-expression'
+import { Operators } from '../../filters/operators'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
@@ -20,14 +26,26 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {
+      const command = request.command.getValue()
       const subCommand = request.subCommand.getValue()
 
       const generateResponseMethodName = GcpShellEngineAdapter.getResponseMethodName(subCommand)
       this.validateRequest(generateResponseMethodName)
 
-      // let policyName: string, policy: any
+      const filterList = request.parameter.filter
+      if (GcpShellEngineAdapter.shouldOverrideNlbAlbFilter(filterList, command, subCommand)) {
+        const potentialElbGarbage = await this.getPotentialLbGarbage(request)
+        const instanceFilter = filterList.getFilterExpressionByResource(FilterResource.INSTANCES)
+        const newFilterExpression = new FilterExpression(
+          FilterResource.LOAD_BALANCER_NAME,
+          instanceFilter?.operator === Operators.IsEmpty ? Operators.In : Operators.NotIn,
+          '[' + potentialElbGarbage.map(x => '"' + x + '"').join(',') + ']'
+        )
+        filterList.replaceFilterExpressionByResource(FilterResource.INSTANCES, newFilterExpression)
+      }
+
       const [policyName, policy] = this.getDefaultPolicy(request)
-      const filters: object = request.parameter.filter?.build(new C7nFilterBuilder(request.command, request.subCommand))
+      const filters: object = filterList.build(new C7nFilterBuilder(request.command, request.subCommand))
 
       if (filters && Object.keys(filters).length) {
         if (typeof policy.policies[0].filters === 'undefined') {
@@ -39,6 +57,13 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       // execute custodian command and return response
       const response = await this.executeC7nPolicy(policy, policyName, request, 'cloud-test-340820')
       return (this as any)[generateResponseMethodName](response)
+    }
+
+    private static shouldOverrideNlbAlbFilter (filterList: FilterInterface, command: string, subCommand: string): boolean {
+      return !filterList.isEmpty() &&
+        filterList.getFilterExpressionByResource(FilterResource.INSTANCES) !== undefined &&
+        command === Command.COLLECT_COMMAND &&
+        subCommand === GcpSubCommand.LB_SUBCOMMAND
     }
 
     private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest, currentAccount: string| undefined) {
@@ -59,6 +84,44 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       GcpShellEngineAdapter.validatePolicyName(policyName)
 
       return [policyName, policy]
+    }
+
+    private async getPotentialLbGarbage (request: EngineRequest) : Promise<string[]> {
+      const policyNameLb = 'gcp-lb-collect-all'
+      const policyNameTargetPool = 'gcp-lb-target-pool-collect'
+      const policyNameVm = 'gcp-vm-collect'
+
+      const response = await Promise.all([
+        this.executeC7nPolicy(this.getPolicy(policyNameLb), policyNameLb, request, 'cloud-test-340820'),
+        this.executeC7nPolicy(this.getPolicy(policyNameTargetPool), policyNameTargetPool, request, 'cloud-test-340820'),
+        this.executeC7nPolicy(this.getPolicy(policyNameVm), policyNameVm, request, 'cloud-test-340820')
+      ])
+
+      const targetPoolInstances: any = {}
+      // Generate an object that has key(s) (target pool name) and value(s) (target pool is attached to at least one running VM or not)
+      response[1].forEach((targetPool: any) => {
+        let instanceFound = false
+        for (const instance of (targetPool.instances || [])) {
+          const instanceName = StringHelper.splitAndGetAtIndex(instance, '/', -1)
+          if (response[2].filter((vm: any) => vm.name === instanceName).length > 0) {
+            instanceFound = true
+            break
+          }
+        }
+        targetPoolInstances[targetPool.name] = instanceFound
+      })
+
+      const potentialGarbageLb: string[] = []
+      // if the LB has a target pool that is not assigned to a running VM, consider it as a potential garbage
+      response[0].forEach((r: any) => {
+        const targetType = StringHelper.splitAndGetAtIndex(r.target, '/', -2)
+        const targetName = StringHelper.splitAndGetAtIndex(r.target, '/', -1)
+        if (targetType === 'targetPools' && targetName !== undefined && targetPoolInstances[targetName] !== true) {
+          potentialGarbageLb.push(r.name)
+        }
+      })
+
+      return potentialGarbageLb
     }
 
     private validateRequest (name: string) {
@@ -138,7 +201,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const items = responseJson.map((item: any) => new Lb(
         item.name,
         item.IPProtocol,
-        undefined,
+        !('region' in item),
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,

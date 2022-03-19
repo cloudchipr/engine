@@ -418,7 +418,14 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case FilterResource.ASSOCIATION_IDS:
         return 'AssociationId'
       case FilterResource.LOAD_BALANCER_NAME:
-        return this.subCommand.getValue() === AwsSubCommand.ELB_SUBCOMMAND ? 'LoadBalancerName' : 'LoadBalancerArn'
+        switch (this.subCommand.getValue()) {
+          case GcpSubCommand.LB_SUBCOMMAND:
+            return 'name'
+          case AwsSubCommand.ELB_SUBCOMMAND:
+            return 'LoadBalancerName'
+          default:
+            return 'LoadBalancerArn'
+        }
       default:
         return StringHelper.capitalizeFirstLetter(name)
     }
