@@ -10,7 +10,7 @@ export enum Operators {
   IsNotEmpty = 'isNotEmpty',
   IsNotAbsent = 'isNotAbsent',
   In = 'in',
-  NotIn = 'notIn',
+  NotIn = 'ni',
   Exists = 'exists',
   Contains = 'contains'
 }

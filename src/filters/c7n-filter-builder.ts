@@ -61,6 +61,10 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       return this.buildAbsent(expression)
     } else if (expression.operator === Operators.IsNotAbsent) {
       return this.buildNotAbsent(expression)
+    } else if (expression.operator === Operators.In) {
+      return this.buildIn(expression)
+    } else if (expression.operator === Operators.NotIn) {
+      return this.buildNotIn(expression)
     }
 
     if ((new RegExp(FilterResourceRegex.TAG)).test(expression.resource)) {
@@ -98,7 +102,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case FilterResource.PUBLIC_IP:
         return C7nFilterBuilder.buildPublicIP(expression)
       case FilterResource.LOAD_BALANCER_NAME:
-        return C7nFilterBuilder.buildLoadBalancerName(expression)
+        return this.buildLoadBalancerName(expression)
       default:
         throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
     }
@@ -257,7 +261,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       default:
         return {
           type: 'value',
-          key: C7nFilterBuilder.mapResourceName(expression.resource),
+          key: this.mapResourceName(expression.resource),
           value: 'absent'
         }
     }
@@ -277,6 +281,24 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         return {
           [StringHelper.capitalizeFirstLetter(expression.resource)]: []
         }
+    }
+  }
+
+  private buildIn (expression: FilterExpression): object {
+    return {
+      type: 'value',
+      key: this.mapResourceName(expression.resource),
+      value: expression.value,
+      op: Operators.In
+    }
+  }
+
+  private buildNotIn (expression: FilterExpression): object {
+    return {
+      type: 'value',
+      key: this.mapResourceName(expression.resource),
+      value: expression.value,
+      op: Operators.NotIn
     }
   }
 
@@ -316,7 +338,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
           not: [
             {
               type: 'value',
-              key: C7nFilterBuilder.mapResourceName(expression.resource),
+              key: this.mapResourceName(expression.resource),
               value: 'absent'
             }
           ]
@@ -383,18 +405,20 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildLoadBalancerName (expression: FilterExpression): object {
+  private buildLoadBalancerName (expression: FilterExpression): object {
     return {
-      LoadBalancerName: expression.value
+      [this.mapResourceName(expression.resource)]: expression.value
     }
   }
 
-  private static mapResourceName (name: string): string {
+  private mapResourceName (name: string): string {
     switch (name) {
       case FilterResource.INSTANCE_IDS:
         return 'InstanceId'
       case FilterResource.ASSOCIATION_IDS:
         return 'AssociationId'
+      case FilterResource.LOAD_BALANCER_NAME:
+        return this.subCommand.getValue() === AwsSubCommand.ELB_SUBCOMMAND ? 'LoadBalancerName' : 'LoadBalancerArn'
       default:
         return StringHelper.capitalizeFirstLetter(name)
     }
