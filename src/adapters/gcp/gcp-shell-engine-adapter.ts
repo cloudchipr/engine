@@ -205,7 +205,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,
-        Label.createInstances(item.settings?.labels)
+        Label.createInstances(item.labels)
       ))
       return new Response<Type>(items)
     }
@@ -218,7 +218,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.name,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,
-        Label.createInstances(undefined)
+        Label.createInstances(item.labels)
       ))
       return new Response<Type>(items)
     }
