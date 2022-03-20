@@ -24,7 +24,7 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
           data.push(new Lb(
             instance.name,
             instance.IPProtocol,
-            undefined, // @todo scope
+            !('region' in instance),
             instance.creationTimestamp,
             StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
             undefined,

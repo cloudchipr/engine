@@ -1,6 +1,7 @@
 import { FilterInterface } from '../filter-interface'
 import { FilterList } from './filter-list'
 import { FilterBuilderInterface } from '../filter-builder-interface'
+import { FilterExpression } from './filter-expression'
 
 export class Criteria implements FilterInterface {
   public filters: FilterList;
@@ -23,5 +24,15 @@ export class Criteria implements FilterInterface {
 
   public isEmpty (): boolean {
     return this.filters.isEmpty()
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public getFilterExpressionByResource (resource: string): FilterExpression | undefined {
+    return undefined
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public replaceFilterExpressionByResource (resource: string, newFilterExpression: FilterExpression): void {
+    return undefined
   }
 }

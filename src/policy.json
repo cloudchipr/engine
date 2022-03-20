@@ -284,6 +284,33 @@
       }
     ]
   },
+  "gcp-lb-collect-all": {
+    "policies": [
+      {
+        "name": "gcp-lb-collect-all",
+        "resource": "gcp.loadbalancer-forwarding-rule",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-lb-backend-bucket-collect": {
+    "policies": [
+      {
+        "name": "gcp-lb-backend-bucket-collect",
+        "resource": "gcp.loadbalancer-backend-bucket",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-lb-target-pool-collect": {
+    "policies": [
+      {
+        "name": "gcp-lb-target-pool-collect",
+        "resource": "gcp.loadbalancer-target-pool",
+        "filters": []
+      }
+    ]
+  },
   "gcp-sql-collect": {
     "policies": [
       {
