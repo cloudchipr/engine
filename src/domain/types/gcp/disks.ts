@@ -10,6 +10,7 @@ export class Disks {
     readonly age?: string,
     readonly zone?: string,
     readonly pricePerMonth?: number,
-    readonly labels?: Label[]
+    readonly labels?: Label[],
+    readonly project?: string
   ) {}
 }
