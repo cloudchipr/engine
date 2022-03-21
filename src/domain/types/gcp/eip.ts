@@ -6,6 +6,7 @@ export class Eip {
     readonly name?: string,
     readonly region?: string,
     readonly pricePerMonth?: number,
-    readonly labels?: Label[]
+    readonly labels?: Label[],
+    readonly project?: string
   ) {}
 }

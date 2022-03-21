@@ -13,7 +13,8 @@ export class Vm {
     readonly networkOut?: Metric,
     public metrics?: VmMetric,
     readonly pricePerMonth?: number,
-    readonly labels?: Label[]
+    readonly labels?: Label[],
+    readonly project?: string
   ) {}
 }
 

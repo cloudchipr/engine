@@ -18,11 +18,16 @@ import { Command } from '../../command'
 import { GcpSubCommand } from './gcp-sub-command'
 import { FilterExpression } from '../../filters/filter-expression'
 import { Operators } from '../../filters/operators'
+import GcpResourceClient from './clients/gcp-resource-client'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
-    private readonly custodianExecutor: C7nExecutor;
+    private readonly custodianExecutor: C7nExecutor
+    private readonly gcpResourceClient: GcpResourceClient
+    private project: string = 'N/A'
+
     constructor (custodian: string, custodianOrg?: string) {
       this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
+      this.gcpResourceClient = new GcpResourceClient()
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {
@@ -55,7 +60,10 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       }
 
       // execute custodian command and return response
-      const response = await this.executeC7nPolicy(policy, policyName, request, 'cloud-test-340820')
+      const response = await this.executeC7nPolicy(policy, policyName, request)
+      if (response.length > 0) {
+        this.project = await this.gcpResourceClient.getProject()
+      }
       return (this as any)[generateResponseMethodName](response)
     }
 
@@ -66,12 +74,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         subCommand === GcpSubCommand.LB_SUBCOMMAND
     }
 
-    private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest, currentAccount: string| undefined) {
+    private executeC7nPolicy (policy: string, policyName: string, request: EngineRequest) {
       return this.custodianExecutor.execute(
         policy,
         policyName,
         request.parameter.regions,
-        currentAccount,
+        undefined,
         [],
         request.outputDirectory
       )
@@ -92,9 +100,9 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const policyNameVm = 'gcp-vm-collect'
 
       const response = await Promise.all([
-        this.executeC7nPolicy(this.getPolicy(policyNameLb), policyNameLb, request, 'cloud-test-340820'),
-        this.executeC7nPolicy(this.getPolicy(policyNameTargetPool), policyNameTargetPool, request, 'cloud-test-340820'),
-        this.executeC7nPolicy(this.getPolicy(policyNameVm), policyNameVm, request, 'cloud-test-340820')
+        this.executeC7nPolicy(this.getPolicy(policyNameLb), policyNameLb, request),
+        this.executeC7nPolicy(this.getPolicy(policyNameTargetPool), policyNameTargetPool, request),
+        this.executeC7nPolicy(this.getPolicy(policyNameVm), policyNameVm, request)
       ])
 
       const targetPoolInstances: any = {}
@@ -157,7 +165,8 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         MetricsHelper.getGcpNetworkOut(item),
         undefined,
         undefined,
-        Label.createInstances(item.labels)
+        Label.createInstances(item.labels),
+        this.project
       ))
       return new Response<Type>(items)
     }
@@ -174,7 +183,8 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
         undefined,
-        Label.createInstances(item.labels)
+        Label.createInstances(item.labels),
+        this.project
       ))
       return new Response<Type>(items)
     }
@@ -190,7 +200,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.region,
         undefined,
         Label.createInstances(item.settings?.userLabels),
-        item.project
+        this.project
       ))
       return new Response<Type>(items)
     }
@@ -205,7 +215,8 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,
-        Label.createInstances(item.labels)
+        Label.createInstances(item.labels),
+        this.project
       ))
       return new Response<Type>(items)
     }
@@ -218,7 +229,8 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.name,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         undefined,
-        Label.createInstances(item.labels)
+        Label.createInstances(item.labels),
+        this.project
       ))
       return new Response<Type>(items)
     }
