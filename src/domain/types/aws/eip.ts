@@ -11,11 +11,14 @@ export class Eip extends ProviderResource {
     readonly instanceId?: string,
     readonly nameTag?: string,
     readonly tags?: Tag[],
-    readonly _c8rRegion?: string,
-    readonly _c8rAccount?: string
+    readonly _account?: string
   ) { super() }
 
   getRegion (): string {
     return this.region
+  }
+
+  getOwner (): string {
+    return this._account ?? 'N/A'
   }
 }

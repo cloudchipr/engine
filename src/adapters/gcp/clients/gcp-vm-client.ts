@@ -41,7 +41,6 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
             undefined,
             undefined,
             undefined,
-            undefined,
             Label.createInstances(instance.labels)
           ))
         })

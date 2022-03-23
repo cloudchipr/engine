@@ -21,11 +21,14 @@ export class Ec2 extends ProviderResource {
     public metrics?: AwsEc2Metric,
     readonly nameTag?: string,
     readonly tags?: Tag[],
-    readonly _c8rRegion?: string,
-    readonly _c8rAccount?: string
+    readonly _account?: string
   ) { super() }
 
   getRegion (): string {
     return this.availabilityZone.slice(0, -1)
+  }
+
+  getOwner (): string {
+    return this._account ?? 'N/A'
   }
 }

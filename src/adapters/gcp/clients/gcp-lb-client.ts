@@ -27,7 +27,6 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
             !('region' in instance),
             instance.creationTimestamp,
             StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
-            undefined,
             Label.createInstances(instance.labels)
           ))
         })

@@ -164,7 +164,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         MetricsHelper.getGcpNetworkIn(item),
         MetricsHelper.getGcpNetworkOut(item),
         undefined,
-        undefined,
         Label.createInstances(item.labels),
         this.project
       ))
@@ -182,7 +181,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         (parseFloat(item.sizeGb) | 0) * 1073741824,
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
-        undefined,
         Label.createInstances(item.labels),
         this.project
       ))
@@ -198,7 +196,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         'secondaryGceZone' in item,
         MetricsHelper.getGcpDatabaseConnections(item),
         item.region,
-        undefined,
         Label.createInstances(item.settings?.userLabels),
         this.project
       ))
@@ -214,7 +211,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         !('region' in item),
         item.creationTimestamp,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
-        undefined,
         Label.createInstances(item.labels),
         this.project
       ))
@@ -228,7 +224,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.address,
         item.name,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1),
-        undefined,
         Label.createInstances(item.labels),
         this.project
       ))
