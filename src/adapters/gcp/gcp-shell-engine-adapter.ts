@@ -157,9 +157,9 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     ): Promise<Response<Type>> {
       const items = responseJson.map((item: any) => new Vm(
         item.name,
+        StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
         StringHelper.splitAndGetAtIndex(item.machineType, '/', -1),
         item.creationTimestamp,
-        StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
         MetricsHelper.getGcpCpuUtilization(item),
         MetricsHelper.getGcpNetworkIn(item),
         MetricsHelper.getGcpNetworkOut(item),
@@ -175,12 +175,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     ): Promise<Response<Type>> {
       const items = responseJson.map((item: any) => new Disks(
         item.name,
+        StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
         StringHelper.splitAndGetAtIndex(item.type, '/', -1),
         item.users?.length > 0,
         item.status,
         (parseFloat(item.sizeGb) | 0) * 1073741824,
         item.creationTimestamp,
-        StringHelper.splitAndGetAtIndex(item.zone, '/', -1),
         Label.createInstances(item.labels),
         this.project
       ))
@@ -192,10 +192,10 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     ): Promise<Response<Type>> {
       const items = responseJson.map((item: any) => new Sql(
         item.name,
+        item.region,
         item.databaseVersion,
         'secondaryGceZone' in item,
         MetricsHelper.getGcpDatabaseConnections(item),
-        item.region,
         Label.createInstances(item.settings?.userLabels),
         this.project
       ))
@@ -207,10 +207,10 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     ): Promise<Response<Type>> {
       const items = responseJson.map((item: any) => new Lb(
         item.name,
+        StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
         item.IPProtocol,
         !('region' in item),
         item.creationTimestamp,
-        StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         Label.createInstances(item.labels),
         this.project
       ))
@@ -222,8 +222,8 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     ): Promise<Response<Type>> {
       const items = responseJson.map((item: any) => new Eip(
         item.address,
+        StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
         item.name,
-        StringHelper.splitAndGetAtIndex(item.region, '/', -1),
         Label.createInstances(item.labels),
         this.project
       ))

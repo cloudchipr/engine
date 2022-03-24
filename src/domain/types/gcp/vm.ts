@@ -6,9 +6,9 @@ import { ProviderResource } from '../provider-resource'
 export class Vm extends ProviderResource {
   constructor (
     readonly name: string,
+    readonly zone: string,
     readonly machineType?: string,
     readonly age?: string,
-    readonly zone?: string,
     readonly cpu?: Metric,
     readonly networkIn?: Metric,
     readonly networkOut?: Metric,
@@ -18,11 +18,11 @@ export class Vm extends ProviderResource {
   ) { super() }
 
   getRegion (): string {
-    return this.zone ? this.zone.split('-').slice(0, -1).join('-') : 'N/A'
+    return this.zone.split('-').slice(0, -1).join('-')
   }
 
-  getOwner (): string {
-    return this._project ?? 'N/A'
+  getOwner (): string | undefined {
+    return this._project
   }
 }
 

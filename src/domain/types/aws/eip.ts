@@ -18,7 +18,7 @@ export class Eip extends ProviderResource {
     return this.region
   }
 
-  getOwner (): string {
-    return this._account ?? 'N/A'
+  getOwner (): string | undefined {
+    return this._account
   }
 }

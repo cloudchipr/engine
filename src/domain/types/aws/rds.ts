@@ -26,7 +26,7 @@ export class Rds extends ProviderResource {
     return this.availabilityZone.slice(0, -1)
   }
 
-  getOwner (): string {
-    return this._account ?? 'N/A'
+  getOwner (): string | undefined {
+    return this._account
   }
 }

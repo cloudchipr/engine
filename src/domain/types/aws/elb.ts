@@ -33,7 +33,7 @@ export class Elb extends ProviderResource {
     return mergeResult.replace('elb.', '').replace('.elb', '')
   }
 
-  getOwner (): string {
-    return this._account ?? 'N/A'
+  getOwner (): string | undefined {
+    return this._account
   }
 }

@@ -23,8 +23,8 @@ export default class GcpEipClient extends GcpBaseClient implements GcpClientInte
         r?.forEach((instance: any) => {
           data.push(new Eip(
             instance.address,
+            StringHelper.splitAndGetAtIndex(instance.region, '/', -1) || '',
             instance.name,
-            StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
             Label.createInstances(instance.labels)
           ))
         })

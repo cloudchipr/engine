@@ -4,17 +4,17 @@ import { ProviderResource } from '../provider-resource'
 export class Eip extends ProviderResource {
   constructor (
     readonly ip: string,
+    readonly region: string,
     readonly name?: string,
-    readonly region?: string,
     readonly labels?: Label[],
     readonly _project?: string
   ) { super() }
 
   getRegion (): string {
-    return this.region ?? 'N/A'
+    return this.region
   }
 
-  getOwner (): string {
-    return this._project ?? 'N/A'
+  getOwner (): string | undefined {
+    return this._project
   }
 }

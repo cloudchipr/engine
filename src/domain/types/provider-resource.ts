@@ -1,15 +1,15 @@
 export abstract class ProviderResource {
     protected _pricePerMonth?: number;
 
-    set pricePerMonth (value: number) {
+    set pricePerMonth (value: number | undefined) {
       this._pricePerMonth = value
     }
 
-    get pricePerMonth (): number {
-      return <number> this._pricePerMonth
+    get pricePerMonth (): number | undefined {
+      return this._pricePerMonth
     }
 
-    abstract getOwner(): string
+    abstract getOwner(): string | undefined
 
     abstract getRegion(): string
 }

@@ -34,9 +34,9 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
         r?.forEach((instance: any) => {
           data.push(new Vm(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
             StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1),
             instance.creationTimestamp,
-            StringHelper.splitAndGetAtIndex(instance.zone, '/', -1),
             undefined,
             undefined,
             undefined,

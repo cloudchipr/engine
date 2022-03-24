@@ -23,10 +23,10 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
         r?.forEach((instance: any) => {
           data.push(new Lb(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.region, '/', -1) || '',
             instance.IPProtocol,
             !('region' in instance),
             instance.creationTimestamp,
-            StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
             Label.createInstances(instance.labels)
           ))
         })
