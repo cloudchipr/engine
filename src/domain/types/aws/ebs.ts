@@ -14,8 +14,4 @@ export class Ebs extends ProviderResource {
     readonly tags?: Tag[],
     readonly account?: string
   ) { super(availabilityZone.slice(0, -1), account) }
-
-  get pricePerMonth (): number {
-    return <number> this._pricePerMonthGB * this.size
-  }
 }
