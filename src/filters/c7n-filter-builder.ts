@@ -98,11 +98,12 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
       case FilterResource.INSTANCE_ID:
         return C7nFilterBuilder.buildInstanceId(expression)
       case FilterResource.DB_INSTANCE_IDENTIFIER:
-        return C7nFilterBuilder.buildDBInstanceIdentifier(expression)
+        return this.buildDBInstanceIdentifier(expression)
       case FilterResource.PUBLIC_IP:
-        return C7nFilterBuilder.buildPublicIP(expression)
+        return this.buildPublicIP(expression)
       case FilterResource.LOAD_BALANCER_NAME:
-        return this.buildLoadBalancerName(expression)
+      case FilterResource.NAME:
+        return this.buildName(expression)
       default:
         throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
     }
@@ -393,19 +394,25 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildDBInstanceIdentifier (expression: FilterExpression): object {
-    return {
-      DBInstanceIdentifier: expression.value
+  private buildDBInstanceIdentifier (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return { name: expression.value }
+      default:
+        return { DBInstanceIdentifier: expression.value }
     }
   }
 
-  private static buildPublicIP (expression: FilterExpression): object {
-    return {
-      PublicIp: expression.value
+  private buildPublicIP (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return { address: expression.value }
+      default:
+        return { PublicIp: expression.value }
     }
   }
 
-  private buildLoadBalancerName (expression: FilterExpression): object {
+  private buildName (expression: FilterExpression): object {
     return {
       [this.mapResourceName(expression.resource)]: expression.value
     }
@@ -426,6 +433,8 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
           default:
             return 'LoadBalancerArn'
         }
+      case FilterResource.NAME:
+        return 'name'
       default:
         return StringHelper.capitalizeFirstLetter(name)
     }

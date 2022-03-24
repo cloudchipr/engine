@@ -17,4 +17,5 @@ export enum FilterResource {
   DB_INSTANCE_IDENTIFIER = 'db-instance-identifier',
   PUBLIC_IP = 'public-ip',
   LOAD_BALANCER_NAME = 'load-balancer-name',
+  NAME = 'name',
 }
