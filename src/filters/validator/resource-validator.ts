@@ -26,7 +26,7 @@ export class ResourceValidator implements FilterValidatorInterface {
     [GcpSubCommand.SQL_SUBCOMMAND, [FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.DATABASE_CONNECTIONS, FilterResourceRegex.LABEL, FilterResourceRegex.DB_INSTANCE_IDENTIFIER]],
     [GcpSubCommand.LB_SUBCOMMAND, [FilterResourceRegex.INSTANCES, FilterResourceRegex.LOAD_BALANCER_NAME, FilterResourceRegex.LABEL, FilterResourceRegex.LOAD_BALANCER_NAME]],
     [GcpSubCommand.DISKS_SUBCOMMAND, [FilterResourceRegex.ATTACHMENTS, FilterResourceRegex.LAUNCH_TIME, FilterResourceRegex.LABEL, FilterResourceRegex.NAME]],
-    [GcpSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.ASSOCIATION_IDS, FilterResourceRegex.PUBLIC_IP]]
+    // [GcpSubCommand.EIP_SUBCOMMAND, [FilterResourceRegex.ASSOCIATION_IDS, FilterResourceRegex.PUBLIC_IP]]
   ]
   )
 
