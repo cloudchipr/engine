@@ -11,6 +11,14 @@ export class Disks extends ProviderResource {
     readonly age?: string,
     readonly zone?: string,
     readonly labels?: Label[],
-    readonly project?: string
-  ) { super(zone?.split('-').slice(0, -1).join('-') || '', project) }
+    readonly _project?: string
+  ) { super() }
+
+  getRegion (): string {
+    return this.zone ? this.zone.split('-').slice(0, -1).join('-') : 'N/A'
+  }
+
+  getOwner (): string {
+    return this._project ?? 'N/A'
+  }
 }

@@ -12,6 +12,14 @@ export class Ebs extends ProviderResource {
     readonly age?: string,
     readonly nameTag?: string,
     readonly tags?: Tag[],
-    readonly account?: string
-  ) { super(availabilityZone.slice(0, -1), account) }
+    readonly _account?: string
+  ) { super() }
+
+  getRegion (): string {
+    return this.availabilityZone.slice(0, -1)
+  }
+
+  getOwner (): string {
+    return this._account ?? 'N/A'
+  }
 }

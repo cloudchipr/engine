@@ -14,8 +14,16 @@ export class Vm extends ProviderResource {
     readonly networkOut?: Metric,
     public metrics?: VmMetric,
     readonly labels?: Label[],
-    readonly project?: string
-  ) { super(zone?.split('-').slice(0, -1).join('-') || '', project) }
+    readonly _project?: string
+  ) { super() }
+
+  getRegion (): string {
+    return this.zone ? this.zone.split('-').slice(0, -1).join('-') : 'N/A'
+  }
+
+  getOwner (): string {
+    return this._project ?? 'N/A'
+  }
 }
 
 export class VmMetric {

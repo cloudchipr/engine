@@ -10,6 +10,14 @@ export class Sql extends ProviderResource {
     readonly connections?: Metric,
     readonly region?: string,
     readonly labels?: Label[],
-    readonly project?: string
-  ) { super(region || '', project) }
+    readonly _project?: string
+  ) { super() }
+
+  getRegion (): string {
+    return this.region ?? 'N/A'
+  }
+
+  getOwner (): string {
+    return this._project ?? 'N/A'
+  }
 }
