@@ -177,7 +177,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 CreateTime: string;
                 AvailabilityZone: string;
                 Tags: any[];
-                C8rRegion: string|undefined;
                 C8rAccount: string|undefined;
             }) => {
           return new Ebs(
@@ -190,7 +189,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             ebsResponseItemJson.CreateTime,
             TagsHelper.getNameTagValue(ebsResponseItemJson.Tags),
             [],
-            ebsResponseItemJson.C8rRegion,
             ebsResponseItemJson.C8rAccount
           )
         }
@@ -217,7 +215,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                 LaunchTime: string;
                 Tags: any[];
                 Placement: { Tenancy: string, AvailabilityZone: string };
-                C8rRegion: string|undefined;
                 C8rAccount: string|undefined;
             }) => {
           return new Ec2(
@@ -236,7 +233,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             undefined,
             TagsHelper.getNameTagValue(ec2ResponseItemJson.Tags),
             [],
-            ec2ResponseItemJson.C8rRegion,
             ec2ResponseItemJson.C8rAccount
           )
         }
@@ -256,7 +252,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
-                    C8rRegion: string|undefined;
                     C8rAccount: string|undefined;
                 }) => {
             return new Elb(
@@ -268,7 +263,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               [],
-              elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
           }
@@ -288,7 +282,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
-                    C8rRegion: string|undefined;
                     C8rAccount: string|undefined;
                 }) => {
             return new Nlb(
@@ -300,7 +293,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               [],
-              elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
           }
@@ -320,7 +312,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     DNSName: string;
                     CreatedTime: string;
                     Tags: any[];
-                    C8rRegion: string|undefined;
                     C8rAccount: string|undefined;
                 }) => {
             return new Alb(
@@ -332,7 +323,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               false,
               TagsHelper.getNameTagValue(elbResponseItemJson.Tags),
               [],
-              elbResponseItemJson.C8rRegion,
               elbResponseItemJson.C8rAccount
             )
           }
@@ -352,7 +342,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     Price: string;
                     NetworkBorderGroup: string;
                     Tags: any[];
-                    C8rRegion: string|undefined;
                     C8rAccount: string|undefined;
                 }) => {
             return new Eip(
@@ -364,7 +353,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               undefined,
               undefined,
               [],
-              eipResponseItemJson.C8rRegion,
               eipResponseItemJson.C8rAccount
             )
           }
@@ -389,7 +377,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
                     'c7n.metrics': any;
                     AvailabilityZone: string;
                     Tags: any[];
-                    C8rRegion: string|undefined;
                     C8rAccount: string|undefined;
                 }) => {
             return new Rds(
@@ -405,7 +392,6 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
               undefined,
               TagsHelper.getNameTagValue(rdsResponseItemJson.Tags),
               [],
-              rdsResponseItemJson.C8rRegion,
               rdsResponseItemJson.C8rAccount
             )
           }

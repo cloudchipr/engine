@@ -12,15 +12,14 @@ export class Ebs extends ProviderResource {
     readonly age?: string,
     readonly nameTag?: string,
     readonly tags?: Tag[],
-    readonly _c8rRegion?: string,
-    readonly _c8rAccount?: string
+    readonly _account?: string
   ) { super() }
 
   getRegion (): string {
     return this.availabilityZone.slice(0, -1)
   }
 
-  get pricePerMonth (): number {
-    return <number> this._pricePerMonthGB * this.size
+  getOwner (): string | undefined {
+    return this._account
   }
 }

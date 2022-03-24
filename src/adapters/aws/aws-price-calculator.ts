@@ -160,7 +160,7 @@ export default class AwsPriceCalculator {
       }
       const elbItems = filters[regionKey].elbItems
       elbItems.forEach(elb => {
-        elb.pricePerHour = price
+        elb.pricePerMonth = price * 720
         return elb
       })
     }
@@ -215,7 +215,7 @@ export default class AwsPriceCalculator {
             }
             const rdsItems = filters[regionKey][instanceTypeKey][dbTypeKey][multiAZKey].rdsItems
             rdsItems.forEach(rds => {
-              rds.pricePerHour = price
+              rds.pricePerMonth = price * 720
               return rds
             })
           }
@@ -264,7 +264,7 @@ export default class AwsPriceCalculator {
         }
         const ebsItems = filters[regionKey][volumeTypeKey].ebsItems
         ebsItems.forEach(ebs => {
-          ebs.pricePerMonthGB = price
+          ebs.pricePerMonth = price * ebs.size
           return ebs
         })
       }
@@ -308,7 +308,7 @@ export default class AwsPriceCalculator {
         if (priceDimensionItem.endRange === 'Inf') {
           const pricePerUnit = priceDimensionItem.pricePerUnit
           eipItems.forEach(eip => {
-            eip.pricePerHour = pricePerUnit.USD
+            eip.pricePerMonth = pricePerUnit.USD * 720
             return eip
           })
           priceFound = true
@@ -351,7 +351,7 @@ export default class AwsPriceCalculator {
       if (ec2Item.isSpotInstance) {
         const spotPrice = await this.getSpotInstancePrice(ec2Item.getRegion(), ec2Item.availabilityZone, ec2Item.type, ec2Item.platformDetails)
         if (spotPrice !== undefined) {
-          ec2Item.pricePerHour = parseFloat(spotPrice)
+          ec2Item.pricePerMonth = parseFloat(spotPrice) * 720
         }
         continue
       }
@@ -392,7 +392,7 @@ export default class AwsPriceCalculator {
               }
               const ec2Items = filters[regionKey][typeKey][platformKey][usageOperationKey][tenancyKey].ec2Items
               ec2Items.forEach(ec2 => {
-                ec2.pricePerHour = price
+                ec2.pricePerMonth = price * 720
                 return ec2
               })
             }
