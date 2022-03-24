@@ -12,10 +12,8 @@ export class Elb extends ProviderResource {
     public hasAttachments?: boolean,
     public nameTag?: string,
     public tags?: Tag[],
-    readonly _account?: string
-  ) {
-    super()
-  }
+    readonly account?: string
+  ) { super('', account) }
 
   getIdentifierForNameTag (): string {
     if (this.type === 'classic') {
@@ -31,9 +29,5 @@ export class Elb extends ProviderResource {
     }
     const mergeResult = `${dnsAsArray[1]}.${dnsAsArray[2]}`
     return mergeResult.replace('elb.', '').replace('.elb', '')
-  }
-
-  getOwner (): string {
-    return this._account ?? 'N/A'
   }
 }

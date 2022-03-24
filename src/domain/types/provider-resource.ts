@@ -2,35 +2,49 @@ export abstract class ProviderResource {
     protected _pricePerHour?: number;
     protected _pricePerMonthGB?: number;
     protected _pricePerMonth?: number;
+    protected _region: string;
+    protected _owner?: string;
 
-    get pricePerHour (): number {
-      return <number> this._pricePerHour
+    protected constructor (
+      region: string,
+      owner?: string
+    ) {
+      this._region = region
+      this._owner = owner
     }
 
-    set pricePerHour (value: number) {
+    get pricePerHour (): number | undefined {
+      return this._pricePerHour
+    }
+
+    set pricePerHour (value: number | undefined) {
       this._pricePerHour = value
-      if (this._pricePerHour !== null) {
-        this._pricePerMonth = this._pricePerHour * 720
+      if (value !== undefined) {
+        this._pricePerMonth = value * 720
       }
     }
 
-    set pricePerMonthGB (value: number) {
-      this._pricePerMonthGB = value * 1
+    set pricePerMonthGB (value: number | undefined) {
+      this._pricePerMonthGB = value
     }
 
-    get pricePerMonthGB (): number {
-      return <number> this._pricePerMonthGB
+    get pricePerMonthGB (): number | undefined {
+      return this._pricePerMonthGB
     }
 
-    set pricePerMonth (value: number) {
+    set pricePerMonth (value: number | undefined) {
       this._pricePerMonth = value
     }
 
-    get pricePerMonth (): number {
-      return <number> this._pricePerMonth
+    get pricePerMonth (): number | undefined {
+      return this._pricePerMonth
     }
 
-    abstract getOwner(): string
+    getOwner (): string | undefined {
+      return this._owner
+    }
 
-    abstract getRegion(): string
+    getRegion (): string {
+      return this._region
+    }
 }
