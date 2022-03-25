@@ -22,13 +22,12 @@ export default class GcpDisksClient extends GcpBaseClient implements GcpClientIn
         r?.forEach((instance: any) => {
           data.push(new Disks(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
             StringHelper.splitAndGetAtIndex(instance.type, '/', -1),
             instance.users?.length > 0,
             instance.status,
             (parseFloat(instance.sizeGb) | 0) * 1073741824,
             instance.creationTimestamp,
-            StringHelper.splitAndGetAtIndex(instance.zone, '/', -1),
-            undefined,
             Label.createInstances(instance.labels)
           ))
         })

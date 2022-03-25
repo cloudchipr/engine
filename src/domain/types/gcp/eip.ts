@@ -1,12 +1,20 @@
 import { Label } from './shared/label'
+import { ProviderResource } from '../provider-resource'
 
-export class Eip {
+export class Eip extends ProviderResource {
   constructor (
     readonly ip: string,
+    readonly region: string,
     readonly name?: string,
-    readonly region?: string,
-    readonly pricePerMonth?: number,
     readonly labels?: Label[],
-    readonly project?: string
-  ) {}
+    readonly _project?: string
+  ) { super() }
+
+  getRegion (): string {
+    return this.region
+  }
+
+  getOwner (): string | undefined {
+    return this._project
+  }
 }
