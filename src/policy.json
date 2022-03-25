@@ -266,12 +266,34 @@
       }
     ]
   },
+  "gcp-vm-clean": {
+    "policies": [
+      {
+        "name": "gcp-vm-clean",
+        "resource": "gcp.instance",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
   "gcp-disks-collect": {
     "policies": [
       {
         "name": "gcp-disks-collect",
         "resource": "gcp.disk",
         "filters": []
+      }
+    ]
+  },
+  "gcp-disks-clean": {
+    "policies": [
+      {
+        "name": "gcp-disks-clean",
+        "resource": "gcp.disk",
+        "actions": [
+          "delete"
+        ]
       }
     ]
   },
@@ -284,20 +306,22 @@
       }
     ]
   },
+  "gcp-lb-clean": {
+    "policies": [
+      {
+        "name": "gcp-lb-clean",
+        "resource": "gcp.loadbalancer-forwarding-rule",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
   "gcp-lb-collect-all": {
     "policies": [
       {
         "name": "gcp-lb-collect-all",
         "resource": "gcp.loadbalancer-forwarding-rule",
-        "filters": []
-      }
-    ]
-  },
-  "gcp-lb-backend-bucket-collect": {
-    "policies": [
-      {
-        "name": "gcp-lb-backend-bucket-collect",
-        "resource": "gcp.loadbalancer-backend-bucket",
         "filters": []
       }
     ]
@@ -320,12 +344,34 @@
       }
     ]
   },
+  "gcp-sql-clean": {
+    "policies": [
+      {
+        "name": "gcp-sql-clean",
+        "resource": "gcp.sql-instance",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
   "gcp-eip-collect": {
     "policies": [
       {
         "name": "gcp-eip-collect",
         "resource": "gcp.loadbalancer-address",
         "filters": []
+      }
+    ]
+  },
+  "gcp-eip-clean": {
+    "policies": [
+      {
+        "name": "gcp-eip-clean",
+        "resource": "gcp.loadbalancer-address",
+        "actions": [
+          "delete"
+        ]
       }
     ]
   }

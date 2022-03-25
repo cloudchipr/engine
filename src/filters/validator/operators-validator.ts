@@ -22,6 +22,7 @@ export class OperatorsValidator implements FilterValidatorInterface {
     [FilterResource.INSTANCE_ID, new Set([Operators.Equal])],
     [FilterResource.DB_INSTANCE_IDENTIFIER, new Set([Operators.Equal])],
     [FilterResource.PUBLIC_IP, new Set([Operators.Equal])],
+    [FilterResource.NAME, new Set([Operators.Equal])],
     [FilterResource.LOAD_BALANCER_NAME, new Set([Operators.Equal])]
   ]
   )

@@ -23,7 +23,7 @@ import GcpResourceClient from './clients/gcp-resource-client'
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor
     private readonly gcpResourceClient: GcpResourceClient
-    private project: string = 'N/A'
+    private project?: string
 
     constructor (custodian: string, custodianOrg?: string) {
       this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
