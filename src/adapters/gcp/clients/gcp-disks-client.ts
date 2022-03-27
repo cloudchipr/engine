@@ -23,10 +23,10 @@ export default class GcpDisksClient extends GcpBaseClient implements GcpClientIn
           data.push(new Disks(
             instance.name,
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
-            StringHelper.splitAndGetAtIndex(instance.type, '/', -1),
+            StringHelper.splitAndGetAtIndex(instance.type, '/', -1) || '',
+            (parseFloat(instance.sizeGb) | 0) * 1073741824,
             instance.users?.length > 0,
             instance.status,
-            (parseFloat(instance.sizeGb) | 0) * 1073741824,
             instance.creationTimestamp,
             Label.createInstances(instance.labels)
           ))

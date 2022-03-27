@@ -5,10 +5,10 @@ export class Disks extends ProviderResource {
   constructor (
     readonly name: string,
     readonly zone: string,
-    readonly type?: string,
+    readonly type: string,
+    readonly size: number,
     readonly hasAttachments?: boolean,
     readonly status?: string,
-    readonly size?: number,
     readonly age?: string,
     readonly labels?: Label[],
     readonly _project?: string
