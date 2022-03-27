@@ -19,6 +19,7 @@ import { GcpSubCommand } from './gcp-sub-command'
 import { FilterExpression } from '../../filters/filter-expression'
 import { Operators } from '../../filters/operators'
 import GcpResourceClient from './clients/gcp-resource-client'
+import { GcpPriceCalculator } from './gcp-price-calculator'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor
@@ -176,14 +177,15 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const items = responseJson.map((item: any) => new Disks(
         item.name,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
-        StringHelper.splitAndGetAtIndex(item.type, '/', -1),
+        StringHelper.splitAndGetAtIndex(item.type, '/', -1) || '',
+        (parseFloat(item.sizeGb) | 0) * 1073741824,
         item.users?.length > 0,
         item.status,
-        (parseFloat(item.sizeGb) | 0) * 1073741824,
         item.creationTimestamp,
         Label.createInstances(item.labels),
         this.project
       ))
+      await GcpPriceCalculator.putDisksPrices(items)
       return new Response<Type>(items)
     }
 
