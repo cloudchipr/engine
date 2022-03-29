@@ -9,7 +9,6 @@ import GcpEipClient from './gcp-eip-client'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
-import { StringHelper } from '../../../helpers/string-hepler'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -40,7 +39,7 @@ export default class GcpClient {
       const result: any = await Promise.allSettled(promises)
       for (let i = 0; i < result.length; i++) {
         result[i].status === 'fulfilled'
-          ? response.addSuccess(StringHelper.splitAndGetAtIndex(result[i].value[0]?.latestResponse?.targetLink, '/', -1) || '')
+          ? response.addSuccess(ids[i])
           : response.addFailure(new CleanFailureResponse(ids[i], result[i].reason.errors[0].message))
       }
     }

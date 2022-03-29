@@ -5,6 +5,8 @@ import { StringHelper } from '../../../helpers/string-hepler'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Label } from '../../../domain/types/gcp/shared/label'
 import GcpBaseClient from './gcp-base-client'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class GcpDisksClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -13,6 +15,19 @@ export default class GcpDisksClient extends GcpBaseClient implements GcpClientIn
       promises.push(GcpDisksClient.getClient().list({ project: 'cloud-test-340820', zone: region }))
     }
     return promises
+  }
+
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
+    return GcpDisksClient.getClient().delete({ disk: request.id, zone: metadata.zone, project: 'cloud-test-340820' })
+  }
+
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request) || !request.metadata) {
+      return false
+    }
+    const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
+    return !!metadata.zone
   }
 
   async formatCollectResponse<Type> (response: any[]): Promise<Response<Type>> {

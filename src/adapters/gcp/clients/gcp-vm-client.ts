@@ -41,7 +41,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
       return false
     }
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return metadata.zone === 'us-west1-b'
+    return !!metadata.zone
   }
 
   async formatCollectResponse<Type> (response: any[]): Promise<Response<Type>> {
