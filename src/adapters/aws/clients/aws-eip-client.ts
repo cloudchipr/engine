@@ -9,7 +9,7 @@ import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
-import { CleanEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { CleanAwsEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class AwsEipClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -20,7 +20,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     return new Promise((resolve, reject) => {
-      const metadata = request.metadata as CleanEipMetadataInterface
+      const metadata = request.metadata as CleanAwsEipMetadataInterface
       const id = metadata.domain === 'classic' ? request.id : metadata.allocationId
       this.getClient(request.region)
         .send(AwsEipClient.getReleaseAddressCommand(id as string, metadata.domain))
@@ -33,7 +33,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
     if (!('metadata' in request) || !request.metadata) {
       return false
     }
-    const metadata = request.metadata as CleanEipMetadataInterface
+    const metadata = request.metadata as CleanAwsEipMetadataInterface
     return metadata.domain === 'classic' || (metadata.domain === 'vpc' && metadata.allocationId !== undefined)
   }
 

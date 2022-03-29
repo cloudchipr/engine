@@ -1,13 +1,24 @@
-export interface CleanElbMetadataInterface {
+export interface CleanAwsElbMetadataInterface {
   loadBalancerArn?: string;
   type: string;
 }
 
-export interface CleanEipMetadataInterface {
+export interface CleanAwsEipMetadataInterface {
   allocationId?: string
   domain: string;
 }
 
+export interface CleanGcpVmDisksMetadataInterface {
+  zone: string;
+}
+
+export interface CleanGcpLbEipMetadataInterface {
+  global: boolean;
+  region?: string;
+}
+
 export type CleanRequestResourceMetadataInterface =
-  | CleanEipMetadataInterface
-  | CleanElbMetadataInterface
+  | CleanAwsEipMetadataInterface
+  | CleanAwsElbMetadataInterface
+  | CleanGcpVmDisksMetadataInterface
+  | CleanGcpLbEipMetadataInterface
