@@ -24,7 +24,7 @@ import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
-import { CleanElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { CleanAwsElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -35,7 +35,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
-    const metadata = request.metadata as CleanElbMetadataInterface
+    const metadata = request.metadata as CleanAwsElbMetadataInterface
     if (metadata.type === 'classic') {
       return new Promise((resolve, reject) => {
         this.getV3Client(request.region).send(AwsElbClient.getV3DeleteCommand(request.id))
@@ -55,7 +55,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     if (!('metadata' in request) || !request.metadata) {
       return false
     }
-    const metadata = request.metadata as CleanElbMetadataInterface
+    const metadata = request.metadata as CleanAwsElbMetadataInterface
     return metadata.type === 'classic' || (['network', 'application'].includes(metadata.type) && metadata.loadBalancerArn !== undefined)
   }
 
