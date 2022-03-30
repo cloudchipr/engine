@@ -6,6 +6,13 @@ export class MetricsHelper {
     return MetricsHelper.getMetric(object, 'AWS/RDS.DatabaseConnections')
   }
 
+  static getGcpDatabaseConnections (object: any): Metric {
+    return MetricsHelper.getGcpMetric(object, [
+      'cloudsql.googleapis.com/database/network/connections',
+      'cloudsql.googleapis.com/database/postgresql/num_backends'
+    ])
+  }
+
   static getDatabaseIOPS (object: any): Metric {
     return MetricsHelper.getMetric(object, 'AWS/RDS.IOPS')
   }
@@ -14,12 +21,30 @@ export class MetricsHelper {
     return MetricsHelper.getMetric(object, 'AWS/EC2.CPUUtilization')
   }
 
+  static getGcpCpuUtilization (object: any): Metric {
+    return MetricsHelper.getGcpMetric(object, [
+      'compute.googleapis.com/instance/cpu/utilization'
+    ])
+  }
+
   static getNetworkIn (object: any): Metric {
     return MetricsHelper.getMetric(object, 'AWS/EC2.NetworkIn')
   }
 
+  static getGcpNetworkIn (object: any): Metric {
+    return MetricsHelper.getGcpMetric(object, [
+      'compute.googleapis.com/instance/network/received_bytes_count'
+    ])
+  }
+
   static getNetworkOut (object: any): Metric {
     return MetricsHelper.getMetric(object, 'AWS/EC2.NetworkOut')
+  }
+
+  static getGcpNetworkOut (object: any): Metric {
+    return MetricsHelper.getGcpMetric(object, [
+      'compute.googleapis.com/instance/network/sent_bytes_count'
+    ])
   }
 
   private static getMetric (object: any, key: string): Metric {
@@ -35,6 +60,21 @@ export class MetricsHelper {
     )
   }
 
+  private static getGcpMetric (object: any, keys: string[]): Metric {
+    for (const key of keys) {
+      const metricObject = object?.['c7n.metrics']?.[this.getMetricKey(object, key)] ?? {}
+      if (!('points' in metricObject)) {
+        continue
+      }
+      const points = metricObject.points
+      const interval = points[0].interval
+      const value = points[0].value.doubleValue ?? points[0].value.int64Value ?? 0
+      const days = Math.abs((new Date(interval.startTime)).getTime() - (new Date(interval.endTime)).getTime()) / (1000 * 3600 * 24)
+      return new Metric(value / (days || 1), this.getMetricType(object, key), '')
+    }
+    return new Metric(0, this.getMetricType({}, ''), '')
+  }
+
   private static getMetricType (object: any, key: string): Statistics {
     if (object?.['c7n.metrics'] === undefined) {
       return Statistics.Unspecified
@@ -42,12 +82,16 @@ export class MetricsHelper {
 
     switch (true) {
       case (key + '.Average' in object?.['c7n.metrics']):
+      case (key + '.ALIGN_MEAN.REDUCE_NONE' in object?.['c7n.metrics']):
         return Statistics.Average
       case (key + '.Maximum' in object?.['c7n.metrics']):
+      case (key + '.ALIGN_MAX.REDUCE_NONE' in object?.['c7n.metrics']):
         return Statistics.Maximum
       case (key + '.Minimum' in object?.['c7n.metrics']):
+      case (key + '.ALIGN_MIN.REDUCE_NONE' in object?.['c7n.metrics']):
         return Statistics.Minimum
       case (key + '.Sum' in object?.['c7n.metrics']):
+      case (key + '.ALIGN_SUM.REDUCE_NONE' in object?.['c7n.metrics']):
         return Statistics.Sum
       default:
         return Statistics.Unspecified
@@ -64,6 +108,14 @@ export class MetricsHelper {
         return key + '.Minimum'
       case (key + '.Sum' in object?.['c7n.metrics']):
         return key + '.Sum'
+      case (key + '.ALIGN_MEAN.REDUCE_NONE' in object?.['c7n.metrics']):
+        return key + '.ALIGN_MEAN.REDUCE_NONE'
+      case (key + '.ALIGN_MAX.REDUCE_NONE' in object?.['c7n.metrics']):
+        return key + '.ALIGN_MAX.REDUCE_NONE'
+      case (key + '.ALIGN_MIN.REDUCE_NONE' in object?.['c7n.metrics']):
+        return key + '.ALIGN_MIN.REDUCE_NONE'
+      case (key + '.ALIGN_SUM.REDUCE_NONE' in object?.['c7n.metrics']):
+        return key + '.ALIGN_SUM.REDUCE_NONE'
       default:
         return ''
     }

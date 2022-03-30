@@ -4,15 +4,25 @@ import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { CloudSql } from '../../../domain/types/gcp/cloud-sql'
 import { sqladmin } from '@googleapis/sqladmin'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import GcpBaseClient from './gcp-base-client'
 // import { google } from 'googleapis'
 
-export default class GcpCloudSqlClient implements GcpClientInterface {
+export default class GcpSqlClient extends GcpBaseClient implements GcpClientInterface {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getCollectCommands (regions: string[]): any[] {
     console.log('Getting sql data')
     return [
       sqladmin({ version: 'v1', auth: '0a6bef0c72d44e341b387b572d6600c1546cfd75' }).instances.list({ project: 'cloud-test-340820' })
     ]
+  }
+
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    return 'test'
+  }
+
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    return true
   }
 
   async formatCollectResponse<Type> (response: any[]): Promise<Response<Type>> {

@@ -252,5 +252,127 @@
         ]
       }
     ]
+  },
+  "gcp-vm-collect": {
+    "policies": [
+      {
+        "name": "gcp-vm-collect",
+        "resource": "gcp.instance",
+        "filters": [
+          {
+            "status": "RUNNING"
+          }
+        ]
+      }
+    ]
+  },
+  "gcp-vm-clean": {
+    "policies": [
+      {
+        "name": "gcp-vm-clean",
+        "resource": "gcp.instance",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
+  "gcp-disks-collect": {
+    "policies": [
+      {
+        "name": "gcp-disks-collect",
+        "resource": "gcp.disk",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-disks-clean": {
+    "policies": [
+      {
+        "name": "gcp-disks-clean",
+        "resource": "gcp.disk",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
+  "gcp-lb-collect": {
+    "policies": [
+      {
+        "name": "gcp-lb-collect",
+        "resource": "gcp.loadbalancer-forwarding-rule",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-lb-clean": {
+    "policies": [
+      {
+        "name": "gcp-lb-clean",
+        "resource": "gcp.loadbalancer-forwarding-rule",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
+  "gcp-lb-collect-all": {
+    "policies": [
+      {
+        "name": "gcp-lb-collect-all",
+        "resource": "gcp.loadbalancer-forwarding-rule",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-lb-target-pool-collect": {
+    "policies": [
+      {
+        "name": "gcp-lb-target-pool-collect",
+        "resource": "gcp.loadbalancer-target-pool",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-sql-collect": {
+    "policies": [
+      {
+        "name": "gcp-sql-collect",
+        "resource": "gcp.sql-instance",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-sql-clean": {
+    "policies": [
+      {
+        "name": "gcp-sql-clean",
+        "resource": "gcp.sql-instance",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
+  },
+  "gcp-eip-collect": {
+    "policies": [
+      {
+        "name": "gcp-eip-collect",
+        "resource": "gcp.loadbalancer-address",
+        "filters": []
+      }
+    ]
+  },
+  "gcp-eip-clean": {
+    "policies": [
+      {
+        "name": "gcp-eip-clean",
+        "resource": "gcp.loadbalancer-address",
+        "actions": [
+          "delete"
+        ]
+      }
+    ]
   }
 }

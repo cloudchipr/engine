@@ -126,7 +126,8 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
   }
 
   private static getDescribeInstancesCommand (): DescribeInstancesCommand {
-    return new DescribeInstancesCommand({ MaxResults: 1000 })
+    // fetch only pending, running, stopping
+    return new DescribeInstancesCommand({ MaxResults: 1000, Filters: [{ Name: 'instance-state-code', Values: ['0', '16', '64'] }] })
   }
 
   private static getTerminateInstancesCommand (instanceId: string): TerminateInstancesCommand {

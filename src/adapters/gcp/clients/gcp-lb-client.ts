@@ -5,6 +5,10 @@ import { Lb } from '../../../domain/types/gcp/lb'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Label } from '../../../domain/types/gcp/shared/label'
 import GcpBaseClient from './gcp-base-client'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import {
+  CleanGcpLbEipMetadataInterface
+} from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class GcpLbClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -16,6 +20,23 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
     return promises
   }
 
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    const metadata = request.metadata as CleanGcpLbEipMetadataInterface
+    if (metadata.global) {
+      return GcpLbClient.getGlobalForwardingRulesClient().delete({ forwardingRule: request.id, project: 'cloud-test-340820' })
+    } else {
+      return GcpLbClient.getForwardingRulesClient().delete({ forwardingRule: request.id, region: metadata.region, project: 'cloud-test-340820' })
+    }
+  }
+
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request) || !request.metadata) {
+      return false
+    }
+    const metadata = request.metadata as CleanGcpLbEipMetadataInterface
+    return metadata.global || !!metadata.region
+  }
+
   async formatCollectResponse<Type> (response: any[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
@@ -23,11 +44,10 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
         r?.forEach((instance: any) => {
           data.push(new Lb(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.region, '/', -1) || '',
             instance.IPProtocol,
-            undefined, // @todo scope
+            !('region' in instance),
             instance.creationTimestamp,
-            StringHelper.splitAndGetAtIndex(instance.region, '/', -1),
-            undefined,
             Label.createInstances(instance.labels)
           ))
         })

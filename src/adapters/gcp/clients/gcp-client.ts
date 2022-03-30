@@ -6,7 +6,10 @@ import { GcpSubCommand } from '../gcp-sub-command'
 import GcpLbClient from './gcp-lb-client'
 import GcpDisksClient from './gcp-disks-client'
 import GcpEipClient from './gcp-eip-client'
-import GcpCloudSqlClient from './gcp-cloud-sql-client'
+import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
+import { CleanResponse } from '../../../responses/clean-response'
+import { CleanFailureResponse } from '../../../responses/clean-failure-response'
+import GcpSqlClient from './gcp-sql-client'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -21,6 +24,29 @@ export default class GcpClient {
     return await this.gcpClientInterface.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
   }
 
+  async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
+    const response = new CleanResponse(request.subCommand.getValue())
+    const promises: any[] = []
+    const ids: string[] = []
+    for (const resource of request.resources) {
+      if (this.gcpClientInterface.isCleanRequestValid(resource)) {
+        promises.push(this.gcpClientInterface.getCleanCommands(resource))
+        ids.push(resource.id)
+      } else {
+        response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
+      }
+    }
+    if (promises.length > 0) {
+      const result: any = await Promise.allSettled(promises)
+      for (let i = 0; i < result.length; i++) {
+        result[i].status === 'fulfilled'
+          ? response.addSuccess(ids[i])
+          : response.addFailure(new CleanFailureResponse(ids[i], result[i].reason.errors[0].message))
+      }
+    }
+    return response
+  }
+
   private static getAwsClient (subcommand: string): GcpClientInterface {
     switch (subcommand) {
       case GcpSubCommand.VM_SUBCOMMAND:
@@ -31,8 +57,8 @@ export default class GcpClient {
         return new GcpDisksClient()
       case GcpSubCommand.EIP_SUBCOMMAND:
         return new GcpEipClient()
-      case GcpSubCommand.CLOUD_SQL_SUBCOMMAND:
-        return new GcpCloudSqlClient()
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return new GcpSqlClient()
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

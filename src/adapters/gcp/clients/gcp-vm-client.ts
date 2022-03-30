@@ -8,6 +8,10 @@ import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
 import GcpBaseClient from './gcp-base-client'
 import { MetricDetails } from '../../../domain/metric-details'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import {
+  CleanGcpVmDisksMetadataInterface
+} from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -27,6 +31,19 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     return promises
   }
 
+  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+    const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
+    return GcpVmClient.getClient().delete({ instance: request.id, zone: metadata.zone, project: 'cloud-test-340820' })
+  }
+
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request) || !request.metadata) {
+      return false
+    }
+    const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
+    return !!metadata.zone
+  }
+
   async formatCollectResponse<Type> (response: any[]): Promise<Response<Type>> {
     const data: any[] = []
     response.forEach((res) => {
@@ -34,9 +51,11 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
         r?.forEach((instance: any) => {
           data.push(new Vm(
             instance.name,
+            StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
             StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1),
             instance.creationTimestamp,
-            StringHelper.splitAndGetAtIndex(instance.zone, '/', -1),
+            undefined,
+            undefined,
             undefined,
             undefined,
             Label.createInstances(instance.labels)

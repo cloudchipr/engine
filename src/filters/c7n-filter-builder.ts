@@ -1,12 +1,16 @@
 import { FilterBuilderInterface } from '../filter-builder-interface'
 import { FilterList } from './filter-list'
 import { FilterExpression } from './filter-expression'
-import { Operators } from './operators'
+import { getOppositeOperator, Operators } from './operators'
 import { SubCommandInterface } from '../sub-command-interface'
 import { AwsSubCommand } from '../aws-sub-command'
 import { StringHelper } from '../helpers/string-hepler'
-import { Statistics } from '../domain/statistics'
+import { getGcpStatistics, Statistics } from '../domain/statistics'
 import { Command } from '../command'
+import { GcpSubCommand } from '../adapters/gcp/gcp-sub-command'
+import moment from 'moment'
+import { FilterResourceRegex } from './filter-resource-regex'
+import { FilterResource } from './filter-resource'
 
 export class C7nFilterBuilder implements FilterBuilderInterface {
   private readonly command: Command
@@ -50,48 +54,56 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
 
   buildFilterExpression (expression: FilterExpression): object {
     if (expression.operator === Operators.IsEmpty) {
-      return C7nFilterBuilder.buildEmpty(expression)
+      return this.buildEmpty(expression)
     } else if (expression.operator === Operators.IsNotEmpty) {
-      return C7nFilterBuilder.buildNotEmpty(expression)
+      return this.buildNotEmpty(expression)
     } else if (expression.operator === Operators.IsAbsent) {
-      return C7nFilterBuilder.buildAbsent(expression)
+      return this.buildAbsent(expression)
     } else if (expression.operator === Operators.IsNotAbsent) {
-      return C7nFilterBuilder.buildNotAbsent(expression)
+      return this.buildNotAbsent(expression)
+    } else if (expression.operator === Operators.In) {
+      return this.buildIn(expression)
+    } else if (expression.operator === Operators.NotIn) {
+      return this.buildNotIn(expression)
     }
 
-    if (/^tag:.{1,128}$/.test(expression.resource)) {
+    if ((new RegExp(FilterResourceRegex.TAG)).test(expression.resource)) {
       return C7nFilterBuilder.buildTag(expression)
+    }
+    if ((new RegExp(FilterResourceRegex.LABEL)).test(expression.resource)) {
+      return this.buildLabel(expression)
     }
 
     switch (expression.resource) {
-      case 'volume-age':
+      case FilterResource.VOLUME_AGE:
         return C7nFilterBuilder.buildVolumeAge(expression)
-      case 'cpu':
-        return C7nFilterBuilder.buildCpu(expression)
-      case 'network-in':
-        return C7nFilterBuilder.buildNetworkIn(expression)
-      case 'network-out':
-        return C7nFilterBuilder.buildNetworkOut(expression)
-      case 'launch-time':
+      case FilterResource.CPU:
+        return this.buildCpu(expression)
+      case FilterResource.NETWORK_IN:
+        return this.buildNetworkIn(expression)
+      case FilterResource.NETWORK_OUT:
+        return this.buildNetworkOut(expression)
+      case FilterResource.LAUNCH_TIME:
         return this.buildLaunchTime(expression)
-      case 'instance-ids':
+      case FilterResource.INSTANCE_IDS:
         return C7nFilterBuilder.buildInstanceIds(expression)
-      case 'association-ids':
+      case FilterResource.ASSOCIATION_IDS:
         return C7nFilterBuilder.buildAssociationId(expression)
-      case 'dns-name':
+      case FilterResource.DNS_NAME:
         return C7nFilterBuilder.buildDnsName(expression)
-      case 'database-connections':
-        return C7nFilterBuilder.buildDatabaseConnections(expression)
-      case 'volume-id':
+      case FilterResource.DATABASE_CONNECTIONS:
+        return this.buildDatabaseConnections(expression)
+      case FilterResource.VOLUME_ID:
         return C7nFilterBuilder.buildVolumeId(expression)
-      case 'instance-id':
+      case FilterResource.INSTANCE_ID:
         return C7nFilterBuilder.buildInstanceId(expression)
-      case 'db-instance-identifier':
-        return C7nFilterBuilder.buildDBInstanceIdentifier(expression)
-      case 'public-ip':
-        return C7nFilterBuilder.buildPublicIP(expression)
-      case 'load-balancer-name':
-        return C7nFilterBuilder.buildLoadBalancerName(expression)
+      case FilterResource.DB_INSTANCE_IDENTIFIER:
+        return this.buildDBInstanceIdentifier(expression)
+      case FilterResource.PUBLIC_IP:
+        return this.buildPublicIP(expression)
+      case FilterResource.LOAD_BALANCER_NAME:
+      case FilterResource.NAME:
+        return this.buildName(expression)
       default:
         throw new Error(`${expression.resource} - ${expression.operator} is not allowed for ${this.subCommand.getValue()}`)
     }
@@ -107,53 +119,107 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildCpu (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'CPUUtilization',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      op: expression.operator,
-      value: Number(expression.value)
+  private buildCpu (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'compute.googleapis.com/instance/cpu/utilization',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'CPUUtilization',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
     }
   }
 
-  private static buildNetworkIn (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'NetworkIn',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      op: expression.operator,
-      value: Number(expression.value)
+  private buildNetworkIn (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'compute.googleapis.com/instance/network/received_bytes_count',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'NetworkIn',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
     }
   }
 
-  private static buildNetworkOut (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'NetworkOut',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      op: expression.operator,
-      value: Number(expression.value)
+  private buildNetworkOut (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return {
+          type: 'metrics',
+          name: 'compute.googleapis.com/instance/network/sent_bytes_count',
+          aligner: getGcpStatistics(expression.statistics as string),
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'NetworkOut',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          op: expression.operator,
+          value: Number(expression.value)
+        }
     }
   }
 
   private buildLaunchTime (expression: FilterExpression): object {
-    return this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND
-      ? {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+      case GcpSubCommand.DISKS_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'creationTimestamp',
+          value: moment().subtract(Number(expression.value), 'd').format(),
+          op: getOppositeOperator(expression.operator)
+        }
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'createTime',
+          value: moment().subtract(Number(expression.value), 'd').format(),
+          op: getOppositeOperator(expression.operator)
+        }
+      case AwsSubCommand.RDS_SUBCOMMAND:
+        return {
           type: 'value',
           value_type: 'age',
           key: 'InstanceCreateTime',
           value: Number(expression.value),
           op: expression.operator
         }
-      : {
+      default:
+        return {
           type: 'instance-age',
           op: expression.operator,
           days: Number(expression.value)
         }
+    }
   }
 
   private static buildInstanceIds (expression: FilterExpression): object {
@@ -183,50 +249,136 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildAbsent (expression: FilterExpression): object {
+  private buildAbsent (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.Equal
+        }
+      default:
+        return {
+          type: 'value',
+          key: this.mapResourceName(expression.resource),
+          value: 'absent'
+        }
+    }
+  }
+
+  private buildEmpty (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.DISKS_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.Equal
+        }
+      default:
+        return {
+          [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+        }
+    }
+  }
+
+  private buildIn (expression: FilterExpression): object {
     return {
       type: 'value',
       key: this.mapResourceName(expression.resource),
-      value: 'absent'
+      value: expression.value,
+      op: Operators.In
     }
   }
 
-  private static buildEmpty (expression: FilterExpression): object {
+  private buildNotIn (expression: FilterExpression): object {
     return {
-      [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+      type: 'value',
+      key: this.mapResourceName(expression.resource),
+      value: expression.value,
+      op: Operators.NotIn
     }
   }
 
-  private static buildNotEmpty (expression: FilterExpression): object {
-    return {
-      not: [
-        {
-          [StringHelper.capitalizeFirstLetter(expression.resource)]: []
-        }
-      ]
-    }
-  }
-
-  private static buildNotAbsent (expression: FilterExpression): object {
-    return {
-      not: [
-        {
+  private buildNotEmpty (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.DISKS_SUBCOMMAND:
+        return {
           type: 'value',
-          key: C7nFilterBuilder.mapResourceName(expression.resource),
-          value: 'absent'
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.GreaterThan
         }
-      ]
+      default:
+        return {
+          not: [
+            {
+              [StringHelper.capitalizeFirstLetter(expression.resource)]: []
+            }
+          ]
+        }
     }
   }
 
-  private static buildDatabaseConnections (expression: FilterExpression): object {
-    return {
-      type: 'metrics',
-      name: 'DatabaseConnections',
-      statistics: expression.statistics,
-      days: Number(expression.since),
-      value: Number(expression.value),
-      op: expression.operator
+  private buildNotAbsent (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return {
+          type: 'value',
+          key: 'users',
+          value: 0,
+          value_type: 'size',
+          op: Operators.GreaterThan
+        }
+      default:
+        return {
+          not: [
+            {
+              type: 'value',
+              key: this.mapResourceName(expression.resource),
+              value: 'absent'
+            }
+          ]
+        }
+    }
+  }
+
+  private buildDatabaseConnections (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return {
+          or: [
+            {
+              type: 'metrics',
+              name: 'cloudsql.googleapis.com/database/network/connections',
+              aligner: getGcpStatistics(expression.statistics as string),
+              days: Number(expression.since),
+              op: expression.operator,
+              value: Number(expression.value)
+            },
+            {
+              type: 'metrics',
+              name: 'cloudsql.googleapis.com/database/postgresql/num_backends',
+              aligner: getGcpStatistics(expression.statistics as string),
+              days: Number(expression.since),
+              op: expression.operator,
+              value: Number(expression.value)
+            }
+          ]
+        }
+      default:
+        return {
+          type: 'metrics',
+          name: 'DatabaseConnections',
+          statistics: expression.statistics,
+          days: Number(expression.since),
+          value: Number(expression.value),
+          op: expression.operator
+        }
     }
   }
 
@@ -242,30 +394,47 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
-  private static buildDBInstanceIdentifier (expression: FilterExpression): object {
-    return {
-      DBInstanceIdentifier: expression.value
+  private buildDBInstanceIdentifier (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return { name: expression.value }
+      default:
+        return { DBInstanceIdentifier: expression.value }
     }
   }
 
-  private static buildPublicIP (expression: FilterExpression): object {
-    return {
-      PublicIp: expression.value
+  private buildPublicIP (expression: FilterExpression): object {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return { address: expression.value }
+      default:
+        return { PublicIp: expression.value }
     }
   }
 
-  private static buildLoadBalancerName (expression: FilterExpression): object {
+  private buildName (expression: FilterExpression): object {
     return {
-      LoadBalancerName: expression.value
+      [this.mapResourceName(expression.resource)]: expression.value
     }
   }
 
-  private static mapResourceName (name: string): string {
+  private mapResourceName (name: string): string {
     switch (name) {
-      case 'instance-ids':
+      case FilterResource.INSTANCE_IDS:
         return 'InstanceId'
-      case 'association-ids':
+      case FilterResource.ASSOCIATION_IDS:
         return 'AssociationId'
+      case FilterResource.LOAD_BALANCER_NAME:
+        switch (this.subCommand.getValue()) {
+          case GcpSubCommand.LB_SUBCOMMAND:
+            return 'name'
+          case AwsSubCommand.ELB_SUBCOMMAND:
+            return 'LoadBalancerName'
+          default:
+            return 'LoadBalancerArn'
+        }
+      case FilterResource.NAME:
+        return 'name'
       default:
         return StringHelper.capitalizeFirstLetter(name)
     }
@@ -293,8 +462,45 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
     }
   }
 
+  private buildLabel (expression: FilterExpression): object {
+    const key = this.mapLabelKey(expression.resource)
+    switch (expression.operator) {
+      case Operators.Exists:
+        return {
+          type: 'value',
+          key: key,
+          value: 0,
+          value_type: 'size',
+          op: Operators.GreaterThan
+        }
+      case Operators.Contains:
+        return {
+          type: 'value',
+          key: key,
+          op: 'regex',
+          value: `(.*${expression.value}.*)`
+        }
+      default:
+        return {
+          type: 'value',
+          key: key,
+          value: expression.value,
+          op: expression.operator
+        }
+    }
+  }
+
+  private mapLabelKey (key: string): string {
+    switch (this.subCommand.getValue()) {
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return key.replace('label:', 'settings.userLabels.')
+      default:
+        return key.replace('label:', 'labels.')
+    }
+  }
+
   private pushDefaultMetricFilterExpressions (filterList: FilterList) {
-    if (this.subCommand.getValue() === AwsSubCommand.EC2_SUBCOMMAND) {
+    if ([AwsSubCommand.EC2_SUBCOMMAND, GcpSubCommand.VM_SUBCOMMAND].includes(this.subCommand.getValue())) {
       const isCPUFilterProvided = filterList.andList.some(filter => {
         return (filter instanceof FilterExpression && filter.resource === 'cpu')
       })
@@ -317,7 +523,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
         C7nFilterBuilder.pushDefaultFilterExpression('network-out', filterList)
       }
     }
-    if (this.subCommand.getValue() === AwsSubCommand.RDS_SUBCOMMAND) {
+    if ([AwsSubCommand.RDS_SUBCOMMAND, GcpSubCommand.SQL_SUBCOMMAND].includes(this.subCommand.getValue())) {
       const isDatabaseConnectionsFilterProvided = filterList.andList.some(filter => {
         return (filter instanceof FilterExpression && filter.resource === 'database-connections')
       })

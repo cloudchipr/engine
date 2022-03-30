@@ -12,8 +12,7 @@ export class Elb extends ProviderResource {
     public hasAttachments?: boolean,
     public nameTag?: string,
     public tags?: Tag[],
-    readonly _c8rRegion?: string,
-    readonly _c8rAccount?: string
+    readonly _account?: string
   ) {
     super()
   }
@@ -32,5 +31,9 @@ export class Elb extends ProviderResource {
     }
     const mergeResult = `${dnsAsArray[1]}.${dnsAsArray[2]}`
     return mergeResult.replace('elb.', '').replace('.elb', '')
+  }
+
+  getOwner (): string | undefined {
+    return this._account
   }
 }

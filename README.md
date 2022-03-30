@@ -2,6 +2,8 @@ cloudchipr-engine
 =============
 The [CloudchiprEngine](https://github.com/cloudchipr/cloudchipr-engine) library exported as [Typescript](https://www.typescriptlang.org/) module
 
+[![🚀 npm-publish](https://github.com/cloudchipr/engine/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/cloudchipr/engine/actions/workflows/npm-publish.yml)
+
 ## Prerequisites
 * [Node](https://nodejs.org/)
 * [Python](https://www.python.org/)

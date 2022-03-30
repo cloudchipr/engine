@@ -5,7 +5,7 @@ export class GcpSubCommand implements SubCommandInterface {
   static readonly VM_SUBCOMMAND = 'vm';
   static readonly DISKS_SUBCOMMAND = 'disks';
   static readonly EIP_SUBCOMMAND = 'eip';
-  static readonly CLOUD_SQL_SUBCOMMAND = 'cloud-sql';
+  static readonly SQL_SUBCOMMAND = 'sql';
   static readonly LB_SUBCOMMAND = 'lb';
 
   private readonly subCommand: string;
@@ -34,8 +34,8 @@ export class GcpSubCommand implements SubCommandInterface {
     return new GcpSubCommand(this.EIP_SUBCOMMAND)
   }
 
-  static 'cloud-sql' (): GcpSubCommand {
-    return new GcpSubCommand(this.CLOUD_SQL_SUBCOMMAND)
+  static sql (): GcpSubCommand {
+    return new GcpSubCommand(this.SQL_SUBCOMMAND)
   }
 
   static lb (): GcpSubCommand {

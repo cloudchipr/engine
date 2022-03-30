@@ -1,11 +1,14 @@
 import { Label } from './shared/label'
+import { Metric } from '../../metric'
 import { ProviderResource } from '../provider-resource'
 
-export class Eip extends ProviderResource {
+export class Sql extends ProviderResource {
   constructor (
-    readonly ip: string,
+    readonly id: string,
     readonly region: string,
-    readonly name?: string,
+    readonly type?: string,
+    readonly multiAz?: boolean,
+    readonly connections?: Metric,
     readonly labels?: Label[],
     readonly _project?: string
   ) { super() }

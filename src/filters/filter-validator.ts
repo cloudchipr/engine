@@ -17,11 +17,17 @@ export class FilterValidator {
     }
 
     public validate (filters: Filters) {
-      if (!filters.and) {
-        throw new Error('Filter validation failed : The root element must either be `and` or `or`')
+      if ((!filters.and && !filters.or) || (filters.and && filters.or)) {
+        throw new Error('Filter validation failed : There should be only one root, and it must either be `and` or `or`')
       }
 
-      filters.and.forEach(filter => {
+      filters.and?.forEach(filter => {
+        this.filterValidators.forEach(validator => {
+          validator.validate(filter)
+        })
+      })
+
+      filters.or?.forEach(filter => {
         this.filterValidators.forEach(validator => {
           validator.validate(filter)
         })

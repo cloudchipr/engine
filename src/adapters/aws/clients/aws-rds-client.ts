@@ -68,7 +68,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     // @ts-ignore
     response.items.forEach((rds: Rds) => {
       promises.push(rds.id)
-      promises.push(this.getCloudWatchClient(rds.getRegion()).send(AwsRdsClient.getMetricStatisticsCommand(rds.id, 'DatabaseConnections', 'Percent')))
+      promises.push(this.getCloudWatchClient(rds.getRegion()).send(AwsRdsClient.getMetricStatisticsCommand(rds.id, 'DatabaseConnections', 'Count')))
     })
     const metricsResponse = await Promise.all(promises)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
@@ -98,7 +98,8 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
               datapoint.Unit,
               datapoint.Average,
               datapoint.Minimum,
-              datapoint.Maximum
+              datapoint.Maximum,
+              datapoint.Sum
             )
           })
       }
@@ -130,7 +131,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
       Dimensions: [{ Name: 'DBInstanceIdentifier', Value: instanceIdentifier }],
       MetricName: metricName,
       Namespace: 'AWS/RDS',
-      Statistics: ['Maximum', 'Minimum', 'Average'],
+      Statistics: ['Maximum', 'Minimum', 'Average', 'Sum'],
       Unit: unit
     })
   }

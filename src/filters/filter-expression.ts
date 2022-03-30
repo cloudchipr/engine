@@ -31,4 +31,14 @@ export class FilterExpression implements FilterInterface {
   isEmpty (): boolean {
     return false
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public getFilterExpressionByResource (resource: string): FilterExpression | undefined {
+    return undefined
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public replaceFilterExpressionByResource (resource: string, newFilterExpression: FilterExpression): void {
+    return undefined
+  }
 }

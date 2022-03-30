@@ -11,9 +11,11 @@ export enum FilterResource {
   INSTANCES = 'instances',
   ASSOCIATION_IDS = 'association-ids',
   TAG = 'tag',
+  LABEL = 'label',
   VOLUME_ID = 'volume-id',
   INSTANCE_ID = 'instance-id',
   DB_INSTANCE_IDENTIFIER = 'db-instance-identifier',
   PUBLIC_IP = 'public-ip',
   LOAD_BALANCER_NAME = 'load-balancer-name',
+  NAME = 'name',
 }

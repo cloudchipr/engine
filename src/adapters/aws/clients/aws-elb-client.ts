@@ -24,7 +24,7 @@ import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
-import { CleanElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { CleanAwsElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -35,7 +35,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
-    const metadata = request.metadata as CleanElbMetadataInterface
+    const metadata = request.metadata as CleanAwsElbMetadataInterface
     if (metadata.type === 'classic') {
       return new Promise((resolve, reject) => {
         this.getV3Client(request.region).send(AwsElbClient.getV3DeleteCommand(request.id))
@@ -55,7 +55,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     if (!('metadata' in request) || !request.metadata) {
       return false
     }
-    const metadata = request.metadata as CleanElbMetadataInterface
+    const metadata = request.metadata as CleanAwsElbMetadataInterface
     return metadata.type === 'classic' || (['network', 'application'].includes(metadata.type) && metadata.loadBalancerArn !== undefined)
   }
 
@@ -77,10 +77,18 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     let promises: any[] = []
     // Get tags for network and application LBs
     Object.keys(loadBalancerNameByRegion).forEach((region) => {
-      promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(loadBalancerNameByRegion[region])))
+      // split into chunks
+      for (let i = 0; i < loadBalancerNameByRegion[region].length; i += 20) {
+        const chunk = loadBalancerNameByRegion[region].slice(i, i + 20)
+        promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(chunk)))
+      }
     })
     Object.keys(loadBalancerArnByRegion).forEach((region) => {
-      promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(loadBalancerArnByRegion[region])))
+      // split into chunks
+      for (let i = 0; i < loadBalancerArnByRegion[region].length; i += 20) {
+        const chunk = loadBalancerArnByRegion[region].slice(i, i + 20)
+        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(chunk)))
+      }
     })
     // Get target groups for network and application LBs
     Object.keys(loadBalancerArnByRegion).forEach((region) => {

@@ -10,7 +10,26 @@ export enum Operators {
   IsNotEmpty = 'isNotEmpty',
   IsNotAbsent = 'isNotAbsent',
   In = 'in',
-  NotIn = 'notIn',
+  NotIn = 'ni',
   Exists = 'exists',
   Contains = 'contains'
+}
+
+export function getOppositeOperator (operator: string): string {
+  switch (operator) {
+    case Operators.Equal:
+      return Operators.NotEqual
+    case Operators.NotEqual:
+      return Operators.Equal
+    case Operators.GreaterThan:
+      return Operators.LessThan
+    case Operators.GreaterThanEqualTo:
+      return Operators.LessThanEqualTo
+    case Operators.LessThan:
+      return Operators.GreaterThan
+    case Operators.LessThanEqualTo:
+      return Operators.GreaterThanEqualTo
+    default:
+      throw new Error(`The opposite operator of [${operator}] is not available.`)
+  }
 }
