@@ -9,6 +9,7 @@ import GcpEipClient from './gcp-eip-client'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
+import GcpSqlClient from './gcp-sql-client'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
@@ -56,6 +57,8 @@ export default class GcpClient {
         return new GcpDisksClient()
       case GcpSubCommand.EIP_SUBCOMMAND:
         return new GcpEipClient()
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return new GcpSqlClient()
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

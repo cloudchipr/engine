@@ -1,9 +1,10 @@
-import { IAMCredentialsClient } from '@google-cloud/iam-credentials'
+import { google } from 'googleapis'
 
 export default class GcpResourceClient {
   async getProject (): Promise<string> {
     try {
-      return await (new IAMCredentialsClient()).getProjectId()
+      const auth = new google.auth.GoogleAuth()
+      return await auth.getProjectId()
     } catch (e) {
       return 'N/A'
     }
