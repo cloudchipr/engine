@@ -356,7 +356,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
               type: 'metrics',
               name: 'cloudsql.googleapis.com/database/network/connections',
               aligner: getGcpStatistics(expression.statistics as string),
-              days: Number(expression.since),
+              days: Math.max(Number(expression.since), 0.002),
               op: expression.operator,
               value: Number(expression.value)
             },
@@ -364,7 +364,7 @@ export class C7nFilterBuilder implements FilterBuilderInterface {
               type: 'metrics',
               name: 'cloudsql.googleapis.com/database/postgresql/num_backends',
               aligner: getGcpStatistics(expression.statistics as string),
-              days: Number(expression.since),
+              days: Math.max(Number(expression.since), 0.002),
               op: expression.operator,
               value: Number(expression.value)
             }
