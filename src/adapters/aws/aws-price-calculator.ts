@@ -534,8 +534,8 @@ export default class AwsPriceCalculator {
       },
       {
         Type: 'TERM_MATCH',
-        Field: 'regionCode',
-        Value: region
+        Field: 'location',
+        Value: this.REGION_CODES_TO_PRICING_NAMES.get(region)
       },
       {
         Type: 'TERM_MATCH',
@@ -587,8 +587,8 @@ export default class AwsPriceCalculator {
       },
       {
         Type: 'TERM_MATCH',
-        Field: 'regionCode',
-        Value: region
+        Field: 'location',
+        Value: this.REGION_CODES_TO_PRICING_NAMES.get(region)
       },
       {
         Type: 'TERM_MATCH',
