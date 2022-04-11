@@ -2,7 +2,6 @@ import { Disks } from '../../domain/types/gcp/disks'
 import { CloudCatalogClient } from '@google-cloud/billing'
 import { Eip } from '../../domain/types/gcp/eip'
 import { Lb } from '../../domain/types/gcp/lb'
-import { json } from 'stream/consumers'
 
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
@@ -126,7 +125,10 @@ export class GcpPriceCalculator {
       const region = item.global ? 'global' : item.getRegion()
       const key = item.global ? 'global' : 'forwarding-rule'
       const loadBalancer = loadBalancers.filter((lb) => lb.key === key && lb.regions?.includes(region))[0]
-      item.pricePerMonth = loadBalancer?.price
+      const pricePerHour = loadBalancer?.price
+      if (pricePerHour !== undefined) {
+        item.pricePerMonth = pricePerHour * 720
+      }
     })
   }
 
