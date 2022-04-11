@@ -74,9 +74,14 @@ export class GcpPriceCalculator {
       }
       let price: number | undefined
       if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
-        const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
+        const pricingExpression = it.pricingInfo[0].pricingExpression
+        const tieredRates = it.pricingInfo[0].pricingExpression.tieredRates
+        const unitPrice = tieredRates[tieredRates.length - 1].unitPrice
         if (unitPrice?.units !== undefined) {
-          price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+          price = (parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000))
+          if (pricingExpression.usageUnit === 'h') {
+            price *= 720
+          }
         }
       }
       return {
@@ -109,9 +114,13 @@ export class GcpPriceCalculator {
       }
       let price: number | undefined
       if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
+        const pricingExpression = it.pricingInfo[0].pricingExpression
         const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
         if (unitPrice?.units !== undefined) {
           price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+          if (pricingExpression.usageUnit === 'h') {
+            price *= 720
+          }
         }
       }
       return {
@@ -125,10 +134,7 @@ export class GcpPriceCalculator {
       const region = item.global ? 'global' : item.getRegion()
       const key = item.global ? 'global' : 'forwarding-rule'
       const loadBalancer = loadBalancers.filter((lb) => lb.key === key && lb.regions?.includes(region))[0]
-      const pricePerHour = loadBalancer?.price
-      if (pricePerHour !== undefined) {
-        item.pricePerMonth = pricePerHour * 720
-      }
+      item.pricePerMonth = loadBalancer?.price
     })
   }
 
