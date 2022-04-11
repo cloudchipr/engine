@@ -2,7 +2,6 @@ import { Disks } from '../../domain/types/gcp/disks'
 import { CloudCatalogClient } from '@google-cloud/billing'
 import { Eip } from '../../domain/types/gcp/eip'
 import { Lb } from '../../domain/types/gcp/lb'
-import { json } from 'stream/consumers'
 
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
@@ -75,9 +74,14 @@ export class GcpPriceCalculator {
       }
       let price: number | undefined
       if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
-        const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
+        const pricingExpression = it.pricingInfo[0].pricingExpression
+        const tieredRates = it.pricingInfo[0].pricingExpression.tieredRates
+        const unitPrice = tieredRates[tieredRates.length - 1].unitPrice
         if (unitPrice?.units !== undefined) {
-          price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+          price = (parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000))
+          if (pricingExpression.usageUnit === 'h') {
+            price *= 720
+          }
         }
       }
       return {
@@ -110,9 +114,13 @@ export class GcpPriceCalculator {
       }
       let price: number | undefined
       if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
+        const pricingExpression = it.pricingInfo[0].pricingExpression
         const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
         if (unitPrice?.units !== undefined) {
           price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+          if (pricingExpression.usageUnit === 'h') {
+            price *= 720
+          }
         }
       }
       return {
