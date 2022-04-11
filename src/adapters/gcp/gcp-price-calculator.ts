@@ -1,7 +1,11 @@
 import { Disks } from '../../domain/types/gcp/disks'
 import { CloudCatalogClient } from '@google-cloud/billing'
+import { Eip } from '../../domain/types/gcp/eip'
+import { Lb } from '../../domain/types/gcp/lb'
 
 export class GcpPriceCalculator {
+  private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
+
   private static DISKS_KEY_MAP = new Map([
     ['Balanced PD Capacity', 'pd-balanced'],
     ['Extreme PD Capacity', 'pd-extreme'],
@@ -11,13 +15,18 @@ export class GcpPriceCalculator {
     ['Regional Extreme PD Capacity', 'regional-pd-extreme'],
     ['Regional Storage PD Capacity', 'regional-pd-standard'],
     ['Regional SSD backed PD Capacity', 'regional-pd-ssd']
+  ])
+
+  private static EIP_KEY_MAP = new Map([
+    ['Static Ip Charge', 'external']
+  ])
+
+  private static LB_KEY_MAP = new Map([
+    ['Network Load Balancing: Forwarding Rule Minimum Service Charge', 'forwarding-rule']
   ]);
 
   static async putDisksPrices (items: Disks[]): Promise<void> {
-    const billingClient = new CloudCatalogClient()
-    const allSkus = await billingClient.listSkus({ parent: 'services/6F81-5844-456A' })
-    const skus = allSkus[0]
-
+    const skus = await GcpPriceCalculator.getAllSkus()
     const storages = skus.filter((it) => {
       return it.category?.resourceFamily === 'Storage' &&
         ['SSD', 'PDStandard'].includes(it.category?.resourceGroup as string) &&
@@ -37,7 +46,7 @@ export class GcpPriceCalculator {
       return {
         key,
         regions: it.serviceRegions,
-        price: price
+        price
       }
     })
 
@@ -48,5 +57,73 @@ export class GcpPriceCalculator {
         item.pricePerMonth = priceGb * (item.size / 1073741824)
       }
     })
+  }
+
+  static async putEipPrices (items: Eip[]): Promise<void> {
+    const skus = await GcpPriceCalculator.getAllSkus()
+    const networks = skus.filter((it) => {
+      return it.category?.resourceFamily === 'Network' &&
+        it.category?.resourceGroup === 'IpAddress' &&
+        it.category?.usageType === 'OnDemand'
+    }).map((it) => {
+      let key = it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || ''
+      if (GcpPriceCalculator.EIP_KEY_MAP.has(key)) {
+        key = GcpPriceCalculator.EIP_KEY_MAP.get(key) || ''
+      }
+      let price: number | undefined
+      if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
+        const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
+        if (unitPrice?.units !== undefined) {
+          price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+        }
+      }
+      return {
+        key,
+        regions: it.serviceRegions,
+        price
+      }
+    })
+
+    items.forEach((item) => {
+      const network = networks.filter((nt) => nt.key === item.type && nt.regions?.includes(item.getRegion()))[0]
+      item.pricePerMonth = network?.price
+    })
+  }
+
+  static async putLbPrices (items: Lb[]): Promise<void> {
+    const skus = await GcpPriceCalculator.getAllSkus()
+    const loadBalancers = skus.filter((it) => {
+      return it.category?.resourceFamily === 'Network' &&
+        it.category?.resourceGroup === 'LoadBalancing' &&
+        it.category?.usageType === 'OnDemand'
+    }).map((it) => {
+      let key = it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || ''
+      if (GcpPriceCalculator.LB_KEY_MAP.has(key)) {
+        key = GcpPriceCalculator.LB_KEY_MAP.get(key) || ''
+      }
+      let price: number | undefined
+      if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
+        const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
+        if (unitPrice?.units !== undefined) {
+          price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+        }
+      }
+      return {
+        key,
+        regions: it.serviceRegions,
+        price
+      }
+    })
+
+    items.forEach((item) => {
+      const loadBalancer = loadBalancers.filter((lb) => lb.regions?.includes(item.getRegion()))[0]
+      item.pricePerMonth = loadBalancer?.price
+    })
+  }
+
+  private static async getAllSkus () {
+    const billingClient = new CloudCatalogClient()
+    const allSkus = await billingClient.listSkus({ parent: GcpPriceCalculator.COMPUTING_SERVICE })
+    return allSkus[0]
   }
 }
