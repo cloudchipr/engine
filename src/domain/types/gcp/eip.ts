@@ -5,7 +5,8 @@ export class Eip extends ProviderResource {
   constructor (
     readonly ip: string,
     readonly region: string,
-    readonly name?: string,
+    readonly name: string,
+    readonly type: string,
     readonly labels?: Label[],
     readonly _project?: string
   ) { super() }

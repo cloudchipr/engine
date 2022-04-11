@@ -216,6 +216,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
+      await GcpPriceCalculator.putLbPrices(items)
       return new Response<Type>(items)
     }
 
@@ -226,9 +227,11 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.address,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
         item.name,
+        item.addressType?.toLowerCase() || '',
         Label.createInstances(item.labels),
         this.project
       ))
+      await GcpPriceCalculator.putEipPrices(items)
       return new Response<Type>(items)
     }
 
