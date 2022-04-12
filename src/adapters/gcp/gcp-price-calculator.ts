@@ -66,11 +66,13 @@ export class GcpPriceCalculator {
         it.category?.resourceGroup === 'IpAddress' &&
         it.category?.usageType === 'OnDemand'
     }).map((it) => {
+      const extraRegions = []
       let key = it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || ''
       if (GcpPriceCalculator.EIP_KEY_MAP.has(key)) {
         key = GcpPriceCalculator.EIP_KEY_MAP.get(key) || ''
-      } else if (it.serviceRegions?.includes('global')) {
-        key = 'global'
+      }
+      if (it.description === 'Static Ip Charge') {
+        extraRegions.push('global')
       }
       let price: number | undefined
       if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
@@ -86,14 +88,14 @@ export class GcpPriceCalculator {
       }
       return {
         key,
-        regions: it.serviceRegions,
+        regions: [...it.serviceRegions as string[], ...extraRegions],
         price
       }
     })
 
     items.forEach((item) => {
       const region = item.region ? item.getRegion() : 'global'
-      const key = item.region ? item.type : 'global'
+      const key = item.region ? item.type : 'external'
       const network = networks.filter((nt) => nt.key === key && nt.regions?.includes(region))[0]
       item.pricePerMonth = network?.price
     })
