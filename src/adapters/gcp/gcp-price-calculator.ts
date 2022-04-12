@@ -205,8 +205,8 @@ export class GcpPriceCalculator {
       const ramPrice = dbs.filter((db) => db.key === ramKey && db.regions?.includes(item.getRegion()))[0]?.price
       const cpuPrice = dbs.filter((db) => db.key === cpuKey && db.regions?.includes(item.getRegion()))[0]?.price
       const storagePrice = dbs.filter((db) => db.key === storageKey && db.regions?.includes(item.getRegion()))[0]?.price
-      if (ramPrice && cpuPrice && storagePrice) {
-        item.pricePerMonth = ramPrice + cpuPrice + storagePrice
+      if (ramPrice && item.ram && cpuPrice && item.cpu && storagePrice && item.storage) {
+        item.pricePerMonth = ramPrice * item.ram + cpuPrice * item.cpu + storagePrice * item.storage
       }
     })
   }
