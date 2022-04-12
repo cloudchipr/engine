@@ -134,7 +134,8 @@ export class GcpPriceCalculator {
       let key = it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || ''
       if (GcpPriceCalculator.LB_KEY_MAP.has(key)) {
         key = GcpPriceCalculator.LB_KEY_MAP.get(key) || ''
-      } else if (it.serviceRegions?.includes('global')) {
+      }
+      if (it.description === 'HTTP Load Balancing: Global Forwarding Rule Minimum Service Charge') {
         key = 'global'
       }
       let price: number | undefined
