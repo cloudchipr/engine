@@ -8,6 +8,9 @@ export class Sql extends ProviderResource {
     readonly region: string,
     readonly type?: string,
     readonly multiAz?: boolean,
+    readonly cpu?: number,
+    readonly ram?: number,
+    readonly storage?: number,
     readonly connections?: Metric,
     readonly labels?: Label[],
     readonly _project?: string
