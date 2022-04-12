@@ -2,9 +2,11 @@ import { Disks } from '../../domain/types/gcp/disks'
 import { CloudCatalogClient } from '@google-cloud/billing'
 import { Eip } from '../../domain/types/gcp/eip'
 import { Lb } from '../../domain/types/gcp/lb'
+import { Sql } from '../../domain/types/gcp/sql'
 
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
+  private static SQL_SERVICE = 'services/9662-B51E-5089'
 
   private static DISKS_KEY_MAP = new Map([
     ['Balanced PD Capacity', 'pd-balanced'],
@@ -23,10 +25,31 @@ export class GcpPriceCalculator {
 
   private static LB_KEY_MAP = new Map([
     ['Network Load Balancing: Forwarding Rule Minimum Service Charge', 'forwarding-rule']
-  ]);
+  ])
+
+  private static SQL_KEY_MAP = new Map([
+    ['Cloud SQL for PostgreSQL: Zonal - vCPU', 'postgres_zonal_cpu'],
+    ['Cloud SQL for PostgreSQL: Regional - vCPU', 'postgres_regional_cpu'],
+    ['Cloud SQL for PostgreSQL: Zonal - RAM', 'postgres_zonal_ram'],
+    ['Cloud SQL for PostgreSQL: Regional - RAM', 'postgres_regional_ram'],
+    ['Cloud SQL for PostgreSQL: Zonal - Standard storage', 'postgres_zonal_storage'],
+    ['Cloud SQL for PostgreSQL: Regional - Standard storage', 'postgres_regional_storage'],
+    ['Cloud SQL for MySQL: Zonal - vCPU', 'mysql_zonal_cpu'],
+    ['Cloud SQL for MySQL: Regional - vCPU', 'mysql_regional_cpu'],
+    ['Cloud SQL for MySQL: Zonal - RAM', 'mysql_zonal_ram'],
+    ['Cloud SQL for MySQL: Regional - RAM', 'mysql_regional_ram'],
+    ['Cloud SQL for MySQL: Zonal - Standard storage', 'mysql_zonal_storage'],
+    ['Cloud SQL for MySQL: Regional - Standard storage', 'mysql_regional_storage'],
+    ['Cloud SQL for SQL Server: Zonal - vCPU', 'sqlserver_zonal_cpu'],
+    ['Cloud SQL for SQL Server: Regional - vCPU', 'sqlserver_regional_cpu'],
+    ['Cloud SQL for SQL Server: Zonal - RAM', 'sqlserver_zonal_ram'],
+    ['Cloud SQL for SQL Server: Regional - RAM', 'sqlserver_regional_ram'],
+    ['Cloud SQL for SQL Server: Zonal - Standard storage', 'sqlserver_zonal_storage'],
+    ['Cloud SQL for SQL Server: Regional - Standard storage', 'sqlserver_regional_storage']
+  ])
 
   static async putDisksPrices (items: Disks[]): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus()
+    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE)
     const storages = skus.filter((it) => {
       return it.category?.resourceFamily === 'Storage' &&
         ['SSD', 'PDStandard'].includes(it.category?.resourceGroup as string) &&
@@ -60,7 +83,7 @@ export class GcpPriceCalculator {
   }
 
   static async putEipPrices (items: Eip[]): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus()
+    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE)
     const networks = skus.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
         it.category?.resourceGroup === 'IpAddress' &&
@@ -102,7 +125,7 @@ export class GcpPriceCalculator {
   }
 
   static async putLbPrices (items: Lb[]): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus()
+    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE)
     const loadBalancers = skus.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
         it.category?.resourceGroup === 'LoadBalancing' &&
@@ -140,9 +163,57 @@ export class GcpPriceCalculator {
     })
   }
 
-  private static async getAllSkus () {
+  static async putSqlPrices (items: Sql[]): Promise<void> {
+    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.SQL_SERVICE)
+    const dbs = skus.filter((it) => {
+      return it.category?.resourceFamily === 'ApplicationServices' &&
+        (
+          it.category?.resourceGroup === 'SQLGen2InstancesRAM' ||
+          it.category?.resourceGroup === 'SQLGen2InstancesCPU' ||
+          it.category?.resourceGroup === 'SSD'
+        ) &&
+        it.category?.usageType === 'OnDemand'
+    }).map((it) => {
+      let key = it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || ''
+      if (GcpPriceCalculator.SQL_KEY_MAP.has(key)) {
+        key = GcpPriceCalculator.SQL_KEY_MAP.get(key) || ''
+      }
+      let price: number | undefined
+      if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
+        const pricingExpression = it.pricingInfo[0].pricingExpression
+        const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
+        if (unitPrice?.units !== undefined) {
+          price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+          if (pricingExpression.usageUnit === 'h') {
+            price *= 720
+          }
+        }
+      }
+      return {
+        key,
+        regions: it.serviceRegions,
+        price
+      }
+    })
+
+    items.forEach((item) => {
+      const type = item.type?.split('_')[0].toLowerCase()
+      const tempKey = type + '_' + (item.multiAz ? 'regional' : 'zonal') + '_'
+      const ramKey = tempKey + 'ram'
+      const cpuKey = tempKey + 'cpu'
+      const storageKey = tempKey + 'storage'
+      const ramPrice = dbs.filter((db) => db.key === ramKey && db.regions?.includes(item.getRegion()))[0]?.price
+      const cpuPrice = dbs.filter((db) => db.key === cpuKey && db.regions?.includes(item.getRegion()))[0]?.price
+      const storagePrice = dbs.filter((db) => db.key === storageKey && db.regions?.includes(item.getRegion()))[0]?.price
+      if (ramPrice && item.ram && cpuPrice && item.cpu && storagePrice && item.storage) {
+        item.pricePerMonth = ramPrice * item.ram / 1000 + cpuPrice * item.cpu + storagePrice * item.storage
+      }
+    })
+  }
+
+  private static async getAllSkus (parent: string) {
     const billingClient = new CloudCatalogClient()
-    const allSkus = await billingClient.listSkus({ parent: GcpPriceCalculator.COMPUTING_SERVICE })
+    const allSkus = await billingClient.listSkus({ parent })
     return allSkus[0]
   }
 }

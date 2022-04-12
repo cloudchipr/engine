@@ -197,10 +197,14 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.region,
         item.databaseVersion,
         'secondaryGceZone' in item,
+        parseFloat(StringHelper.splitAndGetAtIndex(item.settings.tier, '-', -2) || '0'),
+        parseFloat(StringHelper.splitAndGetAtIndex(item.settings.tier, '-', -1) || '0'),
+        item.settings.dataDiskSizeGb,
         MetricsHelper.getGcpDatabaseConnections(item),
         Label.createInstances(item.settings?.userLabels),
         this.project
       ))
+      await GcpPriceCalculator.putSqlPrices(items)
       return new Response<Type>(items)
     }
 
