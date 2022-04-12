@@ -3,7 +3,6 @@ import { CloudCatalogClient } from '@google-cloud/billing'
 import { Eip } from '../../domain/types/gcp/eip'
 import { Lb } from '../../domain/types/gcp/lb'
 import { Sql } from '../../domain/types/gcp/sql'
-import fs from 'fs'
 
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
@@ -166,16 +165,6 @@ export class GcpPriceCalculator {
 
   static async putSqlPrices (items: Sql[]): Promise<void> {
     const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.SQL_SERVICE)
-    const aaa = skus.filter((it) => {
-      return it.category?.resourceFamily === 'ApplicationServices' &&
-        (
-          it.category?.resourceGroup === 'SQLGen2InstancesRAM' ||
-          it.category?.resourceGroup === 'SQLGen2InstancesCPU' ||
-          it.category?.resourceGroup === 'SSD'
-        ) &&
-        it.category?.usageType === 'OnDemand'
-    })
-    await fs.promises.writeFile('./before.json', JSON.stringify(aaa), 'utf8')
     const dbs = skus.filter((it) => {
       return it.category?.resourceFamily === 'ApplicationServices' &&
         (
@@ -206,8 +195,6 @@ export class GcpPriceCalculator {
         price
       }
     })
-
-    await fs.promises.writeFile('./after.json', JSON.stringify(dbs), 'utf8')
 
     items.forEach((item) => {
       const type = item.type?.split('_')[0].toLowerCase()
