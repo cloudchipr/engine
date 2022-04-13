@@ -105,7 +105,7 @@ export class GcpPriceCalculator {
         if (unitPrice?.units !== undefined) {
           price = (parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000))
           if (pricingExpression.usageUnit === 'h') {
-            price *= 720
+            price *= 730
           }
         }
       }
@@ -145,7 +145,7 @@ export class GcpPriceCalculator {
         if (unitPrice?.units !== undefined) {
           price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
           if (pricingExpression.usageUnit === 'h') {
-            price *= 720
+            price *= 730
           }
         }
       }
@@ -185,8 +185,8 @@ export class GcpPriceCalculator {
         const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
         if (unitPrice?.units !== undefined) {
           price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
-          if (pricingExpression.usageUnit === 'h') {
-            price *= 720
+          if (pricingExpression.usageUnit === 'h' || pricingExpression.usageUnit === 'GiBy.h') {
+            price *= 730
           }
         }
       }
