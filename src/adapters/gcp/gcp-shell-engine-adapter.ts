@@ -159,7 +159,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const items = responseJson.map((item: any) => new Vm(
         item.name,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
-        StringHelper.splitAndGetAtIndex(item.machineType, '/', -1),
+        StringHelper.splitAndGetAtIndex(item.machineType, '/', -1) || '',
         item.creationTimestamp,
         MetricsHelper.getGcpCpuUtilization(item),
         MetricsHelper.getGcpNetworkIn(item),
@@ -168,6 +168,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
+      await GcpPriceCalculator.putVmPrices(items)
       return new Response<Type>(items)
     }
 
