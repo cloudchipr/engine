@@ -266,6 +266,23 @@
       }
     ]
   },
+  "gcp-disks-in-use-collect": {
+    "policies": [
+      {
+        "name": "gcp-disks-in-use-collect",
+        "resource": "gcp.disk",
+        "filters": [
+          {
+            "type": "value",
+            "key": "users",
+            "value": 0,
+            "value_type": "size",
+            "op": "gt"
+          }
+        ]
+      }
+    ]
+  },
   "gcp-vm-clean": {
     "policies": [
       {

@@ -7,7 +7,8 @@ export class Vm extends ProviderResource {
   constructor (
     readonly name: string,
     readonly zone: string,
-    readonly machineType?: string,
+    readonly machineType: string,
+    readonly disks: string[],
     readonly age?: string,
     readonly cpu?: Metric,
     readonly networkIn?: Metric,

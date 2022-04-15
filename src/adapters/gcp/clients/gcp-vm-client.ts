@@ -52,7 +52,8 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
           data.push(new Vm(
             instance.name,
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
-            StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1),
+            StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1) || '',
+            instance.disks.map((d: any) => d.deviceName),
             instance.creationTimestamp,
             undefined,
             undefined,
