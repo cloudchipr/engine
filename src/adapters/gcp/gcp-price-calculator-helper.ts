@@ -12,12 +12,10 @@ export class GcpPriceCalculatorHelper {
       switch (type) {
         case 'micro':
           return { ram: 1, cpu: 0.25 }
-          // return { ram: 1, cpu: 2 }
         case 'small':
           return { ram: 2, cpu: 0.5 }
-          // return { ram: 2, cpu: 2 }
         case 'medium':
-          return { ram: 4, cpu: 1 }
+          return { ram: 4, cpu: 2 }
         case 'standard':
           return { ram: cpu * 4, cpu: cpu }
         case 'highmem':
