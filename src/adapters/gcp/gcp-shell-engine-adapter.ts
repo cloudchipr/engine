@@ -60,11 +60,17 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         policy.policies[0].filters.push(filters)
       }
 
+      this.project = await this.gcpResourceClient.getProject()
+
       // execute custodian command and return response
-      const response = await this.executeC7nPolicy(policy, policyName, request)
-      if (response.length > 0) {
-        this.project = await this.gcpResourceClient.getProject()
+      const promises = []
+      promises.push(this.executeC7nPolicy(policy, policyName, request))
+      if (subCommand === GcpSubCommand.VM_SUBCOMMAND) {
+        // for VMs we need to send two request to calculate the price, 1 for VMs, and 1 for Disks attached to the VMs
+        const extraPolicyName = 'gcp-disks-in-use-collect'
+        promises.push(this.executeC7nPolicy(this.getPolicy(extraPolicyName), extraPolicyName, request))
       }
+      const response = await Promise.all(promises)
       return (this as any)[generateResponseMethodName](response)
     }
 
@@ -156,10 +162,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateVmResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const items = responseJson.map((item: any) => new Vm(
+      const disks = await this.generateDisksResponse([responseJson[1]])
+      const items = responseJson[0].map((item: any) => new Vm(
         item.name,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
         StringHelper.splitAndGetAtIndex(item.machineType, '/', -1) || '',
+        item.disks.map((d: any) => d.deviceName),
         item.creationTimestamp,
         MetricsHelper.getGcpCpuUtilization(item),
         MetricsHelper.getGcpNetworkIn(item),
@@ -168,14 +176,14 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
-      await GcpPriceCalculator.putVmPrices(items)
+      await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[])
       return new Response<Type>(items)
     }
 
     private async generateDisksResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const items = responseJson.map((item: any) => new Disks(
+      const items = responseJson[0].map((item: any) => new Disks(
         item.name,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
         StringHelper.splitAndGetAtIndex(item.type, '/', -1) || '',
@@ -193,7 +201,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateSqlResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const items = responseJson.map((item: any) => new Sql(
+      const items = responseJson[0].map((item: any) => new Sql(
         item.name,
         item.region,
         item.databaseVersion,
@@ -212,7 +220,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateLbResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const items = responseJson.map((item: any) => new Lb(
+      const items = responseJson[0].map((item: any) => new Lb(
         item.name,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
         item.IPProtocol,
@@ -228,7 +236,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateEipResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const items = responseJson.map((item: any) => new Eip(
+      const items = responseJson[0].map((item: any) => new Eip(
         item.address,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
         item.name,

@@ -11,11 +11,13 @@ export class GcpPriceCalculatorHelper {
     if (['e2', 'n2', 'n2d', 'c2', 'c2d', 'm1', 'm2'].includes(series)) {
       switch (type) {
         case 'micro':
-          return { ram: 1, cpu: 2 }
+          return { ram: 1, cpu: 0.25 }
+          // return { ram: 1, cpu: 2 }
         case 'small':
-          return { ram: 2, cpu: 2 }
+          return { ram: 2, cpu: 0.5 }
+          // return { ram: 2, cpu: 2 }
         case 'medium':
-          return { ram: 4, cpu: 2 }
+          return { ram: 4, cpu: 1 }
         case 'standard':
           return { ram: cpu * 4, cpu: cpu }
         case 'highmem':

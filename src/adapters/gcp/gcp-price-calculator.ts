@@ -9,6 +9,7 @@ import { GcpPriceCalculatorHelper } from './gcp-price-calculator-helper'
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
   private static SQL_SERVICE = 'services/9662-B51E-5089'
+  private static ALL_SKUS: any[] = []
 
   private static VM_KEY_MAP = new Map([
     ['E2 Instance Ram running', 'e2_ram'],
@@ -23,10 +24,10 @@ export class GcpPriceCalculator {
     ['N2D AMD Custom Instance Core running', 'n2d_custom_core'],
     ['T2D AMD Instance Ram running', 't2d_ram'],
     ['T2D AMD Instance Core running', 't2d_core'],
-    ['Compute optimized Ram running', 'co_ram'],
-    ['Compute optimized Core running', 'co_core'],
-    ['Memory-optimized Instance Ram running', 'mo_ram'],
-    ['Memory-optimized Instance Core running', 'mo_core'],
+    ['Compute optimized Ram running', 'c2_ram'],
+    ['Compute optimized Core running', 'c2_core'],
+    ['Memory-optimized Instance Ram running', 'm1_ram'],
+    ['Memory-optimized Instance Core running', 'm1_core'],
     ['N1 Predefined Instance Ram running', 'n1_ram'],
     ['N1 Predefined Instance Core running', 'n1_cpu'],
     ['Custom Instance Ram running', 'custom_ram'],
@@ -75,7 +76,7 @@ export class GcpPriceCalculator {
     ['Cloud SQL for SQL Server: Regional - Standard storage', 'sqlserver_regional_storage']
   ])
 
-  static async putVmPrices (items: Vm[]): Promise<void> {
+  static async putVmPrices (items: Vm[], disks: Disks[]): Promise<void> {
     const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE)
     const vms = skus.filter((it) => {
       return it.category?.resourceFamily === 'Compute' &&
@@ -96,7 +97,7 @@ export class GcpPriceCalculator {
         const unitPrice = tieredRates[tieredRates.length - 1].unitPrice
         if (unitPrice?.units !== undefined) {
           price = (parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000))
-          if (pricingExpression.usageUnit === 'GiBy.h') {
+          if (pricingExpression.usageUnit === 'GiBy.h' || pricingExpression.usageUnit === 'h') {
             price *= 730
           }
         }
@@ -115,8 +116,9 @@ export class GcpPriceCalculator {
       const cpuKey = series + '_cpu'
       const ramPrice = vms.filter((vm) => vm.key === ramKey && vm.regions?.includes(item.getRegion()))[0]?.price
       const cpuPrice = vms.filter((vm) => vm.key === cpuKey && vm.regions?.includes(item.getRegion()))[0]?.price
+      const diskPrice = disks.reduce((prev, current) => prev + (item.disks.includes(current.name) ? (current.pricePerMonth || 0) : 0), 0)
       if (ramPrice && ram && cpuPrice && cpu) {
-        item.pricePerMonth = ramPrice * ram + cpuPrice * cpu
+        item.pricePerMonth = ramPrice * ram + cpuPrice * cpu + diskPrice
       }
     })
   }
@@ -286,8 +288,11 @@ export class GcpPriceCalculator {
   }
 
   private static async getAllSkus (parent: string) {
-    const billingClient = new CloudCatalogClient()
-    const allSkus = await billingClient.listSkus({ parent })
-    return allSkus[0]
+    if (GcpPriceCalculator.ALL_SKUS.length === 0) {
+      const billingClient = new CloudCatalogClient()
+      const allSkus = await billingClient.listSkus({ parent })
+      GcpPriceCalculator.ALL_SKUS = allSkus[0]
+    }
+    return GcpPriceCalculator.ALL_SKUS
   }
 }
