@@ -116,7 +116,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
   }
 
   private static getDescribeDBInstancesCommand (): DescribeDBInstancesCommand {
-    return new DescribeDBInstancesCommand({ MaxRecords: 100 })
+    return new DescribeDBInstancesCommand({})
   }
 
   private static getDeleteDBInstanceCommand (instanceIdentifier: string): DeleteDBInstanceCommand {

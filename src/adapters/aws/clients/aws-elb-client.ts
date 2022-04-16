@@ -247,7 +247,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   private static getV3Command (): V3Command {
-    return new V3Command({ PageSize: 400 })
+    return new V3Command({})
   }
 
   private static getV3TagsCommand (loadBalancerNames: string[]): V3TagsCommand {
@@ -259,7 +259,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
   }
 
   private static getV2Command (): V2Command {
-    return new V2Command({ PageSize: 400 })
+    return new V2Command({})
   }
 
   private static getV2TagsCommand (resourceArns: string[]): V2TagsCommand {

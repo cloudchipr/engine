@@ -21,4 +21,8 @@ export class Eip extends ProviderResource {
   getOwner (): string | undefined {
     return this._account
   }
+
+  getId (): string {
+    return this.ip
+  }
 }

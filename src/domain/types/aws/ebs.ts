@@ -22,4 +22,8 @@ export class Ebs extends ProviderResource {
   getOwner (): string | undefined {
     return this._account
   }
+
+  getId (): string {
+    return this.id
+  }
 }

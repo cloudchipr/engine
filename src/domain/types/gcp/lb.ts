@@ -19,4 +19,8 @@ export class Lb extends ProviderResource {
   getOwner (): string | undefined {
     return this._project
   }
+
+  getId (): string {
+    return this.name
+  }
 }
