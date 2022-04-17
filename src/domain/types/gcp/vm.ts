@@ -9,6 +9,8 @@ export class Vm extends ProviderResource {
     readonly zone: string,
     readonly machineType: string,
     readonly disks: string[],
+    public ram?: number,
+    public vcpu?: number,
     readonly age?: string,
     readonly cpu?: Metric,
     readonly networkIn?: Metric,

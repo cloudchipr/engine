@@ -168,6 +168,8 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
         StringHelper.splitAndGetAtIndex(item.machineType, '/', -1) || '',
         item.disks.map((d: any) => d.deviceName),
+        0, // this will be populated during price calculation
+        0, // this will be populated during price calculation
         item.creationTimestamp,
         MetricsHelper.getGcpCpuUtilization(item),
         MetricsHelper.getGcpNetworkIn(item),

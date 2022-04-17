@@ -120,6 +120,8 @@ export class GcpPriceCalculator {
       if (ramPrice && ram && cpuPrice && cpu) {
         item.pricePerMonth = ramPrice * ram + cpuPrice * cpu + diskPrice
       }
+      item.ram = ram
+      item.vcpu = cpu
     })
   }
 
