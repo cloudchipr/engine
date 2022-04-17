@@ -54,6 +54,8 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
             StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1) || '',
             instance.disks.map((d: any) => d.deviceName),
+            0, // this will be populated during price calculation
+            0, // this will be populated during price calculation
             instance.creationTimestamp,
             undefined,
             undefined,
