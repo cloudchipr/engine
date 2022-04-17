@@ -55,7 +55,7 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
   }
 
   private static getDescribeVolumesCommand (): DescribeVolumesCommand {
-    return new DescribeVolumesCommand({ MaxResults: 1000 })
+    return new DescribeVolumesCommand({})
   }
 
   private static getDeleteVolumeCommand (volumeId: string): DeleteVolumeCommand {

@@ -4,7 +4,8 @@ export class CleanResponse {
   constructor (
     readonly subCommand: string,
     readonly success: string[] = [],
-    readonly failure: CleanFailureResponse[] = []
+    readonly failure: CleanFailureResponse[] = [],
+    public savedCosts: number = 0
   ) {}
 
   addSuccess (success: string): void {

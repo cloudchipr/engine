@@ -11,6 +11,9 @@ import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
 import { EngineRequest } from '../../../engine-request'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
+import { Command } from '../../../command'
+import { Parameter } from '../../../parameter'
+import { FilterList } from '../../../filters/filter-list'
 
 export default class AwsClient {
   private awsClientInstance: AwsClientInterface;
@@ -19,18 +22,29 @@ export default class AwsClient {
     this.awsClientInstance = AwsClient.getAwsClient(subcommand, credentialProvider)
   }
 
-  async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
+  async collectResources<Type> (request: EngineRequest, withAdditionalData: boolean = true): Promise<Response<Type>> {
     let promises: any[] = []
     for (const region of request.parameter.regions) {
       promises = [...promises, ...this.awsClientInstance.getCollectCommands(region)]
     }
     const response = await Promise.all(promises)
-    const formattedResponse = await this.awsClientInstance.formatCollectResponse<Type>(response)
-    return this.awsClientInstance.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
+    if (withAdditionalData) {
+      const formattedResponse = await this.awsClientInstance.formatCollectResponse<Type>(response)
+      return this.awsClientInstance.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
+    } else {
+      return this.awsClientInstance.formatCollectResponse<Type>(response)
+    }
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
     const response = new CleanResponse(request.subCommand.getValue())
+    const regions: string[] = []
+    for (const resource of request.resources) {
+      regions.push(resource.region)
+    }
+    const engineRequest = new EngineRequest(Command.collect(), request.subCommand, new Parameter(new FilterList(), false, regions, []), false)
+    const collectResources = await this.collectResources(engineRequest, false)
+
     const promises: any[] = []
     for (const resource of request.resources) {
       if (this.awsClientInstance.isCleanRequestValid(resource)) {
@@ -39,13 +53,21 @@ export default class AwsClient {
         response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
       }
     }
-    if (promises.length > 0) {
-      const result = await Promise.allSettled(promises)
-      for (let i = 0; i < result.length; i++) {
+
+    // @ts-ignore
+    const result: {status: string, value: string, reason: string}[] = await Promise.allSettled(promises)
+    let savings = 0
+    for (let i = 0; i < result.length; i++) {
+      if (result[i].status === 'fulfilled') {
+        response.addSuccess(result[i].value)
         // @ts-ignore
-        result[i].status === 'fulfilled' ? response.addSuccess(result[i].value) : response.addFailure(new CleanFailureResponse(request.resources[i].id, result[i].reason))
+        const price = collectResources.items.filter((item) => item.getId() === result[i].value)[0]?.pricePerMonth
+        savings += (price || 0)
+      } else {
+        response.addFailure(new CleanFailureResponse(request.resources[i].id, result[i].reason))
       }
     }
+    response.savedCosts = savings
     return response
   }
 

@@ -23,4 +23,8 @@ export class Sql extends ProviderResource {
   getOwner (): string | undefined {
     return this._project
   }
+
+  getId (): string {
+    return this.id
+  }
 }

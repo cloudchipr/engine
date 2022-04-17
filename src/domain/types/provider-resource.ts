@@ -12,4 +12,6 @@ export abstract class ProviderResource {
     abstract getOwner(): string | undefined
 
     abstract getRegion(): string
+
+    abstract getId(): string
 }

@@ -27,6 +27,10 @@ export class Vm extends ProviderResource {
   getOwner (): string | undefined {
     return this._project
   }
+
+  getId (): string {
+    return this.name
+  }
 }
 
 export class VmMetric {
