@@ -5,7 +5,7 @@ export class CleanResponse {
     readonly subCommand: string,
     readonly success: string[] = [],
     readonly failure: CleanFailureResponse[] = [],
-    public savings: number = 0
+    public savedCosts: number = 0
   ) {}
 
   addSuccess (success: string): void {

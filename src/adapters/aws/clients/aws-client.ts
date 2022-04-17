@@ -67,7 +67,7 @@ export default class AwsClient {
         response.addFailure(new CleanFailureResponse(request.resources[i].id, result[i].reason))
       }
     }
-    response.savings = savings
+    response.savedCosts = savings
     return response
   }
 
