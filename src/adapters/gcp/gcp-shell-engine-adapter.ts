@@ -178,8 +178,13 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
-      await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[])
-      return new Response<Type>(items)
+      const response = new Response<Type>(items)
+      if (response.count > 0) {
+        try {
+          await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[])
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateDisksResponse (
@@ -196,8 +201,13 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
-      await GcpPriceCalculator.putDisksPrices(items)
-      return new Response<Type>(items)
+      const response = new Response<Type>(items)
+      if (response.count > 0) {
+        try {
+          await GcpPriceCalculator.putDisksPrices(items)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateSqlResponse (
@@ -215,8 +225,13 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.settings?.userLabels),
         this.project
       ))
-      await GcpPriceCalculator.putSqlPrices(items)
-      return new Response<Type>(items)
+      const response = new Response<Type>(items)
+      if (response.count > 0) {
+        try {
+          await GcpPriceCalculator.putSqlPrices(items)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateLbResponse (
@@ -231,8 +246,13 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
-      await GcpPriceCalculator.putLbPrices(items)
-      return new Response<Type>(items)
+      const response = new Response<Type>(items)
+      if (response.count > 0) {
+        try {
+          await GcpPriceCalculator.putLbPrices(items)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateEipResponse (
@@ -246,8 +266,13 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         Label.createInstances(item.labels),
         this.project
       ))
-      await GcpPriceCalculator.putEipPrices(items)
-      return new Response<Type>(items)
+      const response = new Response<Type>(items)
+      if (response.count > 0) {
+        try {
+          await GcpPriceCalculator.putEipPrices(items)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private getPolicy (policyName: string) {
