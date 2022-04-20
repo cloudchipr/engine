@@ -9,7 +9,6 @@ import { GcpPriceCalculatorHelper } from './gcp-price-calculator-helper'
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
   private static SQL_SERVICE = 'services/9662-B51E-5089'
-  private static ALL_SKUS: any[] = []
 
   private static VM_KEY_MAP = new Map([
     ['E2 Instance Ram running', 'e2_ram'],
@@ -290,11 +289,8 @@ export class GcpPriceCalculator {
   }
 
   private static async getAllSkus (parent: string) {
-    if (GcpPriceCalculator.ALL_SKUS.length === 0) {
-      const billingClient = new CloudCatalogClient()
-      const allSkus = await billingClient.listSkus({ parent })
-      GcpPriceCalculator.ALL_SKUS = allSkus[0]
-    }
-    return GcpPriceCalculator.ALL_SKUS
+    const billingClient = new CloudCatalogClient()
+    const allSkus = await billingClient.listSkus({ parent })
+    return allSkus[0]
   }
 }
