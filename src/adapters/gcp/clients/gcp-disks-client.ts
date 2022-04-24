@@ -12,14 +12,14 @@ export default class GcpDisksClient extends GcpBaseClient implements GcpClientIn
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {
-      promises.push(GcpDisksClient.getClient().list({ project: 'cloud-test-340820', zone: region }))
+      promises.push(GcpDisksClient.getClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820', zone: region }))
     }
     return promises
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return GcpDisksClient.getClient().delete({ disk: request.id, zone: metadata.zone, project: 'cloud-test-340820' })
+    return GcpDisksClient.getClient().delete({ disk: request.id, zone: metadata.zone, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
