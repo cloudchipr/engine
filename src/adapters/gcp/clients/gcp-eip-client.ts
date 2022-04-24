@@ -14,18 +14,18 @@ export default class GcpEipClient extends GcpBaseClient implements GcpClientInte
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {
-      promises.push(GcpEipClient.getAddressesClient().list({ project: 'cloud-test-340820', region }))
+      promises.push(GcpEipClient.getAddressesClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820', region }))
     }
-    promises.push(GcpEipClient.getGlobalAddressesClient().list({ project: 'cloud-test-340820' }))
+    promises.push(GcpEipClient.getGlobalAddressesClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' }))
     return promises
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     if (metadata.global) {
-      return GcpEipClient.getGlobalAddressesClient().delete({ address: request.id, project: 'cloud-test-340820' })
+      return GcpEipClient.getGlobalAddressesClient().delete({ address: request.id, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
     } else {
-      return GcpEipClient.getAddressesClient().delete({ address: request.id, region: metadata.region, project: 'cloud-test-340820' })
+      return GcpEipClient.getAddressesClient().delete({ address: request.id, region: metadata.region, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
     }
   }
 

@@ -26,14 +26,14 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {
-      promises.push(GcpVmClient.getClient().list({ project: 'cloud-test-340820', zone: region }))
+      promises.push(GcpVmClient.getClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820', zone: region }))
     }
     return promises
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return GcpVmClient.getClient().delete({ instance: request.id, zone: metadata.zone, project: 'cloud-test-340820' })
+    return GcpVmClient.getClient().delete({ instance: request.id, zone: metadata.zone, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
@@ -129,7 +129,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
 
   private static getTimeSeriesRequest (client: MetricServiceClient, metricName: string, instanceName: string, seriesAligner: string) {
     return {
-      name: client.projectPath('cloud-test-340820'),
+      name: client.projectPath(process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820'),
       filter: `metric.type="${metricName}" AND metric.labels.instance_name = "${instanceName}"`,
       interval: {
         startTime: {
