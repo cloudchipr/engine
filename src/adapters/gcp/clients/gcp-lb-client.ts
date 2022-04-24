@@ -9,6 +9,7 @@ import { CleanRequestResourceInterface } from '../../../request/clean/clean-requ
 import {
   CleanGcpLbEipMetadataInterface
 } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { GcpPriceCalculator } from '../gcp-price-calculator'
 
 export default class GcpLbClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -53,7 +54,13 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
         })
       })
     })
-    return new Response<Type>(data)
+    const result = new Response<Type>(data)
+    if (result.count > 0) {
+      try {
+        await GcpPriceCalculator.putLbPrices(data)
+      } catch (e) { result.addError(e) }
+    }
+    return result
   }
 
   private static getForwardingRulesClient (): ForwardingRulesClient {
