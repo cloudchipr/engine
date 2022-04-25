@@ -38,6 +38,6 @@ export class Elb extends ProviderResource {
   }
 
   getId (): string {
-    return this.loadBalancerName
+    return this.getIdentifierForNameTag()
   }
 }
