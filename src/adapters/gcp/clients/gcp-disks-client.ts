@@ -7,6 +7,7 @@ import { Label } from '../../../domain/types/gcp/shared/label'
 import GcpBaseClient from './gcp-base-client'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { GcpPriceCalculator } from '../gcp-price-calculator'
 
 export default class GcpDisksClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
@@ -48,7 +49,13 @@ export default class GcpDisksClient extends GcpBaseClient implements GcpClientIn
         })
       })
     })
-    return new Response<Type>(data)
+    const result = new Response<Type>(data)
+    if (result.count > 0) {
+      try {
+        await GcpPriceCalculator.putDisksPrices(data)
+      } catch (e) { result.addError(e) }
+    }
+    return result
   }
 
   private static getClient (): DisksClient {

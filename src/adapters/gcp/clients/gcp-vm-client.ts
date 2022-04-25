@@ -12,6 +12,8 @@ import { CleanRequestResourceInterface } from '../../../request/clean/clean-requ
 import {
   CleanGcpVmDisksMetadataInterface
 } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { GcpPriceCalculator } from '../gcp-price-calculator'
+import { Disks } from '../../../domain/types/gcp/disks'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -66,7 +68,13 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
         })
       })
     })
-    return new Response<Type>(data)
+    const result = new Response<Type>(data)
+    if (result.count > 0) {
+      try {
+        await GcpPriceCalculator.putVmPrices(data, [])
+      } catch (e) { result.addError(e) }
+    }
+    return result
   }
 
   async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
