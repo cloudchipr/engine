@@ -263,6 +263,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
         item.name,
         item.addressType?.toLowerCase() || '',
+        item.creationTimestamp,
         Label.createInstances(item.labels),
         this.project
       ))

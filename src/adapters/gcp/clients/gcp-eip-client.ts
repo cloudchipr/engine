@@ -48,6 +48,7 @@ export default class GcpEipClient extends GcpBaseClient implements GcpClientInte
             StringHelper.splitAndGetAtIndex(instance.region, '/', -1) || '',
             instance.name,
             instance.addressType?.toLowerCase() || '',
+            instance.creationTimestamp,
             Label.createInstances(instance.labels)
           ))
         })

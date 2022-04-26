@@ -7,6 +7,7 @@ export class Eip extends ProviderResource {
     readonly region: string,
     readonly name: string,
     readonly type: string,
+    readonly age?: string,
     readonly labels?: Label[],
     readonly _project?: string
   ) { super() }
