@@ -13,6 +13,7 @@ import {
   CleanGcpVmDisksMetadataInterface
 } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { GcpPriceCalculator } from '../gcp-price-calculator'
+import fs from 'fs'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -51,6 +52,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
       res.forEach((r: any) => {
         r?.forEach((instance: any) => {
           data.push(new Vm(
+            instance.id,
             instance.name,
             StringHelper.splitAndGetAtIndex(instance.zone, '/', -1) || '',
             StringHelper.splitAndGetAtIndex(instance.machineType, '/', -1) || '',
@@ -82,18 +84,20 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     // @ts-ignore
     response.items.forEach((item: Vm) => {
       // @ts-ignore
-      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_CPU_NAME, item.name, 'ALIGN_MAX')))
+      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_CPU_NAME, item.id, 'ALIGN_MAX')))
       // @ts-ignore
-      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_IN_NAME, item.name, 'ALIGN_SUM')))
+      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_IN_NAME, item.id, 'ALIGN_SUM')))
       // @ts-ignore
-      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_OUT_NAME, item.name, 'ALIGN_SUM')))
+      promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_OUT_NAME, item.id, 'ALIGN_SUM')))
     })
     const metricsResponse = await Promise.all(promises)
+    await fs.promises.writeFile('./before.json', JSON.stringify(metricsResponse), 'utf8')
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
+    await fs.promises.writeFile('./after.json', JSON.stringify(formattedMetrics), 'utf8')
     // @ts-ignore
     response.items.map((item: Vm) => {
       if (item.name in formattedMetrics) {
-        item.metrics = formattedMetrics[item.name]
+        item.metrics = formattedMetrics[item.name] ?? undefined
       }
       return item
     })
@@ -135,13 +139,13 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     return new MetricServiceClient()
   }
 
-  private static getTimeSeriesRequest (client: MetricServiceClient, metricName: string, instanceName: string, seriesAligner: string) {
+  private static getTimeSeriesRequest (client: MetricServiceClient, metricName: string, id: string, seriesAligner: string) {
     return {
       name: client.projectPath(process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820'),
-      filter: `metric.type="${metricName}" AND metric.labels.instance_name = "${instanceName}"`,
+      filter: `metric.type="${metricName}" AND resource.labels.instance_id = ${id}`,
       interval: {
         startTime: {
-          seconds: moment().subtract(1, 'days').unix()
+          seconds: moment().subtract(30, 'days').unix()
         },
         endTime: {
           seconds: moment().unix()
