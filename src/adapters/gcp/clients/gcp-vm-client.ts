@@ -13,7 +13,6 @@ import {
   CleanGcpVmDisksMetadataInterface
 } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { GcpPriceCalculator } from '../gcp-price-calculator'
-import fs from 'fs'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -91,9 +90,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
       promises.push(client.listTimeSeries(GcpVmClient.getTimeSeriesRequest(client, GcpVmClient.METRIC_NETWORK_OUT_NAME, item.id, 'ALIGN_SUM')))
     })
     const metricsResponse = await Promise.all(promises)
-    await fs.promises.writeFile('./before.json', JSON.stringify(metricsResponse), 'utf8')
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
-    await fs.promises.writeFile('./after.json', JSON.stringify(formattedMetrics), 'utf8')
     // @ts-ignore
     response.items.map((item: Vm) => {
       if (item.name in formattedMetrics) {
