@@ -13,7 +13,6 @@ import {
   CleanGcpVmDisksMetadataInterface
 } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { GcpPriceCalculator } from '../gcp-price-calculator'
-import { Disks } from '../../../domain/types/gcp/disks'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -114,13 +113,14 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
           if (!(instanceName in formattedData)) {
             formattedData[instanceName] = new VmMetric()
           }
-          formattedData[instanceName][metricName] = d.points.map((p: any) => {
+          const points = d.points.map((p: any) => {
             return MetricDetails.createInstance(
-              new Date(parseInt(p.interval.startTime.seconds)),
+              new Date(parseInt(p.interval.endTime.seconds) * 1000),
               p.value.doubleValue ?? p.value.int64Value,
               metricName
             )
           })
+          formattedData[instanceName][metricName] = [...formattedData[instanceName][metricName], ...points]
         })
       })
     })
@@ -141,7 +141,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
       filter: `metric.type="${metricName}" AND metric.labels.instance_name = "${instanceName}"`,
       interval: {
         startTime: {
-          seconds: moment().subtract(30, 'days').unix()
+          seconds: moment().subtract(1, 'days').unix()
         },
         endTime: {
           seconds: moment().unix()
@@ -149,7 +149,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
       },
       aggregation: {
         alignmentPeriod: {
-          seconds: 60 * 60 * 24
+          seconds: 86400 // 30 days
         },
         perSeriesAligner: seriesAligner
       }
