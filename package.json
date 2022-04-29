@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -37,7 +37,7 @@
     "@google-cloud/monitoring": "^2.3.5",
     "fs": "0.0.1-security",
     "js-yaml": "^4.1.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

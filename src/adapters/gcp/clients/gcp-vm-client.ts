@@ -93,9 +93,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
     // @ts-ignore
     response.items.map((item: Vm) => {
-      if (item.name in formattedMetrics) {
-        item.metrics = formattedMetrics[item.name] ?? undefined
-      }
+      item.metrics = item.name in formattedMetrics ? formattedMetrics[item.name] : new VmMetric()
       return item
     })
     return response
