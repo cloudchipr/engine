@@ -100,7 +100,7 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
   }
 
   private formatMetricsResponse (metricsResponse: any[]): any {
-    const formattedData: any = {}
+    const formattedData: any = {};
     metricsResponse.forEach(timeSeries => {
       timeSeries.forEach((data: any) => {
         if (!Array.isArray(data)) {
