@@ -5,6 +5,7 @@ import { ProviderResource } from '../provider-resource'
 
 export class Vm extends ProviderResource {
   constructor (
+    readonly id: string,
     readonly name: string,
     readonly zone: string,
     readonly machineType: string,

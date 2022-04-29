@@ -164,6 +164,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     ): Promise<Response<Type>> {
       const disks = await this.generateDisksResponse([responseJson[1]])
       const items = responseJson[0].map((item: any) => new Vm(
+        item.id,
         item.name,
         StringHelper.splitAndGetAtIndex(item.zone, '/', -1) || '',
         StringHelper.splitAndGetAtIndex(item.machineType, '/', -1) || '',
