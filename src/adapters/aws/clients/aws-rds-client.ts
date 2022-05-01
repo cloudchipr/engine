@@ -22,6 +22,23 @@ import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
+  private readonly ENGINE_WHITELIST = [
+    'aurora',
+    'aurora-mysql',
+    'aurora-postgresql',
+    'mariadb',
+    'mysql',
+    'oracle-ee',
+    'oracle-ee-cdb',
+    'oracle-se2',
+    'oracle-se2-cdb',
+    'postgres',
+    'sqlserver-ee',
+    'sqlserver-se',
+    'sqlserver-ex',
+    'sqlserver-web'
+  ]
+
   getCollectCommands (region: string): any[] {
     const commands = []
     commands.push(this.getClient(region).send(AwsRdsClient.getDescribeDBInstancesCommand()))
@@ -43,6 +60,9 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
         return
       }
       res.DBInstances.forEach((db) => {
+        if (!this.ENGINE_WHITELIST.includes(db.Engine || '')) {
+          return
+        }
         data.push(new Rds(
           db.DBInstanceIdentifier || '',
           db.DBInstanceClass || '',
