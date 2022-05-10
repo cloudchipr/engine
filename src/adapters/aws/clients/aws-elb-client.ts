@@ -25,6 +25,7 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanAwsElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import fs from 'fs'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -95,10 +96,11 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetGroupsCommand()))
     })
     const tagsAndTargetGroupsResponse = await Promise.all(promises)
+    await fs.promises.writeFile('./ttt.json', JSON.stringify(tagsAndTargetGroupsResponse), 'utf8')
     const formattedTagsAndTargetGroupsResponse = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
-
+    await fs.promises.writeFile('./ccc.json', JSON.stringify(formattedTagsAndTargetGroupsResponse), 'utf8')
     const targetGroupsArnByRegion = this.groupTargetGroupArnsByRegion(loadBalancerArnByRegion, formattedTagsAndTargetGroupsResponse.loadBalancerArns)
-
+    await fs.promises.writeFile('./fff.json', JSON.stringify(targetGroupsArnByRegion), 'utf8')
     // Get target health for network and application LBs
     promises = []
     Object.keys(targetGroupsArnByRegion).forEach((region) => {
@@ -108,16 +110,20 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       })
     })
     const targetHealthResponse = await Promise.all(promises)
+    await fs.promises.writeFile('./sss.json', JSON.stringify(targetHealthResponse), 'utf8')
     const formattedTargetHealthResponse = this.formatTargetHealthResponse(targetHealthResponse)
+    await fs.promises.writeFile('./kkk.json', JSON.stringify(formattedTargetHealthResponse), 'utf8')
 
     // @ts-ignore
     response.items.map((elb: Elb) => {
       elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
       elb.tags = TagsHelper.formatTags(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
-      if (elb.hasAttachments === undefined) {
-        elb.hasAttachments = (elb.loadBalancerArn ?? '') in formattedTagsAndTargetGroupsResponse.loadBalancerArns &&
-          formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] in formattedTargetHealthResponse
-      }
+      let hasAttachments = false
+      const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
+      arns.forEach((arn: string) => {
+        hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
+      })
+      elb.hasAttachments = hasAttachments
       return elb
     })
     return response
@@ -132,10 +138,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
+        !!lb.Instances?.length || false,
         undefined,
         lb.CreatedTime?.toISOString() || '',
         'classic',
-        !!lb.Instances?.length,
         TagsHelper.getNameTagValue([])
       ))
     })
@@ -151,10 +157,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
+        false,
         lb.LoadBalancerArn || '',
         lb.CreatedTime?.toISOString() || '',
         lb.Type || '',
-        undefined,
         TagsHelper.getNameTagValue([])
       ))
     })
@@ -170,7 +176,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       if (AwsElbClient.instanceOfV2TargetGroupsCommandOutput(r)) {
         r.TargetGroups?.forEach((t) => {
           t.LoadBalancerArns?.forEach((l) => {
-            data.loadBalancerArns[l] = t.TargetGroupArn
+            if (!data.loadBalancerArns[l]) {
+              data.loadBalancerArns[l] = []
+            }
+            data.loadBalancerArns[l].push(t.TargetGroupArn)
           })
         })
       } else {
@@ -194,9 +203,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         instanceIdentifier = r
         return
       }
-      if (r.TargetHealthDescriptions?.length) {
-        data[instanceIdentifier] = true
-      }
+      data[instanceIdentifier] = !!r.TargetHealthDescriptions?.length
     })
     return data
   }
@@ -231,7 +238,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
           data[region] = []
         }
         if (arn in loadBalancerArn) {
-          data[region].push(loadBalancerArn[arn])
+          data[region] = [...data[region], ...loadBalancerArn[arn]]
         }
       })
     })
