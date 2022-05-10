@@ -96,7 +96,6 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     })
     const tagsAndTargetGroupsResponse = await Promise.all(promises)
     const formattedTagsAndTargetGroupsResponse = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
-
     const targetGroupsArnByRegion = this.groupTargetGroupArnsByRegion(loadBalancerArnByRegion, formattedTagsAndTargetGroupsResponse.loadBalancerArns)
 
     // Get target health for network and application LBs
@@ -114,10 +113,12 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     response.items.map((elb: Elb) => {
       elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
       elb.tags = TagsHelper.formatTags(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
-      if (elb.hasAttachments === undefined) {
-        elb.hasAttachments = (elb.loadBalancerArn ?? '') in formattedTagsAndTargetGroupsResponse.loadBalancerArns &&
-          formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] in formattedTargetHealthResponse
-      }
+      let hasAttachments = false
+      const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
+      arns.forEach((arn: string) => {
+        hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
+      })
+      elb.hasAttachments = hasAttachments
       return elb
     })
     return response
@@ -132,10 +133,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
+        !!lb.Instances?.length || false,
         undefined,
         lb.CreatedTime?.toISOString() || '',
         'classic',
-        !!lb.Instances?.length,
         TagsHelper.getNameTagValue([])
       ))
     })
@@ -151,10 +152,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
+        false,
         lb.LoadBalancerArn || '',
         lb.CreatedTime?.toISOString() || '',
         lb.Type || '',
-        undefined,
         TagsHelper.getNameTagValue([])
       ))
     })
@@ -170,7 +171,10 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       if (AwsElbClient.instanceOfV2TargetGroupsCommandOutput(r)) {
         r.TargetGroups?.forEach((t) => {
           t.LoadBalancerArns?.forEach((l) => {
-            data.loadBalancerArns[l] = t.TargetGroupArn
+            if (!data.loadBalancerArns[l]) {
+              data.loadBalancerArns[l] = []
+            }
+            data.loadBalancerArns[l].push(t.TargetGroupArn)
           })
         })
       } else {
@@ -194,9 +198,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         instanceIdentifier = r
         return
       }
-      if (r.TargetHealthDescriptions?.length) {
-        data[instanceIdentifier] = true
-      }
+      data[instanceIdentifier] = !!r.TargetHealthDescriptions?.length
     })
     return data
   }
@@ -231,7 +233,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
           data[region] = []
         }
         if (arn in loadBalancerArn) {
-          data[region].push(loadBalancerArn[arn])
+          data[region] = [...data[region], ...loadBalancerArn[arn]]
         }
       })
     })
