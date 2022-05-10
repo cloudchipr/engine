@@ -25,7 +25,6 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanAwsElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
-import fs from 'fs'
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
   getCollectCommands (region: string): any[] {
@@ -96,11 +95,9 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetGroupsCommand()))
     })
     const tagsAndTargetGroupsResponse = await Promise.all(promises)
-    await fs.promises.writeFile('./ttt.json', JSON.stringify(tagsAndTargetGroupsResponse), 'utf8')
     const formattedTagsAndTargetGroupsResponse = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
-    await fs.promises.writeFile('./ccc.json', JSON.stringify(formattedTagsAndTargetGroupsResponse), 'utf8')
     const targetGroupsArnByRegion = this.groupTargetGroupArnsByRegion(loadBalancerArnByRegion, formattedTagsAndTargetGroupsResponse.loadBalancerArns)
-    await fs.promises.writeFile('./fff.json', JSON.stringify(targetGroupsArnByRegion), 'utf8')
+
     // Get target health for network and application LBs
     promises = []
     Object.keys(targetGroupsArnByRegion).forEach((region) => {
@@ -110,9 +107,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       })
     })
     const targetHealthResponse = await Promise.all(promises)
-    await fs.promises.writeFile('./sss.json', JSON.stringify(targetHealthResponse), 'utf8')
     const formattedTargetHealthResponse = this.formatTargetHealthResponse(targetHealthResponse)
-    await fs.promises.writeFile('./kkk.json', JSON.stringify(formattedTargetHealthResponse), 'utf8')
 
     // @ts-ignore
     response.items.map((elb: Elb) => {
