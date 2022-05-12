@@ -15,18 +15,18 @@ export default class GcpEipClient extends GcpBaseClient implements GcpClientInte
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {
-      promises.push(GcpEipClient.getAddressesClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820', region }))
+      promises.push(this.getAddressesClient().list({ project: this.projectId, region }))
     }
-    promises.push(GcpEipClient.getGlobalAddressesClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' }))
+    promises.push(this.getGlobalAddressesClient().list({ project: this.projectId }))
     return promises
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     if (metadata.global) {
-      return GcpEipClient.getGlobalAddressesClient().delete({ address: request.id, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
+      return this.getGlobalAddressesClient().delete({ address: request.id, project: this.projectId })
     } else {
-      return GcpEipClient.getAddressesClient().delete({ address: request.id, region: metadata.region, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
+      return this.getAddressesClient().delete({ address: request.id, region: metadata.region, project: this.projectId })
     }
   }
 
@@ -57,17 +57,17 @@ export default class GcpEipClient extends GcpBaseClient implements GcpClientInte
     const result = new Response<Type>(data)
     if (result.count > 0) {
       try {
-        await GcpPriceCalculator.putEipPrices(data)
+        await GcpPriceCalculator.putEipPrices(data, this.credentials)
       } catch (e) { result.addError(e) }
     }
     return result
   }
 
-  private static getAddressesClient (): AddressesClient {
-    return new AddressesClient()
+  private getAddressesClient (): AddressesClient {
+    return new AddressesClient({ credentials: this.credentials })
   }
 
-  private static getGlobalAddressesClient (): GlobalAddressesClient {
-    return new GlobalAddressesClient()
+  private getGlobalAddressesClient (): GlobalAddressesClient {
+    return new GlobalAddressesClient({ credentials: this.credentials })
   }
 }
