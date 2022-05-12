@@ -27,14 +27,14 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {
-      promises.push(GcpVmClient.getClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820', zone: region }))
+      promises.push(this.getClient().list({ project: this.projectId, zone: region }))
     }
     return promises
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return GcpVmClient.getClient().delete({ instance: request.id, zone: metadata.zone, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
+    return this.getClient().delete({ instance: request.id, zone: metadata.zone, project: this.projectId })
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
@@ -71,14 +71,14 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     const result = new Response<Type>(data)
     if (result.count > 0) {
       try {
-        await GcpPriceCalculator.putVmPrices(data, [])
+        await GcpPriceCalculator.putVmPrices(data, [], this.credentials)
       } catch (e) { result.addError(e) }
     }
     return result
   }
 
   async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
-    const client = GcpVmClient.getMetricServiceClient()
+    const client = this.getMetricServiceClient()
     const promises: any[] = []
     // @ts-ignore
     response.items.forEach((item: Vm) => {
@@ -126,17 +126,17 @@ export default class GcpVmClient extends GcpBaseClient implements GcpClientInter
     return formattedData
   }
 
-  private static getClient (): InstancesClient {
-    return new InstancesClient()
+  private getClient (): InstancesClient {
+    return new InstancesClient({ credentials: this.credentials })
   }
 
-  private static getMetricServiceClient (): MetricServiceClient {
-    return new MetricServiceClient()
+  private getMetricServiceClient (): MetricServiceClient {
+    return new MetricServiceClient({ credentials: this.credentials })
   }
 
-  private static getTimeSeriesRequest (client: MetricServiceClient, metricName: string, id: string, seriesAligner: string) {
+  private getTimeSeriesRequest (client: MetricServiceClient, metricName: string, id: string, seriesAligner: string) {
     return {
-      name: client.projectPath(process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820'),
+      name: client.projectPath(this.projectId),
       filter: `metric.type="${metricName}" AND resource.labels.instance_id = ${id}`,
       interval: {
         startTime: {

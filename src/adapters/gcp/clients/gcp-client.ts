@@ -9,12 +9,13 @@ import GcpEipClient from './gcp-eip-client'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
+import { CredentialBody } from 'google-auth-library'
 
 export default class GcpClient {
   private gcpClientInterface: GcpClientInterface;
 
-  constructor (subcommand: string) {
-    this.gcpClientInterface = GcpClient.getAwsClient(subcommand)
+  constructor (subcommand: string, gcpCredentials: CredentialBody, projectId: string) {
+    this.gcpClientInterface = GcpClient.getAwsClient(subcommand, gcpCredentials, projectId)
   }
 
   async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
@@ -46,16 +47,16 @@ export default class GcpClient {
     return response
   }
 
-  private static getAwsClient (subcommand: string): GcpClientInterface {
+  private static getAwsClient (subcommand: string, gcpCredentials: CredentialBody, projectId: string): GcpClientInterface {
     switch (subcommand) {
       case GcpSubCommand.VM_SUBCOMMAND:
-        return new GcpVmClient()
+        return new GcpVmClient(gcpCredentials, projectId)
       case GcpSubCommand.LB_SUBCOMMAND:
-        return new GcpLbClient()
+        return new GcpLbClient(gcpCredentials, projectId)
       case GcpSubCommand.DISKS_SUBCOMMAND:
-        return new GcpDisksClient()
+        return new GcpDisksClient(gcpCredentials, projectId)
       case GcpSubCommand.EIP_SUBCOMMAND:
-        return new GcpEipClient()
+        return new GcpEipClient(gcpCredentials, projectId)
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

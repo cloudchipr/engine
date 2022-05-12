@@ -15,18 +15,18 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
   getCollectCommands (regions: string[]): any[] {
     const promises: any[] = []
     for (const region of regions) {
-      promises.push(GcpLbClient.getForwardingRulesClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820', region }))
+      promises.push(this.getForwardingRulesClient().list({ project: this.projectId, region }))
     }
-    promises.push(GcpLbClient.getGlobalForwardingRulesClient().list({ project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' }))
+    promises.push(this.getGlobalForwardingRulesClient().list({ project: this.projectId }))
     return promises
   }
 
   getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     if (metadata.global) {
-      return GcpLbClient.getGlobalForwardingRulesClient().delete({ forwardingRule: request.id, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
+      return this.getGlobalForwardingRulesClient().delete({ forwardingRule: request.id, project: this.projectId })
     } else {
-      return GcpLbClient.getForwardingRulesClient().delete({ forwardingRule: request.id, region: metadata.region, project: process.env.GOOGLE_CLOUD_PROJECT ?? 'cloud-test-340820' })
+      return this.getForwardingRulesClient().delete({ forwardingRule: request.id, region: metadata.region, project: this.projectId })
     }
   }
 
@@ -57,17 +57,17 @@ export default class GcpLbClient extends GcpBaseClient implements GcpClientInter
     const result = new Response<Type>(data)
     if (result.count > 0) {
       try {
-        await GcpPriceCalculator.putLbPrices(data)
+        await GcpPriceCalculator.putLbPrices(data, this.credentials)
       } catch (e) { result.addError(e) }
     }
     return result
   }
 
-  private static getForwardingRulesClient (): ForwardingRulesClient {
-    return new ForwardingRulesClient()
+  private getForwardingRulesClient (): ForwardingRulesClient {
+    return new ForwardingRulesClient({ credentials: this.credentials })
   }
 
-  private static getGlobalForwardingRulesClient (): GlobalForwardingRulesClient {
-    return new GlobalForwardingRulesClient()
+  private getGlobalForwardingRulesClient (): GlobalForwardingRulesClient {
+    return new GlobalForwardingRulesClient({ credentials: this.credentials })
   }
 }
