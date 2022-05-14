@@ -21,6 +21,6 @@ export class Eip extends ProviderResource {
   }
 
   getId (): string {
-    return this.ip
+    return this.name
   }
 }
