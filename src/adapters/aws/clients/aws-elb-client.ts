@@ -117,7 +117,6 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         let hasAttachments = false
         const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
         arns.forEach((arn: string) => {
-          console.log((arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn]))
           hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
         })
         elb.hasAttachments = hasAttachments
