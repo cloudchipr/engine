@@ -6,7 +6,7 @@ export class Elb extends ProviderResource {
   constructor (
     readonly loadBalancerName: string,
     readonly dnsName: string,
-    public hasAttachments: boolean,
+    public hasAttachments?: boolean,
     readonly loadBalancerArn?: string,
     readonly age?: string,
     readonly type?: string,

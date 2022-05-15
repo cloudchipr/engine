@@ -113,12 +113,14 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     response.items.map((elb: Elb) => {
       elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
       elb.tags = TagsHelper.formatTags(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
-      let hasAttachments = false
-      const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
-      arns.forEach((arn: string) => {
-        hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
-      })
-      elb.hasAttachments = hasAttachments
+      if (elb.hasAttachments === undefined) {
+        let hasAttachments = false
+        const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
+        arns.forEach((arn: string) => {
+          hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
+        })
+        elb.hasAttachments = hasAttachments
+      }
       return elb
     })
     return response
@@ -133,7 +135,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
-        !!lb.Instances?.length || false,
+        !!lb.Instances?.length,
         undefined,
         lb.CreatedTime?.toISOString() || '',
         'classic',
@@ -152,7 +154,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       data.push(new Elb(
         lb.LoadBalancerName || '',
         lb.DNSName || '',
-        false,
+        undefined,
         lb.LoadBalancerArn || '',
         lb.CreatedTime?.toISOString() || '',
         lb.Type || '',
