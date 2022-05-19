@@ -1,4 +1,4 @@
-import { Response } from '../../../responses/response'
+import { Response } from '../../../../responses/response'
 import { CredentialBody } from 'google-auth-library'
 
 export default class GcpBaseClient {
@@ -8,6 +8,10 @@ export default class GcpBaseClient {
   constructor (gcpCredentials: CredentialBody, projectId: string) {
     this.credentials = gcpCredentials
     this.projectId = projectId
+  }
+
+  async collect<Type> (): Promise<Response<Type>> {
+    return new Response<Type>([])
   }
 
   async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {

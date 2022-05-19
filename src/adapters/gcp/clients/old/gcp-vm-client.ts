@@ -1,18 +1,18 @@
 import { GcpClientInterface } from './gcp-client-interface'
 import { InstancesClient } from '@google-cloud/compute'
-import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
-import { Response } from '../../../responses/response'
-import { StringHelper } from '../../../helpers/string-hepler'
-import { Label } from '../../../domain/types/gcp/shared/label'
+import { Vm, VmMetric } from '../../../../domain/types/gcp/vm'
+import { Response } from '../../../../responses/response'
+import { StringHelper } from '../../../../helpers/string-hepler'
+import { Label } from '../../../../domain/types/gcp/shared/label'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
 import GcpBaseClient from './gcp-base-client'
-import { MetricDetails } from '../../../domain/metric-details'
-import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { MetricDetails } from '../../../../domain/metric-details'
+import { CleanRequestResourceInterface } from '../../../../request/clean/clean-request-resource-interface'
 import {
   CleanGcpVmDisksMetadataInterface
-} from '../../../request/clean/clean-request-resource-metadata-interface'
-import { GcpPriceCalculator } from '../gcp-price-calculator'
+} from '../../../../request/clean/clean-request-resource-metadata-interface'
+import { GcpPriceCalculator } from '../../gcp-price-calculator'
 
 export default class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'

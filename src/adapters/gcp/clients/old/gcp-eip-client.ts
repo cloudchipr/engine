@@ -1,15 +1,15 @@
 import { GcpClientInterface } from './gcp-client-interface'
 import { AddressesClient, GlobalAddressesClient } from '@google-cloud/compute'
-import { Response } from '../../../responses/response'
-import { StringHelper } from '../../../helpers/string-hepler'
-import { Eip } from '../../../domain/types/gcp/eip'
-import { Label } from '../../../domain/types/gcp/shared/label'
+import { Response } from '../../../../responses/response'
+import { StringHelper } from '../../../../helpers/string-hepler'
+import { Eip } from '../../../../domain/types/gcp/eip'
+import { Label } from '../../../../domain/types/gcp/shared/label'
 import GcpBaseClient from './gcp-base-client'
-import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CleanRequestResourceInterface } from '../../../../request/clean/clean-request-resource-interface'
 import {
   CleanGcpLbEipMetadataInterface
-} from '../../../request/clean/clean-request-resource-metadata-interface'
-import { GcpPriceCalculator } from '../gcp-price-calculator'
+} from '../../../../request/clean/clean-request-resource-metadata-interface'
+import { GcpPriceCalculator } from '../../gcp-price-calculator'
 
 export default class GcpEipClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {

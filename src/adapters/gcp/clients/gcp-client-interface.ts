@@ -1,14 +1,6 @@
 import { Response } from '../../../responses/response'
-import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CredentialBody } from 'google-auth-library'
 
 export interface GcpClientInterface {
-  getCollectCommands (regions: string[]): any[]
-
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any>
-
-  isCleanRequestValid (request: CleanRequestResourceInterface): boolean
-
-  formatCollectResponse<Type> (response: any): Promise<Response<Type>>
-
-  getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>>
+  collectAll<Type> (credentials: CredentialBody, project: string): Promise<Response<Type>>
 }

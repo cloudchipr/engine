@@ -1,24 +1,27 @@
-import { Response } from '../../../responses/response'
-import { EngineRequest } from '../../../engine-request'
+import { Response } from '../../../../responses/response'
+import { EngineRequest } from '../../../../engine-request'
 import { GcpClientInterface } from './gcp-client-interface'
-import { GcpSubCommand } from '../gcp-sub-command'
+import GcpVmClient from './gcp-vm-client'
+import { GcpSubCommand } from '../../gcp-sub-command'
+import GcpLbClient from './gcp-lb-client'
 import GcpDisksClient from './gcp-disks-client'
-import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
-import { CleanResponse } from '../../../responses/clean-response'
-import { CleanFailureResponse } from '../../../responses/clean-failure-response'
+import GcpEipClient from './gcp-eip-client'
+import { CleanRequestInterface } from '../../../../request/clean/clean-request-interface'
+import { CleanResponse } from '../../../../responses/clean-response'
+import { CleanFailureResponse } from '../../../../responses/clean-failure-response'
 import { CredentialBody } from 'google-auth-library'
 
-export default class GcpClient {
-  protected readonly credentials: CredentialBody
-  protected readonly projectId: string
+export class GcpClient {
+  private gcpClientInterface: GcpClientInterface;
 
-  constructor (gcpCredentials: CredentialBody, projectId: string) {
-    this.credentials = gcpCredentials
-    this.projectId = projectId
+  constructor (subcommand: string, gcpCredentials: CredentialBody, projectId: string) {
+    this.gcpClientInterface = GcpClient.getAwsClient(subcommand, gcpCredentials, projectId)
   }
 
-  async collectResources<Type> (): Promise<Response<Type>[]> {
-    return []
+  async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
+    const response = await Promise.all(this.gcpClientInterface.getCollectCommands(request.parameter.regions))
+    const formattedResponse = await this.gcpClientInterface.formatCollectResponse<Type>(response)
+    return await this.gcpClientInterface.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {

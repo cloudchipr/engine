@@ -18,8 +18,14 @@ export class GcpSubCommand implements SubCommandInterface {
     return this.subCommand
   }
 
-  static all (): GcpSubCommand {
-    return new GcpSubCommand(this.ALL_SUBCOMMAND)
+  static all (): GcpSubCommand[] {
+    return [
+      new GcpSubCommand(this.VM_SUBCOMMAND),
+      new GcpSubCommand(this.DISKS_SUBCOMMAND),
+      // new GcpSubCommand(this.EIP_SUBCOMMAND),
+      // new GcpSubCommand(this.SQL_SUBCOMMAND),
+      // new GcpSubCommand(this.LB_SUBCOMMAND)
+    ]
   }
 
   static vm (): GcpSubCommand {

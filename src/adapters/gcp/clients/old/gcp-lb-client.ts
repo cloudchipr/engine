@@ -1,15 +1,15 @@
 import { GcpClientInterface } from './gcp-client-interface'
 import { GlobalForwardingRulesClient, ForwardingRulesClient } from '@google-cloud/compute'
-import { Response } from '../../../responses/response'
-import { Lb } from '../../../domain/types/gcp/lb'
-import { StringHelper } from '../../../helpers/string-hepler'
-import { Label } from '../../../domain/types/gcp/shared/label'
+import { Response } from '../../../../responses/response'
+import { Lb } from '../../../../domain/types/gcp/lb'
+import { StringHelper } from '../../../../helpers/string-hepler'
+import { Label } from '../../../../domain/types/gcp/shared/label'
 import GcpBaseClient from './gcp-base-client'
-import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CleanRequestResourceInterface } from '../../../../request/clean/clean-request-resource-interface'
 import {
   CleanGcpLbEipMetadataInterface
-} from '../../../request/clean/clean-request-resource-metadata-interface'
-import { GcpPriceCalculator } from '../gcp-price-calculator'
+} from '../../../../request/clean/clean-request-resource-metadata-interface'
+import { GcpPriceCalculator } from '../../gcp-price-calculator'
 
 export default class GcpLbClient extends GcpBaseClient implements GcpClientInterface {
   getCollectCommands (regions: string[]): any[] {
