@@ -43,7 +43,7 @@ export class GcpPriceCalculatorHelper {
     } else if (series === 'custom') {
       return { ram: cpu / 1024, cpu: parseInt(type) }
     } else if (type === 'custom') {
-      return { ram: cpu, cpu: parseFloat(machineType.split('-')[3] ?? '0') }
+      return { ram: parseFloat(machineType.split('-')[3] ?? '0') / 1024, cpu: cpu }
     }
     throw new Error(`Failed to detect the CPU and ram for vm machine type ${machineType}!`)
   }
