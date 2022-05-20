@@ -1,11 +1,11 @@
 import { Disks } from '../../domain/types/gcp/disks'
-import { CloudCatalogClient } from '@google-cloud/billing'
 import { Eip } from '../../domain/types/gcp/eip'
 import { Lb } from '../../domain/types/gcp/lb'
 import { Sql } from '../../domain/types/gcp/sql'
 import { Vm } from '../../domain/types/gcp/vm'
 import { GcpPriceCalculatorHelper } from './gcp-price-calculator-helper'
 import { CredentialBody } from 'google-auth-library'
+import { GcpCatalogClient } from './clients/gcp-catalog-client'
 
 export class GcpPriceCalculator {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
@@ -77,8 +77,8 @@ export class GcpPriceCalculator {
   ])
 
   static async putVmPrices (items: Vm[], disks: Disks[], gcpCredentials?: CredentialBody): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE, gcpCredentials)
-    const vms = skus.filter((it) => {
+    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+    const vms = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Compute' &&
         it.category?.usageType === 'OnDemand'
     }).map((it) => {
@@ -126,8 +126,8 @@ export class GcpPriceCalculator {
   }
 
   static async putDisksPrices (items: Disks[], gcpCredentials?: CredentialBody): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE, gcpCredentials)
-    const storages = skus.filter((it) => {
+    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+    const storages = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Storage' &&
         ['SSD', 'PDStandard'].includes(it.category?.resourceGroup as string) &&
         it.category?.usageType === 'OnDemand'
@@ -160,8 +160,8 @@ export class GcpPriceCalculator {
   }
 
   static async putEipPrices (items: Eip[], gcpCredentials?: CredentialBody): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE, gcpCredentials)
-    const networks = skus.filter((it) => {
+    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+    const networks = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
         it.category?.resourceGroup === 'IpAddress' &&
         it.category?.usageType === 'OnDemand'
@@ -202,8 +202,8 @@ export class GcpPriceCalculator {
   }
 
   static async putLbPrices (items: Lb[], gcpCredentials?: CredentialBody): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.COMPUTING_SERVICE, gcpCredentials)
-    const loadBalancers = skus.filter((it) => {
+    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+    const loadBalancers = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
         it.category?.resourceGroup === 'LoadBalancing' &&
         it.category?.usageType === 'OnDemand'
@@ -242,8 +242,8 @@ export class GcpPriceCalculator {
   }
 
   static async putSqlPrices (items: Sql[], gcpCredentials?: CredentialBody): Promise<void> {
-    const skus = await GcpPriceCalculator.getAllSkus(GcpPriceCalculator.SQL_SERVICE, gcpCredentials)
-    const dbs = skus.filter((it) => {
+    await GcpPriceCalculator.getAllSkus('sql', gcpCredentials)
+    const dbs = GcpCatalogClient.SQL_SKU.filter((it) => {
       return it.category?.resourceFamily === 'ApplicationServices' &&
         (
           it.category?.resourceGroup === 'SQLGen2InstancesRAM' ||
@@ -289,9 +289,11 @@ export class GcpPriceCalculator {
     })
   }
 
-  private static async getAllSkus (parent: string, gcpCredentials?: CredentialBody) {
-    const billingClient = gcpCredentials !== undefined ? new CloudCatalogClient({ credentials: gcpCredentials }) : new CloudCatalogClient()
-    const allSkus = await billingClient.listSkus({ parent })
-    return allSkus[0]
+  private static async getAllSkus (target: string, gcpCredentials?: CredentialBody) {
+    if (target === 'computing') {
+      await GcpCatalogClient.collectAllComputing(gcpCredentials)
+    } else {
+      await GcpCatalogClient.collectAllSql(gcpCredentials)
+    }
   }
 }

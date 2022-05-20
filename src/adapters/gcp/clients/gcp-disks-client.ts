@@ -1,23 +1,32 @@
-import { GcpClientInterface } from './gcp-client-interface'
 import { DisksClient } from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Label } from '../../../domain/types/gcp/shared/label'
-import GcpBaseClient from './gcp-base-client'
+import { CredentialBody } from 'google-auth-library'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
-import { GcpPriceCalculator } from '../gcp-price-calculator'
-import { CredentialBody } from 'google-auth-library'
 
-export class GcpDisksClient implements GcpClientInterface {
+export class GcpDisksClient {
   static async collectAll<Type> (credentials: CredentialBody, project: string): Promise<Response<Type>> {
-    const client = new DisksClient({ credentials })
-    const response = client.aggregatedListAsync({ project })
-    return
+    const response = GcpDisksClient.getClient(credentials).aggregatedListAsync({ project })
+    return GcpDisksClient.formatCollectResponse(response)
   }
 
-  protected async formatCollectResponse<Type> (response: any): Promise<Response<Type>> {
+  static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
+    const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
+    return GcpDisksClient.getClient(credentials).delete({ disk: request.id, zone: metadata.zone, project })
+  }
+
+  static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request) || !request.metadata) {
+      return false
+    }
+    const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
+    return !!metadata.zone
+  }
+
+  private static async formatCollectResponse<Type> (response: any): Promise<Response<Type>> {
     const data: any[] = []
     for await (const [, value] of response) {
       value.disks?.forEach((v: any) => {
@@ -34,5 +43,9 @@ export class GcpDisksClient implements GcpClientInterface {
       })
     }
     return new Response<Type>(data)
+  }
+
+  private static getClient (credentials: CredentialBody): DisksClient {
+    return new DisksClient({ credentials })
   }
 }

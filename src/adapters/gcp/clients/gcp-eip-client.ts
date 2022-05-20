@@ -1,0 +1,60 @@
+import {
+  AddressesClient,
+  GlobalAddressesClient
+} from '@google-cloud/compute'
+import { Response } from '../../../responses/response'
+import { StringHelper } from '../../../helpers/string-hepler'
+import { Label } from '../../../domain/types/gcp/shared/label'
+import { CredentialBody } from 'google-auth-library'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { Eip } from '../../../domain/types/gcp/eip'
+
+export class GcpEipClient {
+  static async collectAll<Type> (credentials: CredentialBody, project: string): Promise<Response<Type>> {
+    const response = GcpEipClient.getClient(credentials).aggregatedListAsync({ project })
+    return GcpEipClient.formatCollectResponse(response)
+  }
+
+  static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
+    const metadata = request.metadata as CleanGcpLbEipMetadataInterface
+    if (metadata.global) {
+      return GcpEipClient.getGlobalClient(credentials).delete({ address: request.id, project })
+    } else {
+      return GcpEipClient.getClient(credentials).delete({ address: request.id, region: metadata.region, project })
+    }
+  }
+
+  static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    if (!('metadata' in request) || !request.metadata) {
+      return false
+    }
+    const metadata = request.metadata as CleanGcpLbEipMetadataInterface
+    return metadata.global || !!metadata.region
+  }
+
+  private static async formatCollectResponse<Type> (response: any): Promise<Response<Type>> {
+    const data: any[] = []
+    for await (const [, value] of response) {
+      value.addresses?.forEach((v: any) => {
+        data.push(new Eip(
+          v.address,
+          StringHelper.splitAndGetAtIndex(v.region, '/', -1) || '',
+          v.name,
+          v.addressType?.toLowerCase() || '',
+          v.creationTimestamp,
+          Label.createInstances(v.labels)
+        ))
+      })
+    }
+    return new Response<Type>(data)
+  }
+
+  private static getClient (credentials: CredentialBody): AddressesClient {
+    return new AddressesClient({ credentials })
+  }
+
+  private static getGlobalClient (credentials: CredentialBody): GlobalAddressesClient {
+    return new GlobalAddressesClient({ credentials })
+  }
+}
