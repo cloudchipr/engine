@@ -26,6 +26,8 @@ export class GcpPriceCalculatorHelper {
           return { ram: cpu * (series === 'm1' ? 14.9 : 14), cpu: cpu }
         case 'ultramem':
           return { ram: cpu * (series === 'm1' ? 24 : 28.3), cpu: cpu }
+        case 'custom':
+          return { ram: parseFloat(machineType.split('-')[3] ?? '0') / 1024, cpu: cpu }
       }
     } else if (series === 'n1') {
       switch (type) {
