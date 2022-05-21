@@ -67,10 +67,8 @@ export class MetricsHelper {
         continue
       }
       const points = metricObject.points
-      const interval = points[0].interval
       const value = points[0].value.doubleValue ?? points[0].value.int64Value ?? 0
-      const days = Math.abs((new Date(interval.startTime)).getTime() - (new Date(interval.endTime)).getTime()) / (1000 * 3600 * 24)
-      return new Metric(value / (days || 1), this.getMetricType(object, key), '')
+      return new Metric(value, this.getMetricType(object, key), '')
     }
     return new Metric(0, this.getMetricType({}, ''), '')
   }
