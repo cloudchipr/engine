@@ -39,6 +39,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       this.validateRequest(generateResponseMethodName)
 
       const filterList = request.parameter.filter
+      console.info(JSON.stringify(filterList))
       if (GcpShellEngineAdapter.shouldOverrideNlbAlbFilter(filterList, command, subCommand)) {
         const potentialElbGarbage = await this.getPotentialLbGarbage(request)
         const instanceFilter = filterList.getFilterExpressionByResource(FilterResource.INSTANCES)
@@ -52,12 +53,14 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       const [policyName, policy] = this.getDefaultPolicy(request)
       const filters: object = filterList.build(new C7nFilterBuilder(request.command, request.subCommand))
-
+      console.info(JSON.stringify(filters))
       if (filters && Object.keys(filters).length) {
         if (typeof policy.policies[0].filters === 'undefined') {
           policy.policies[0].filters = []
         }
         policy.policies[0].filters.push(filters)
+      } else {
+        console.error(filters)
       }
 
       this.project = await this.gcpResourceClient.getProject()
