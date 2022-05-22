@@ -19,15 +19,15 @@ export class GcpPriceCalculator {
     ['N2 Custom Instance Ram running', 'n2_custom_ram'],
     ['N2 Custom Instance Core running', 'n2_custom_cpu'],
     ['N2D AMD Instance Ram running', 'n2d_ram'],
-    ['N2D AMD Instance Core running', 'n2d_core'],
+    ['N2D AMD Instance Core running', 'n2d_cpu'],
     ['N2D AMD Custom Instance Ram running', 'n2d_custom_ram'],
-    ['N2D AMD Custom Instance Core running', 'n2d_custom_core'],
+    ['N2D AMD Custom Instance Core running', 'n2d_custom_cpu'],
     ['T2D AMD Instance Ram running', 't2d_ram'],
-    ['T2D AMD Instance Core running', 't2d_core'],
+    ['T2D AMD Instance Core running', 't2d_cpu'],
     ['Compute optimized Ram running', 'c2_ram'],
-    ['Compute optimized Core running', 'c2_core'],
+    ['Compute optimized Core running', 'c2_cpu'],
     ['Memory-optimized Instance Ram running', 'm1_ram'],
-    ['Memory-optimized Instance Core running', 'm1_core'],
+    ['Memory-optimized Instance Core running', 'm1_cpu'],
     ['N1 Predefined Instance Ram running', 'n1_ram'],
     ['N1 Predefined Instance Core running', 'n1_cpu'],
     ['Custom Instance Ram running', 'custom_ram'],
@@ -111,9 +111,10 @@ export class GcpPriceCalculator {
 
     items.forEach((item) => {
       const series = item.machineType.split('-')[0].toLowerCase()
+      const type = item.machineType.split('-')[1].toLowerCase()
       const { ram, cpu } = GcpPriceCalculatorHelper.getVmRamAndCpu(item.machineType)
-      const ramKey = series + '_ram'
-      const cpuKey = series + '_cpu'
+      const ramKey = series + (type === 'custom' ? '_custom' : '') + '_ram'
+      const cpuKey = series + (type === 'custom' ? '_custom' : '') + '_cpu'
       const ramPrice = vms.filter((vm) => vm.key === ramKey && vm.regions?.includes(item.getRegion()))[0]?.price
       const cpuPrice = vms.filter((vm) => vm.key === cpuKey && vm.regions?.includes(item.getRegion()))[0]?.price
       const diskPrice = disks.reduce((prev, current) => prev + (item.disks.includes(current.name) ? (current.pricePerMonth || 0) : 0), 0)

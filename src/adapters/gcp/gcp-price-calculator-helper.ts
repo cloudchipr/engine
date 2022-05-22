@@ -26,6 +26,8 @@ export class GcpPriceCalculatorHelper {
           return { ram: cpu * (series === 'm1' ? 14.9 : 14), cpu: cpu }
         case 'ultramem':
           return { ram: cpu * (series === 'm1' ? 24 : 28.3), cpu: cpu }
+        case 'custom':
+          return { ram: parseFloat(machineType.split('-')[3] ?? '0') / 1024, cpu: cpu }
       }
     } else if (series === 'n1') {
       switch (type) {
@@ -42,6 +44,8 @@ export class GcpPriceCalculatorHelper {
       return { ram: 1.7, cpu: 1 }
     } else if (series === 'custom') {
       return { ram: cpu / 1024, cpu: parseInt(type) }
+    } else if (type === 'custom') {
+      return { ram: parseFloat(machineType.split('-')[3] ?? '0') / 1024, cpu: cpu }
     }
     throw new Error(`Failed to detect the CPU and ram for vm machine type ${machineType}!`)
   }
