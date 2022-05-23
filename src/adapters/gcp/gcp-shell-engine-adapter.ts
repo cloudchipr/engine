@@ -104,7 +104,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async getPotentialLbGarbage (request: EngineRequest) : Promise<string[]> {
       const policyNameLb = 'gcp-lb-collect-all'
       const policyNameTargetPool = 'gcp-lb-target-pool-collect'
-      const policyNameVm = 'gcp-vm-collect'
+      const policyNameVm = 'gcp-lb-vm-collect'
 
       const response = await Promise.all([
         this.executeC7nPolicy(this.getPolicy(policyNameLb), policyNameLb, request),
