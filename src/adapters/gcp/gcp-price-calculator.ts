@@ -72,7 +72,7 @@ export class GcpPriceCalculator {
     ['Cloud SQL for SQL Server: Regional - Standard storage', 'sqlserver_regional_storage']
   ])
 
-  static async putVmPrices (items: Vm[], disks: Disks[], auth?: any): Promise<void> {
+  static async putVmPrices (items: Vm[], disks: Disks[], auth: any): Promise<void> {
     await GcpPriceCalculator.getAllSkus('computing', auth)
     const vms = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Compute' &&
@@ -122,7 +122,7 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putDisksPrices (items: Disks[], auth?: any): Promise<void> {
+  static async putDisksPrices (items: Disks[], auth: any): Promise<void> {
     await GcpPriceCalculator.getAllSkus('computing', auth)
     const storages = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Storage' &&
@@ -156,7 +156,7 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putEipPrices (items: Eip[], auth?: any): Promise<void> {
+  static async putEipPrices (items: Eip[], auth: any): Promise<void> {
     await GcpPriceCalculator.getAllSkus('computing', auth)
     const networks = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
@@ -198,7 +198,7 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putLbPrices (items: Lb[], auth?: any): Promise<void> {
+  static async putLbPrices (items: Lb[], auth: any): Promise<void> {
     await GcpPriceCalculator.getAllSkus('computing', auth)
     const loadBalancers = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
@@ -238,7 +238,7 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putSqlPrices (items: Sql[], auth?: any): Promise<void> {
+  static async putSqlPrices (items: Sql[], auth: any): Promise<void> {
     await GcpPriceCalculator.getAllSkus('sql', auth)
     const dbs = GcpCatalogClient.SQL_SKU.filter((it) => {
       return it.category?.resourceFamily === 'ApplicationServices' &&
@@ -286,7 +286,7 @@ export class GcpPriceCalculator {
     })
   }
 
-  private static async getAllSkus (target: string, auth?: any) {
+  private static async getAllSkus (target: string, auth: any) {
     if (target === 'computing') {
       await GcpCatalogClient.collectAllComputing(auth)
     } else {
