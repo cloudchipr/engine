@@ -14,6 +14,8 @@ import { Vm } from '../../../domain/types/gcp/vm'
 import { google } from 'googleapis'
 import { Lb } from '../../../domain/types/gcp/lb'
 import { Eip } from '../../../domain/types/gcp/eip'
+import { GcpSqlClient } from './gcp-sql-client'
+import { Sql } from '../../../domain/types/gcp/sql'
 
 export class GcpClient {
   protected readonly credentials: CredentialBody
@@ -29,7 +31,8 @@ export class GcpClient {
       credentials: this.credentials,
       scopes: [
         'https://www.googleapis.com/auth/compute',
-        'https://www.googleapis.com/auth/cloud-billing'
+        'https://www.googleapis.com/auth/cloud-billing',
+        'https://www.googleapis.com/auth/sqlservice.admin'
       ]
     })
     const authClient = await auth.getClient()
@@ -39,19 +42,16 @@ export class GcpClient {
       GcpVmClient.collectAll(authClient, this.projectId),
       GcpLbClient.collectAll(authClient, this.projectId),
       GcpEipClient.collectAll(authClient, this.projectId),
+      GcpSqlClient.collectAll(authClient, this.projectId),
       GcpCatalogClient.collectAllComputing(authClient),
       GcpCatalogClient.collectAllSql(authClient)
     ])
     await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], authClient)
     await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], authClient)
-    await GcpPriceCalculator.putLbPrices(responses[1].items as Lb[], authClient)
-    await GcpPriceCalculator.putEipPrices(responses[1].items as Eip[], authClient)
-    return [
-      responses[0],
-      responses[1],
-      responses[2],
-      responses[3]
-    ] as Response<Type>[]
+    await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
+    await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], authClient)
+    await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], authClient)
+    return [responses[0], responses[1], responses[2], responses[3], responses[4]] as Response<Type>[]
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {

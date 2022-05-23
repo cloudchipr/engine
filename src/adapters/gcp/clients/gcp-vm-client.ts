@@ -5,7 +5,7 @@ import { Label } from '../../../domain/types/gcp/shared/label'
 import { CredentialBody } from 'google-auth-library'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
-import { Vm } from '../../../domain/types/gcp/vm'
+import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
 import fs from 'fs'
@@ -39,7 +39,7 @@ export class GcpVmClient {
             undefined,
             undefined,
             undefined,
-            undefined,
+            new VmMetric(),
             Label.createInstances(v.labels)
           ))
         })

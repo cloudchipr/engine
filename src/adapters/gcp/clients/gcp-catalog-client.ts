@@ -11,17 +11,31 @@ export class GcpCatalogClient {
     if (GcpCatalogClient.COMPUTING_SKU.length) {
       return
     }
-    const config = auth === undefined ? { parent: GcpCatalogClient.COMPUTING_SERVICE } : { parent: GcpCatalogClient.COMPUTING_SERVICE, auth }
-    const result = await google.cloudbilling('v1').services.skus.list(config)
-    GcpCatalogClient.COMPUTING_SKU = result?.data?.skus ?? []
+    const config: any = auth === undefined ? { parent: GcpCatalogClient.COMPUTING_SERVICE } : { parent: GcpCatalogClient.COMPUTING_SERVICE, auth }
+    while (true) {
+      const result = await google.cloudbilling('v1').services.skus.list(config)
+      GcpCatalogClient.COMPUTING_SKU = [...GcpCatalogClient.COMPUTING_SKU, ...(result?.data?.skus ?? [])]
+      if (result?.data?.nextPageToken) {
+        config.pageToken = result?.data?.nextPageToken
+      } else {
+        break
+      }
+    }
   }
 
   static async collectAllSql (auth?: any) {
     if (GcpCatalogClient.SQL_SKU.length) {
       return
     }
-    const config = auth === undefined ? { parent: GcpCatalogClient.SQL_SERVICE } : { parent: GcpCatalogClient.SQL_SERVICE, auth }
-    const result = await google.cloudbilling('v1').services.skus.list(config)
-    GcpCatalogClient.SQL_SKU = result?.data?.skus ?? []
+    const config: any = auth === undefined ? { parent: GcpCatalogClient.SQL_SERVICE } : { parent: GcpCatalogClient.SQL_SERVICE, auth }
+    while (true) {
+      const result = await google.cloudbilling('v1').services.skus.list(config)
+      GcpCatalogClient.SQL_SKU = [...GcpCatalogClient.SQL_SKU, ...(result?.data?.skus ?? [])]
+      if (result?.data?.nextPageToken) {
+        config.pageToken = result?.data?.nextPageToken
+      } else {
+        break
+      }
+    }
   }
 }

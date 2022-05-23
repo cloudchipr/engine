@@ -222,7 +222,9 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         parseFloat(StringHelper.splitAndGetAtIndex(item.settings.tier, '-', -2) || '0'),
         parseFloat(StringHelper.splitAndGetAtIndex(item.settings.tier, '-', -1) || '0'),
         item.settings.dataDiskSizeGb,
+        item.createTime,
         MetricsHelper.getGcpDatabaseConnections(item),
+        undefined,
         Label.createInstances(item.settings?.userLabels),
         this.project
       ))
