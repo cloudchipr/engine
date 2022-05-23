@@ -1,9 +1,4 @@
-import { CredentialBody } from 'google-auth-library'
-import { CloudCatalogClient } from '@google-cloud/billing'
-import fs from 'fs'
 import { google } from 'googleapis'
-const https = require('https')
-
 
 export class GcpCatalogClient {
   private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
@@ -12,53 +7,21 @@ export class GcpCatalogClient {
   public static COMPUTING_SKU: any[] = []
   public static SQL_SKU: any[] = []
 
-  static async collectAllComputing (credentials?: CredentialBody): Promise<void> {
-    console.time('www')
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/cloud-billing']
-    })
-    const authClient = await auth.getClient()
-    const catalog = google.cloudbilling('v1')
-    const result = await catalog.services.skus.list({
-      parent: 'services/6F81-5844-456A',
-      auth: authClient
-    })
-    console.timeEnd('www')
-    await fs.promises.writeFile('./yy.json', JSON.stringify(result.data.skus), 'utf8')
-
-    console.time('aaaa')
-    https.get('https://cloudbilling.googleapis.com/v1/services/6F81-5844-456A/skus?key=AIzaSyC8OCkl6s6r7VGQu3foWoU08nibH_o8kwQ', async (res: any) => {
-      console.timeEnd('aaaa')
-      await fs.promises.writeFile('./aaaa.json', res, 'utf8')
-    })
-
-    // if (GcpCatalogClient.COMPUTING_SKU.length) {
-    //   return
-    // }
-    console.time('bb')
-    const response = GcpCatalogClient.getClient(credentials).listSkusAsync({ parent: GcpCatalogClient.COMPUTING_SERVICE })
-    for await (const value of response) {
-      // GcpCatalogClient.COMPUTING_SKU.push(value)
+  static async collectAllComputing (auth?: any): Promise<void> {
+    if (GcpCatalogClient.COMPUTING_SKU.length) {
+      return
     }
-    console.timeEnd('bb')
-
-    console.time('cc')
-    const respoasdnse = await GcpCatalogClient.getClient(credentials).listSkus({ parent: GcpCatalogClient.COMPUTING_SERVICE })
-    console.timeEnd('cc')
+    const config = auth === undefined ? { parent: GcpCatalogClient.COMPUTING_SERVICE } : { parent: GcpCatalogClient.COMPUTING_SERVICE, auth }
+    const result = await google.cloudbilling('v1').services.skus.list(config)
+    GcpCatalogClient.COMPUTING_SKU = result?.data?.skus ?? []
   }
 
-  static async collectAllSql (credentials?: CredentialBody) {
+  static async collectAllSql (auth?: any) {
     if (GcpCatalogClient.SQL_SKU.length) {
       return
     }
-    const response = GcpCatalogClient.getClient(credentials).listSkusAsync({ parent: GcpCatalogClient.SQL_SERVICE })
-    for await (const value of response) {
-      GcpCatalogClient.SQL_SKU.push(value)
-    }
-  }
-
-  private static getClient (credentials?: CredentialBody): CloudCatalogClient {
-    return credentials !== undefined ? new CloudCatalogClient({ credentials }) : new CloudCatalogClient()
+    const config = auth === undefined ? { parent: GcpCatalogClient.SQL_SERVICE } : { parent: GcpCatalogClient.SQL_SERVICE, auth }
+    const result = await google.cloudbilling('v1').services.skus.list(config)
+    GcpCatalogClient.SQL_SKU = result?.data?.skus ?? []
   }
 }

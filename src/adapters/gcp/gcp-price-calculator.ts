@@ -4,13 +4,9 @@ import { Lb } from '../../domain/types/gcp/lb'
 import { Sql } from '../../domain/types/gcp/sql'
 import { Vm } from '../../domain/types/gcp/vm'
 import { GcpPriceCalculatorHelper } from './gcp-price-calculator-helper'
-import { CredentialBody } from 'google-auth-library'
 import { GcpCatalogClient } from './clients/gcp-catalog-client'
 
 export class GcpPriceCalculator {
-  private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
-  private static SQL_SERVICE = 'services/9662-B51E-5089'
-
   private static VM_KEY_MAP = new Map([
     ['E2 Instance Ram running', 'e2_ram'],
     ['E2 Instance Core running', 'e2_cpu'],
@@ -41,10 +37,10 @@ export class GcpPriceCalculator {
     ['Extreme PD Capacity', 'pd-extreme'],
     ['Storage PD Capacity', 'pd-standard'],
     ['SSD backed PD Capacity', 'pd-ssd'],
-    ['Regional Balanced PD Capacity', 'regional-pd-balanced'],
-    ['Regional Extreme PD Capacity', 'regional-pd-extreme'],
-    ['Regional Storage PD Capacity', 'regional-pd-standard'],
-    ['Regional SSD backed PD Capacity', 'regional-pd-ssd']
+    ['Regional Balanced PD Capacity', 'pd-balanced'],
+    ['Regional Extreme PD Capacity', 'pd-extreme'],
+    ['Regional Storage PD Capacity', 'pd-standard'],
+    ['Regional SSD backed PD Capacity', 'pd-ssd']
   ])
 
   private static EIP_KEY_MAP = new Map([
@@ -76,8 +72,8 @@ export class GcpPriceCalculator {
     ['Cloud SQL for SQL Server: Regional - Standard storage', 'sqlserver_regional_storage']
   ])
 
-  static async putVmPrices (items: Vm[], disks: Disks[], gcpCredentials?: CredentialBody): Promise<void> {
-    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+  static async putVmPrices (items: Vm[], disks: Disks[], auth?: any): Promise<void> {
+    await GcpPriceCalculator.getAllSkus('computing', auth)
     const vms = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Compute' &&
         it.category?.usageType === 'OnDemand'
@@ -126,8 +122,8 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putDisksPrices (items: Disks[], gcpCredentials?: CredentialBody): Promise<void> {
-    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+  static async putDisksPrices (items: Disks[], auth?: any): Promise<void> {
+    await GcpPriceCalculator.getAllSkus('computing', auth)
     const storages = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Storage' &&
         ['SSD', 'PDStandard'].includes(it.category?.resourceGroup as string) &&
@@ -153,15 +149,15 @@ export class GcpPriceCalculator {
 
     items.forEach((item) => {
       const storage = storages.filter((st) => st.key === item.type && st.regions?.includes(item.getRegion()))[0]
-      const priceGb = storage.price
+      const priceGb = storage?.price
       if (priceGb !== undefined) {
         item.pricePerMonth = priceGb * (item.size / 1073741824)
       }
     })
   }
 
-  static async putEipPrices (items: Eip[], gcpCredentials?: CredentialBody): Promise<void> {
-    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+  static async putEipPrices (items: Eip[], auth?: any): Promise<void> {
+    await GcpPriceCalculator.getAllSkus('computing', auth)
     const networks = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
         it.category?.resourceGroup === 'IpAddress' &&
@@ -202,8 +198,8 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putLbPrices (items: Lb[], gcpCredentials?: CredentialBody): Promise<void> {
-    await GcpPriceCalculator.getAllSkus('computing', gcpCredentials)
+  static async putLbPrices (items: Lb[], auth?: any): Promise<void> {
+    await GcpPriceCalculator.getAllSkus('computing', auth)
     const loadBalancers = GcpCatalogClient.COMPUTING_SKU.filter((it) => {
       return it.category?.resourceFamily === 'Network' &&
         it.category?.resourceGroup === 'LoadBalancing' &&
@@ -242,8 +238,8 @@ export class GcpPriceCalculator {
     })
   }
 
-  static async putSqlPrices (items: Sql[], gcpCredentials?: CredentialBody): Promise<void> {
-    await GcpPriceCalculator.getAllSkus('sql', gcpCredentials)
+  static async putSqlPrices (items: Sql[], auth?: any): Promise<void> {
+    await GcpPriceCalculator.getAllSkus('sql', auth)
     const dbs = GcpCatalogClient.SQL_SKU.filter((it) => {
       return it.category?.resourceFamily === 'ApplicationServices' &&
         (
@@ -290,11 +286,11 @@ export class GcpPriceCalculator {
     })
   }
 
-  private static async getAllSkus (target: string, gcpCredentials?: CredentialBody) {
+  private static async getAllSkus (target: string, auth?: any) {
     if (target === 'computing') {
-      await GcpCatalogClient.collectAllComputing(gcpCredentials)
+      await GcpCatalogClient.collectAllComputing(auth)
     } else {
-      await GcpCatalogClient.collectAllSql(gcpCredentials)
+      await GcpCatalogClient.collectAllSql(auth)
     }
   }
 }

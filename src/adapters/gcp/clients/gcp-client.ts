@@ -11,6 +11,10 @@ import { GcpCatalogClient } from './gcp-catalog-client'
 import { GcpPriceCalculator } from '../gcp-price-calculator'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Vm } from '../../../domain/types/gcp/vm'
+import { google } from 'googleapis'
+import { InvalidCredentialsException } from '../../../exceptions/invalid-credentials-exception'
+import { Lb } from '../../../domain/types/gcp/lb'
+import { Eip } from '../../../domain/types/gcp/eip'
 
 export class GcpClient {
   protected readonly credentials: CredentialBody
@@ -22,21 +26,37 @@ export class GcpClient {
   }
 
   async collectResources<Type> (): Promise<Response<Type>[]> {
+    const auth = new google.auth.GoogleAuth({
+      credentials: this.credentials,
+      scopes: [
+        'https://www.googleapis.com/auth/compute',
+        'https://www.googleapis.com/auth/cloud-billing'
+      ]
+    })
+    let authClient: any
+    try {
+      authClient = await auth.getClient()
+    } catch (e: any) {
+      throw new InvalidCredentialsException(e.message)
+    }
+
     const responses = await Promise.all([
-      // GcpDisksClient.collectAll(this.credentials, this.projectId),
-      // GcpVmClient.collectAll(this.credentials, this.projectId),
-      // GcpLbClient.collectAll(this.credentials, this.projectId),
-      // GcpEipClient.collectAll(this.credentials, this.projectId),
-      GcpCatalogClient.collectAllComputing(this.credentials),
-      // GcpCatalogClient.collectAllSql(this.credentials)
+      GcpDisksClient.collectAll(authClient, this.projectId),
+      GcpVmClient.collectAll(authClient, this.projectId),
+      GcpLbClient.collectAll(authClient, this.projectId),
+      GcpEipClient.collectAll(authClient, this.projectId),
+      GcpCatalogClient.collectAllComputing(authClient),
+      GcpCatalogClient.collectAllSql(authClient)
     ])
-    // await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[])
-    // await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[])
+    await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], authClient)
+    await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], authClient)
+    await GcpPriceCalculator.putLbPrices(responses[1].items as Lb[], authClient)
+    await GcpPriceCalculator.putEipPrices(responses[1].items as Eip[], authClient)
     return [
-      // responses[0],
-      // responses[1],
-      // responses[2],
-      // responses[3]
+      responses[0],
+      responses[1],
+      responses[2],
+      responses[3]
     ] as Response<Type>[]
   }
 
