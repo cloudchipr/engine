@@ -39,7 +39,6 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       this.validateRequest(generateResponseMethodName)
 
       const filterList = request.parameter.filter
-
       if (GcpShellEngineAdapter.shouldOverrideNlbAlbFilter(filterList, command, subCommand)) {
         const potentialElbGarbage = await this.getPotentialLbGarbage(request)
         const instanceFilter = filterList.getFilterExpressionByResource(FilterResource.INSTANCES)
@@ -163,7 +162,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateVmResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      // const disks = await this.generateDisksResponse([responseJson[1]])
+      const disks = await this.generateDisksResponse([responseJson[1]])
       const items = responseJson[0].map((item: any) => new Vm(
         item.id,
         item.name,
@@ -183,7 +182,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putVmPrices(items, [])
+          await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[])
         } catch (e) { response.addError(e) }
       }
       return response
