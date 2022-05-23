@@ -39,7 +39,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       this.validateRequest(generateResponseMethodName)
 
       const filterList = request.parameter.filter
-      console.info(JSON.stringify(filterList))
+
       if (GcpShellEngineAdapter.shouldOverrideNlbAlbFilter(filterList, command, subCommand)) {
         const potentialElbGarbage = await this.getPotentialLbGarbage(request)
         const instanceFilter = filterList.getFilterExpressionByResource(FilterResource.INSTANCES)
@@ -53,14 +53,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
 
       const [policyName, policy] = this.getDefaultPolicy(request)
       const filters: object = filterList.build(new C7nFilterBuilder(request.command, request.subCommand))
-      console.info(JSON.stringify(filters))
+
       if (filters && Object.keys(filters).length) {
         if (typeof policy.policies[0].filters === 'undefined') {
           policy.policies[0].filters = []
         }
         policy.policies[0].filters.push(filters)
-      } else {
-        console.error(filters)
       }
 
       this.project = await this.gcpResourceClient.getProject()
@@ -107,7 +105,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async getPotentialLbGarbage (request: EngineRequest) : Promise<string[]> {
       const policyNameLb = 'gcp-lb-collect-all'
       const policyNameTargetPool = 'gcp-lb-target-pool-collect'
-      const policyNameVm = 'gcp-vm-collect'
+      const policyNameVm = 'gcp-lb-vm-collect'
 
       const response = await Promise.all([
         this.executeC7nPolicy(this.getPolicy(policyNameLb), policyNameLb, request),
@@ -165,7 +163,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private async generateVmResponse (
       responseJson: any
     ): Promise<Response<Type>> {
-      const disks = await this.generateDisksResponse([responseJson[1]])
+      // const disks = await this.generateDisksResponse([responseJson[1]])
       const items = responseJson[0].map((item: any) => new Vm(
         item.id,
         item.name,
@@ -185,7 +183,7 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[])
+          await GcpPriceCalculator.putVmPrices(items, [])
         } catch (e) { response.addError(e) }
       }
       return response
