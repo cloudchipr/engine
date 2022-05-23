@@ -23,7 +23,7 @@ export class GcpClient {
 
   async collectResources<Type> (): Promise<Response<Type>[]> {
     const responses = await Promise.all([
-      GcpDisksClient.collectAll(this.credentials, this.projectId),
+      // GcpDisksClient.collectAll(this.credentials, this.projectId),
       // GcpVmClient.collectAll(this.credentials, this.projectId),
       // GcpLbClient.collectAll(this.credentials, this.projectId),
       // GcpEipClient.collectAll(this.credentials, this.projectId),
@@ -33,7 +33,7 @@ export class GcpClient {
     // await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[])
     // await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[])
     return [
-      responses[0],
+      // responses[0],
       // responses[1],
       // responses[2],
       // responses[3]

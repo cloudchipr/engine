@@ -1,6 +1,7 @@
 import { CredentialBody } from 'google-auth-library'
 import { CloudCatalogClient } from '@google-cloud/billing'
 import fs from 'fs'
+import { google } from 'googleapis'
 const https = require('https')
 
 
@@ -12,6 +13,20 @@ export class GcpCatalogClient {
   public static SQL_SKU: any[] = []
 
   static async collectAllComputing (credentials?: CredentialBody): Promise<void> {
+    console.time('www')
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/cloud-billing']
+    })
+    const authClient = await auth.getClient()
+    const catalog = google.cloudbilling('v1')
+    const result = await catalog.services.skus.list({
+      parent: 'services/6F81-5844-456A',
+      auth: authClient
+    })
+    console.timeEnd('www')
+    await fs.promises.writeFile('./yy.json', JSON.stringify(result.data.skus), 'utf8')
+
     console.time('aaaa')
     https.get('https://cloudbilling.googleapis.com/v1/services/6F81-5844-456A/skus?key=AIzaSyC8OCkl6s6r7VGQu3foWoU08nibH_o8kwQ', async (res: any) => {
       console.timeEnd('aaaa')

@@ -37,6 +37,7 @@
     "@google-cloud/monitoring": "^2.3.5",
     "fs": "0.0.1-security",
     "google-auth-library": "^7.12.0",
+    "googleapis": "^100.0.0",
     "js-yaml": "^4.1.0",
     "moment": "^2.29.2",
     "uuid": "^8.3.1"

@@ -8,6 +8,8 @@ import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-r
 import { Vm } from '../../../domain/types/gcp/vm'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
+import fs from 'fs'
+const { google } = require('googleapis')
 
 export class GcpVmClient {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
@@ -20,8 +22,61 @@ export class GcpVmClient {
   }
 
   static async collectAll<Type> (credentials: CredentialBody, project: string): Promise<Response<Type>> {
-    const response = GcpVmClient.getClient(credentials).aggregatedListAsync({ project })
-    return GcpVmClient.formatCollectResponse(response)
+    const data: any[] = []
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/compute']
+    })
+    const authClient = await auth.getClient()
+    const compute = google.compute('v1')
+    const result = await compute.instances.aggregatedList({
+      auth: authClient,
+      project
+    })
+    // await fs.promises.writeFile('./ww.json', JSON.stringify(result), 'utf8')
+    Object.keys(result.data.items).forEach(key => {
+      if ('instances' in result.data.items[key] && Array.isArray(result.data.items[key].instances)) {
+        for (const v of result.data.items[key].instances) {
+          data.push(new Vm(
+            v.id,
+            v.name,
+            StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
+            StringHelper.splitAndGetAtIndex(v.machineType, '/', -1) || '',
+            v.disks.map((d: any) => d.deviceName),
+            0, // this will be populated during price calculation
+            0, // this will be populated during price calculation
+            v.creationTimestamp,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            Label.createInstances(v.labels)
+          ))
+        }
+      }
+    })
+    // const response = GcpVmClient.getClient(credentials).aggregatedListAsync({ project })
+    // for await (const [, value] of response) {
+    //   value.instances?.forEach((v: any) => {
+    //     data.push(new Vm(
+    //       v.id,
+    //       v.name,
+    //       StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
+    //       StringHelper.splitAndGetAtIndex(v.machineType, '/', -1) || '',
+    //       v.disks.map((d: any) => d.deviceName),
+    //       0, // this will be populated during price calculation
+    //       0, // this will be populated during price calculation
+    //       v.creationTimestamp,
+    //       undefined,
+    //       undefined,
+    //       undefined,
+    //       undefined,
+    //       Label.createInstances(v.labels)
+    //     ))
+    //   })
+    // }
+    return new Response<Type>(data)
+    // return GcpVmClient.formatCollectResponse(response)
   }
 
   static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
