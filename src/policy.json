@@ -352,6 +352,19 @@
       }
     ]
   },
+  "gcp-lb-vm-collect": {
+    "policies": [
+      {
+        "name": "gcp-lb-vm-collect",
+        "resource": "gcp.instance",
+        "filters": [
+          {
+            "status": "RUNNING"
+          }
+        ]
+      }
+    ]
+  },
   "gcp-sql-collect": {
     "policies": [
       {
