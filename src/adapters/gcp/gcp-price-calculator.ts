@@ -37,10 +37,10 @@ export class GcpPriceCalculator {
     ['Extreme PD Capacity', 'pd-extreme'],
     ['Storage PD Capacity', 'pd-standard'],
     ['SSD backed PD Capacity', 'pd-ssd'],
-    ['Regional Balanced PD Capacity', 'pd-balanced'],
-    ['Regional Extreme PD Capacity', 'pd-extreme'],
-    ['Regional Storage PD Capacity', 'pd-standard'],
-    ['Regional SSD backed PD Capacity', 'pd-ssd']
+    ['Regional Balanced PD Capacity', 'regional-pd-balanced'],
+    ['Regional Extreme PD Capacity', 'regional-pd-extreme'],
+    ['Regional Storage PD Capacity', 'regional-pd-standard'],
+    ['Regional SSD backed PD Capacity', 'regional-pd-ssd']
   ])
 
   private static EIP_KEY_MAP = new Map([

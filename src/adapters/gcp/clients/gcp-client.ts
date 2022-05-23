@@ -12,7 +12,6 @@ import { GcpPriceCalculator } from '../gcp-price-calculator'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Vm } from '../../../domain/types/gcp/vm'
 import { google } from 'googleapis'
-import { InvalidCredentialsException } from '../../../exceptions/invalid-credentials-exception'
 import { Lb } from '../../../domain/types/gcp/lb'
 import { Eip } from '../../../domain/types/gcp/eip'
 
@@ -33,12 +32,7 @@ export class GcpClient {
         'https://www.googleapis.com/auth/cloud-billing'
       ]
     })
-    let authClient: any
-    try {
-      authClient = await auth.getClient()
-    } catch (e: any) {
-      throw new InvalidCredentialsException(e.message)
-    }
+    const authClient = await auth.getClient()
 
     const responses = await Promise.all([
       GcpDisksClient.collectAll(authClient, this.projectId),
