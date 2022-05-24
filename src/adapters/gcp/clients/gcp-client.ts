@@ -51,7 +51,6 @@ export class GcpClient {
     const response = new CleanResponse(request.subCommand.getValue())
     const promises: any[] = []
     const ids: string[] = []
-    console.log(JSON.stringify(request))
     for (const resource of request.resources) {
       if (GcpClient.getClient(request.subCommand.getValue()).isCleanRequestValid(resource)) {
         promises.push(GcpClient.getClient(request.subCommand.getValue()).clean(authClient, this.projectId, resource))
