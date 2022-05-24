@@ -1,8 +1,6 @@
-import { ForwardingRulesClient, GlobalForwardingRulesClient } from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Label } from '../../../domain/types/gcp/shared/label'
-import { CredentialBody } from 'google-auth-library'
 import { Lb } from '../../../domain/types/gcp/lb'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
@@ -29,12 +27,12 @@ export class GcpLbClient {
     return new Response<Type>(data)
   }
 
-  static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
+  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     if (metadata.global) {
-      return GcpLbClient.getGlobalClient(credentials).delete({ forwardingRule: request.id, project })
+      return google.compute('v1').globalForwardingRules.delete({ forwardingRule: request.id, auth, project })
     } else {
-      return GcpLbClient.getClient(credentials).delete({ forwardingRule: request.id, region: metadata.region, project })
+      return google.compute('v1').forwardingRules.delete({ forwardingRule: request.id, region: metadata.region, auth, project })
     }
   }
 
@@ -44,13 +42,5 @@ export class GcpLbClient {
     }
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     return metadata.global || !!metadata.region
-  }
-
-  private static getClient (credentials: CredentialBody): ForwardingRulesClient {
-    return new ForwardingRulesClient({ credentials })
-  }
-
-  private static getGlobalClient (credentials: CredentialBody): GlobalForwardingRulesClient {
-    return new GlobalForwardingRulesClient({ credentials })
   }
 }

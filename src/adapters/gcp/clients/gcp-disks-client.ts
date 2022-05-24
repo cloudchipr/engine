@@ -1,9 +1,7 @@
-import { DisksClient } from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Label } from '../../../domain/types/gcp/shared/label'
-import { CredentialBody } from 'google-auth-library'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { google } from 'googleapis'
@@ -31,9 +29,9 @@ export class GcpDisksClient {
     return new Response<Type>(data)
   }
 
-  static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
+  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return GcpDisksClient.getClient(credentials).delete({ disk: request.id, zone: metadata.zone, project })
+    return google.compute('v1').disks.delete({ disk: request.id, zone: metadata.zone, auth, project })
   }
 
   static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
@@ -42,9 +40,5 @@ export class GcpDisksClient {
     }
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
     return !!metadata.zone
-  }
-
-  private static getClient (credentials: CredentialBody): DisksClient {
-    return new DisksClient({ credentials })
   }
 }

@@ -8,7 +8,6 @@ import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-r
 import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
-import fs from 'fs'
 const { google } = require('googleapis')
 
 export class GcpVmClient {
@@ -48,9 +47,9 @@ export class GcpVmClient {
     return new Response<Type>(data)
   }
 
-  static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
+  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return GcpVmClient.getClient(credentials).delete({ instance: request.id, zone: metadata.zone, project })
+    return google.compute('v1').instances.delete({ instance: request.id, zone: metadata.zone, auth, project })
   }
 
   static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {

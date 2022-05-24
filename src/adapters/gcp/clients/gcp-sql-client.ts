@@ -3,6 +3,7 @@ import { StringHelper } from '../../../helpers/string-hepler'
 import { Label } from '../../../domain/types/gcp/shared/label'
 import { google } from 'googleapis'
 import { Sql, SqlMetric } from '../../../domain/types/gcp/sql'
+import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
 export class GcpSqlClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
@@ -24,5 +25,13 @@ export class GcpSqlClient {
       ))
     })
     return new Response<Type>(data)
+  }
+
+  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
+    return google.sqladmin('v1beta4').instances.delete({ instance: request.id, auth, project })
+  }
+
+  static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+    return !!request.id
   }
 }

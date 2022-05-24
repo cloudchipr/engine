@@ -18,18 +18,15 @@ import { Command } from '../../command'
 import { GcpSubCommand } from './gcp-sub-command'
 import { FilterExpression } from '../../filters/filter-expression'
 import { Operators } from '../../filters/operators'
-import GcpResourceClient from './clients/gcp-resource-client'
 import { GcpPriceCalculator } from './gcp-price-calculator'
 import { google } from 'googleapis'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor
-    private readonly gcpResourceClient: GcpResourceClient
     private authClient: any
 
     constructor (custodian: string, custodianOrg?: string) {
       this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
-      this.gcpResourceClient = new GcpResourceClient()
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {

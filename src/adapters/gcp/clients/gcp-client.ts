@@ -16,6 +16,7 @@ import { Lb } from '../../../domain/types/gcp/lb'
 import { Eip } from '../../../domain/types/gcp/eip'
 import { GcpSqlClient } from './gcp-sql-client'
 import { Sql } from '../../../domain/types/gcp/sql'
+import { GcpSubCommand } from '../gcp-sub-command'
 
 export class GcpClient {
   protected readonly credentials: CredentialBody
@@ -27,16 +28,7 @@ export class GcpClient {
   }
 
   async collectResources<Type> (): Promise<Response<Type>[]> {
-    const auth = new google.auth.GoogleAuth({
-      credentials: this.credentials,
-      scopes: [
-        'https://www.googleapis.com/auth/compute',
-        'https://www.googleapis.com/auth/cloud-billing',
-        'https://www.googleapis.com/auth/sqlservice.admin'
-      ]
-    })
-    const authClient = await auth.getClient()
-
+    const authClient = await this.getAuthClient()
     const responses = await Promise.all([
       GcpDisksClient.collectAll(authClient, this.projectId),
       GcpVmClient.collectAll(authClient, this.projectId),
@@ -55,25 +47,56 @@ export class GcpClient {
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
+    const authClient = await this.getAuthClient()
     const response = new CleanResponse(request.subCommand.getValue())
-    // const promises: any[] = []
-    // const ids: string[] = []
-    // for (const resource of request.resources) {
-    //   if (this.gcpClientInterface.isCleanRequestValid(resource)) {
-    //     promises.push(this.gcpClientInterface.getCleanCommands(resource))
-    //     ids.push(resource.id)
-    //   } else {
-    //     response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
-    //   }
-    // }
-    // if (promises.length > 0) {
-    //   const result: any = await Promise.allSettled(promises)
-    //   for (let i = 0; i < result.length; i++) {
-    //     result[i].status === 'fulfilled'
-    //       ? response.addSuccess(ids[i])
-    //       : response.addFailure(new CleanFailureResponse(ids[i], result[i].reason.errors[0].message))
-    //   }
-    // }
+    const promises: any[] = []
+    const ids: string[] = []
+    console.log(JSON.stringify(request))
+    for (const resource of request.resources) {
+      if (GcpClient.getClient(request.subCommand.getValue()).isCleanRequestValid(resource)) {
+        promises.push(GcpClient.getClient(request.subCommand.getValue()).clean(authClient, this.projectId, resource))
+        ids.push(resource.id)
+      } else {
+        response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
+      }
+    }
+    if (promises.length > 0) {
+      const result: any = await Promise.allSettled(promises)
+      for (let i = 0; i < result.length; i++) {
+        result[i].status === 'fulfilled'
+          ? response.addSuccess(ids[i])
+          : response.addFailure(new CleanFailureResponse(ids[i], result[i].reason.errors[0].message))
+      }
+    }
     return response
+  }
+
+  private async getAuthClient () {
+    const auth = new google.auth.GoogleAuth({
+      credentials: this.credentials,
+      scopes: [
+        'https://www.googleapis.com/auth/compute',
+        'https://www.googleapis.com/auth/cloud-billing',
+        'https://www.googleapis.com/auth/sqlservice.admin'
+      ]
+    })
+    return auth.getClient()
+  }
+
+  private static getClient (subcommand: string) {
+    switch (subcommand) {
+      case GcpSubCommand.VM_SUBCOMMAND:
+        return GcpVmClient
+      case GcpSubCommand.LB_SUBCOMMAND:
+        return GcpLbClient
+      case GcpSubCommand.DISKS_SUBCOMMAND:
+        return GcpDisksClient
+      case GcpSubCommand.EIP_SUBCOMMAND:
+        return GcpEipClient
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return GcpSqlClient
+      default:
+        throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
+    }
   }
 }

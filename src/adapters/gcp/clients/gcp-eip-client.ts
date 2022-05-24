@@ -1,11 +1,6 @@
-import {
-  AddressesClient,
-  GlobalAddressesClient
-} from '@google-cloud/compute'
 import { Response } from '../../../responses/response'
 import { StringHelper } from '../../../helpers/string-hepler'
 import { Label } from '../../../domain/types/gcp/shared/label'
-import { CredentialBody } from 'google-auth-library'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { Eip } from '../../../domain/types/gcp/eip'
@@ -32,12 +27,12 @@ export class GcpEipClient {
     return new Response<Type>(data)
   }
 
-  static getCleanCommands (credentials: CredentialBody, project: string, request: CleanRequestResourceInterface): Promise<any> {
+  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     if (metadata.global) {
-      return GcpEipClient.getGlobalClient(credentials).delete({ address: request.id, project })
+      return google.compute('v1').globalAddresses.delete({ address: request.id, auth, project })
     } else {
-      return GcpEipClient.getClient(credentials).delete({ address: request.id, region: metadata.region, project })
+      return google.compute('v1').addresses.delete({ address: request.id, region: metadata.region, auth, project })
     }
   }
 
@@ -47,13 +42,5 @@ export class GcpEipClient {
     }
     const metadata = request.metadata as CleanGcpLbEipMetadataInterface
     return metadata.global || !!metadata.region
-  }
-
-  private static getClient (credentials: CredentialBody): AddressesClient {
-    return new AddressesClient({ credentials })
-  }
-
-  private static getGlobalClient (credentials: CredentialBody): GlobalAddressesClient {
-    return new GlobalAddressesClient({ credentials })
   }
 }
