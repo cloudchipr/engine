@@ -18,17 +18,15 @@ import { Command } from '../../command'
 import { GcpSubCommand } from './gcp-sub-command'
 import { FilterExpression } from '../../filters/filter-expression'
 import { Operators } from '../../filters/operators'
-import GcpResourceClient from './clients/gcp-resource-client'
 import { GcpPriceCalculator } from './gcp-price-calculator'
+import { google } from 'googleapis'
 
 export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor
-    private readonly gcpResourceClient: GcpResourceClient
-    private project?: string
+    private authClient: any
 
     constructor (custodian: string, custodianOrg?: string) {
       this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
-      this.gcpResourceClient = new GcpResourceClient()
     }
 
     async execute (request: EngineRequest): Promise<Response<Type>> {
@@ -60,7 +58,10 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         policy.policies[0].filters.push(filters)
       }
 
-      this.project = await this.gcpResourceClient.getProject()
+      const auth = new google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/cloud-billing']
+      })
+      this.authClient = await auth.getClient()
 
       // execute custodian command and return response
       const promises = []
@@ -177,12 +178,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         MetricsHelper.getGcpNetworkOut(item),
         undefined,
         Label.createInstances(item.labels),
-        this.project
+        this.authClient.projectId
       ))
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[])
+          await GcpPriceCalculator.putVmPrices(items, disks.items as unknown as Disks[], this.authClient)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -200,12 +201,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.status,
         item.creationTimestamp,
         Label.createInstances(item.labels),
-        this.project
+        this.authClient.projectId
       ))
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putDisksPrices(items)
+          await GcpPriceCalculator.putDisksPrices(items, this.authClient)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -222,14 +223,16 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         parseFloat(StringHelper.splitAndGetAtIndex(item.settings.tier, '-', -2) || '0'),
         parseFloat(StringHelper.splitAndGetAtIndex(item.settings.tier, '-', -1) || '0'),
         item.settings.dataDiskSizeGb,
+        item.createTime,
         MetricsHelper.getGcpDatabaseConnections(item),
+        undefined,
         Label.createInstances(item.settings?.userLabels),
-        this.project
+        this.authClient.projectId
       ))
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putSqlPrices(items)
+          await GcpPriceCalculator.putSqlPrices(items, this.authClient)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -245,12 +248,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         !('region' in item),
         item.creationTimestamp,
         Label.createInstances(item.labels),
-        this.project
+        this.authClient.projectId
       ))
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putLbPrices(items)
+          await GcpPriceCalculator.putLbPrices(items, this.authClient)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -266,12 +269,12 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
         item.addressType?.toLowerCase() || '',
         item.creationTimestamp,
         Label.createInstances(item.labels),
-        this.project
+        this.authClient.projectId
       ))
       const response = new Response<Type>(items)
       if (response.count > 0) {
         try {
-          await GcpPriceCalculator.putEipPrices(items)
+          await GcpPriceCalculator.putEipPrices(items, this.authClient)
         } catch (e) { response.addError(e) }
       }
       return response

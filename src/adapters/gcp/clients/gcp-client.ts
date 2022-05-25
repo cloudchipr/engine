@@ -1,36 +1,59 @@
 import { Response } from '../../../responses/response'
-import { EngineRequest } from '../../../engine-request'
-import { GcpClientInterface } from './gcp-client-interface'
-import GcpVmClient from './gcp-vm-client'
-import { GcpSubCommand } from '../gcp-sub-command'
-import GcpLbClient from './gcp-lb-client'
-import GcpDisksClient from './gcp-disks-client'
-import GcpEipClient from './gcp-eip-client'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../../responses/clean-response'
-import { CleanFailureResponse } from '../../../responses/clean-failure-response'
 import { CredentialBody } from 'google-auth-library'
+import { GcpDisksClient } from './gcp-disks-client'
+import { GcpLbClient } from './gcp-lb-client'
+import { GcpEipClient } from './gcp-eip-client'
+import { CleanFailureResponse } from '../../../responses/clean-failure-response'
+import { GcpVmClient } from './gcp-vm-client'
+import { GcpCatalogClient } from './gcp-catalog-client'
+import { GcpPriceCalculator } from '../gcp-price-calculator'
+import { Disks } from '../../../domain/types/gcp/disks'
+import { Vm } from '../../../domain/types/gcp/vm'
+import { google } from 'googleapis'
+import { Lb } from '../../../domain/types/gcp/lb'
+import { Eip } from '../../../domain/types/gcp/eip'
+import { GcpSqlClient } from './gcp-sql-client'
+import { Sql } from '../../../domain/types/gcp/sql'
+import { GcpSubCommand } from '../gcp-sub-command'
 
-export default class GcpClient {
-  private gcpClientInterface: GcpClientInterface;
+export class GcpClient {
+  protected readonly credentials: CredentialBody
+  protected readonly projectId: string
 
-  constructor (subcommand: string, gcpCredentials: CredentialBody, projectId: string) {
-    this.gcpClientInterface = GcpClient.getAwsClient(subcommand, gcpCredentials, projectId)
+  constructor (gcpCredentials: CredentialBody, projectId: string) {
+    this.credentials = gcpCredentials
+    this.projectId = projectId
   }
 
-  async collectResources<Type> (request: EngineRequest): Promise<Response<Type>> {
-    const response = await Promise.all(this.gcpClientInterface.getCollectCommands(request.parameter.regions))
-    const formattedResponse = await this.gcpClientInterface.formatCollectResponse<Type>(response)
-    return await this.gcpClientInterface.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
+  async collectResources<Type> (): Promise<Response<Type>[]> {
+    const authClient = await this.getAuthClient()
+    const responses = await Promise.all([
+      GcpDisksClient.collectAll(authClient, this.projectId),
+      GcpVmClient.collectAll(authClient, this.projectId),
+      GcpLbClient.collectAll(authClient, this.projectId),
+      GcpEipClient.collectAll(authClient, this.projectId),
+      GcpSqlClient.collectAll(authClient, this.projectId),
+      GcpCatalogClient.collectAllComputing(authClient),
+      GcpCatalogClient.collectAllSql(authClient)
+    ])
+    await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], authClient)
+    await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], authClient)
+    await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
+    await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], authClient)
+    await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], authClient)
+    return [responses[0], responses[1], responses[2], responses[3], responses[4]] as Response<Type>[]
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
+    const authClient = await this.getAuthClient()
     const response = new CleanResponse(request.subCommand.getValue())
     const promises: any[] = []
     const ids: string[] = []
     for (const resource of request.resources) {
-      if (this.gcpClientInterface.isCleanRequestValid(resource)) {
-        promises.push(this.gcpClientInterface.getCleanCommands(resource))
+      if (GcpClient.getClient(request.subCommand.getValue()).isCleanRequestValid(resource)) {
+        promises.push(GcpClient.getClient(request.subCommand.getValue()).clean(authClient, this.projectId, resource))
         ids.push(resource.id)
       } else {
         response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
@@ -47,16 +70,30 @@ export default class GcpClient {
     return response
   }
 
-  private static getAwsClient (subcommand: string, gcpCredentials: CredentialBody, projectId: string): GcpClientInterface {
+  private async getAuthClient () {
+    const auth = new google.auth.GoogleAuth({
+      credentials: this.credentials,
+      scopes: [
+        'https://www.googleapis.com/auth/compute',
+        'https://www.googleapis.com/auth/cloud-billing',
+        'https://www.googleapis.com/auth/sqlservice.admin'
+      ]
+    })
+    return auth.getClient()
+  }
+
+  private static getClient (subcommand: string) {
     switch (subcommand) {
       case GcpSubCommand.VM_SUBCOMMAND:
-        return new GcpVmClient(gcpCredentials, projectId)
+        return GcpVmClient
       case GcpSubCommand.LB_SUBCOMMAND:
-        return new GcpLbClient(gcpCredentials, projectId)
+        return GcpLbClient
       case GcpSubCommand.DISKS_SUBCOMMAND:
-        return new GcpDisksClient(gcpCredentials, projectId)
+        return GcpDisksClient
       case GcpSubCommand.EIP_SUBCOMMAND:
-        return new GcpEipClient(gcpCredentials, projectId)
+        return GcpEipClient
+      case GcpSubCommand.SQL_SUBCOMMAND:
+        return GcpSqlClient
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

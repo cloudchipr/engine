@@ -1,6 +1,7 @@
 import { Label } from './shared/label'
 import { Metric } from '../../metric'
 import { ProviderResource } from '../provider-resource'
+import { MetricDetails } from '../../metric-details'
 
 export class Sql extends ProviderResource {
   constructor (
@@ -11,7 +12,9 @@ export class Sql extends ProviderResource {
     readonly cpu?: number,
     readonly ram?: number,
     readonly storage?: number,
+    readonly age?: string,
     readonly connections?: Metric,
+    public metrics?: SqlMetric,
     readonly labels?: Label[],
     readonly _project?: string
   ) { super() }
@@ -27,4 +30,10 @@ export class Sql extends ProviderResource {
   getId (): string {
     return this.id
   }
+}
+
+export class SqlMetric {
+  constructor (
+    public databaseConnections: MetricDetails[] = []
+  ) {}
 }
