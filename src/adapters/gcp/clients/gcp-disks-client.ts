@@ -10,7 +10,6 @@ export class GcpDisksClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
     const data: any[] = []
     const result: any = await google.compute('v1').disks.aggregatedList({ auth, project })
-    // const result: any = await google.monitoring('v3').projects.timeSeries.list({ auth, project })
     Object.keys(result.data.items).forEach(key => {
       if ('disks' in result.data.items[key] && Array.isArray(result.data.items[key].disks)) {
         result.data.items[key].disks?.forEach((v: any) => {

@@ -81,8 +81,7 @@ export class GcpClient {
       scopes: [
         'https://www.googleapis.com/auth/compute',
         'https://www.googleapis.com/auth/cloud-billing',
-        'https://www.googleapis.com/auth/sqlservice.admin',
-        'https://www.googleapis.com/auth/monitoring'
+        'https://www.googleapis.com/auth/sqlservice.admin'
       ]
     })
     return auth.getClient()

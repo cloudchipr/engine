@@ -8,7 +8,6 @@ import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-r
 import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
-import fs from 'fs'
 const { google } = require('googleapis')
 
 export class GcpVmClient {
@@ -61,9 +60,7 @@ export class GcpVmClient {
     return !!metadata.zone
   }
 
-  static async getMetrics<Type> (auth: any, project: string, response: Response<Type>): Promise<Response<Type>> {
-    const result: any = await google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_CPU_NAME, 'instance-1', 'ALIGN_MAX'))
-    await fs.promises.writeFile('./aaa.json', JSON.stringify(result), 'utf8')
+  protected static async getMetrics<Type> (credentials: CredentialBody, response: Response<Type>): Promise<Response<Type>> {
     // const client = new MetricServiceClient({ credentials })
     // const promises: any[] = []
     // // @ts-ignore
@@ -89,10 +86,9 @@ export class GcpVmClient {
     return new InstancesClient({ credentials })
   }
 
-  private static getTimeSeriesRequest (auth: any, project: string, metricName: string, id: string, seriesAligner: string) {
+  private static getTimeSeriesRequest (client: MetricServiceClient, project: string, metricName: string, id: string, seriesAligner: string) {
     return {
-      auth,
-      name: `projects/${project}`,
+      name: client.projectPath(project),
       filter: `metric.type="${metricName}" AND resource.labels.instance_id = ${id}`,
       interval: {
         startTime: {
@@ -103,7 +99,9 @@ export class GcpVmClient {
         }
       },
       aggregation: {
-        alignmentPeriod: 86400, // 30 days
+        alignmentPeriod: {
+          seconds: 86400 // 30 days
+        },
         perSeriesAligner: seriesAligner
       }
     }
