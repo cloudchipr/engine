@@ -244,9 +244,11 @@ export class GcpShellEngineAdapter<Type> implements EngineInterface<Type> {
       const items = responseJson[0].map((item: any) => new Lb(
         item.name,
         StringHelper.splitAndGetAtIndex(item.region, '/', -1) || '',
+        false,
         item.IPProtocol,
         !('region' in item),
         item.creationTimestamp,
+        item.target,
         Label.createInstances(item.labels),
         this.authClient.projectId
       ))

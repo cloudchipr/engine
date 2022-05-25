@@ -29,15 +29,20 @@ export class GcpClient {
 
   async collectResources<Type> (): Promise<Response<Type>[]> {
     const authClient = await this.getAuthClient()
+    // get all needed resources
     const responses = await Promise.all([
       GcpDisksClient.collectAll(authClient, this.projectId),
       GcpVmClient.collectAll(authClient, this.projectId),
       GcpLbClient.collectAll(authClient, this.projectId),
       GcpEipClient.collectAll(authClient, this.projectId),
       GcpSqlClient.collectAll(authClient, this.projectId),
+      GcpLbClient.collectAllTargetPool(authClient, this.projectId),
       GcpCatalogClient.collectAllComputing(authClient),
       GcpCatalogClient.collectAllSql(authClient)
     ])
+    // set LBs attachment value
+    GcpLbClient.setAttachmentValue(responses[2].items as Lb[], responses[1].items as Vm[], responses[5])
+    // calculate prices
     await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], authClient)
     await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], authClient)
     await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
