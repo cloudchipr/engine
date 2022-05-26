@@ -1,7 +1,7 @@
 import { Response } from '../../../responses/response'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../../responses/clean-response'
-import { CredentialBody } from 'google-auth-library'
+import { CredentialBody, OAuth2ClientOptions } from 'google-auth-library'
 import { GcpDisksClient } from './gcp-disks-client'
 import { GcpLbClient } from './gcp-lb-client'
 import { GcpEipClient } from './gcp-eip-client'
@@ -19,10 +19,10 @@ import { Sql } from '../../../domain/types/gcp/sql'
 import { GcpSubCommand } from '../gcp-sub-command'
 
 export class GcpClient {
-  protected readonly credentials: CredentialBody
+  protected readonly credentials: CredentialBody | OAuth2ClientOptions
   protected readonly projectId: string
 
-  constructor (gcpCredentials: CredentialBody, projectId: string) {
+  constructor (gcpCredentials: CredentialBody | OAuth2ClientOptions, projectId: string) {
     this.credentials = gcpCredentials
     this.projectId = projectId
   }
@@ -76,15 +76,24 @@ export class GcpClient {
   }
 
   private async getAuthClient () {
-    const auth = new google.auth.GoogleAuth({
-      credentials: this.credentials,
+    const options: {[K: string]: any} = {
       scopes: [
         'https://www.googleapis.com/auth/compute',
         'https://www.googleapis.com/auth/cloud-billing',
         'https://www.googleapis.com/auth/sqlservice.admin'
       ]
-    })
+    }
+    if (GcpClient.instanceOfOAuth2ClientOptions(this.credentials)) {
+      options.clientOptions = this.credentials
+    } else {
+      options.credentials = this.credentials
+    }
+    const auth = new google.auth.GoogleAuth(options)
     return auth.getClient()
+  }
+
+  private static instanceOfOAuth2ClientOptions (data: any): data is OAuth2ClientOptions {
+    return 'clientId' in data
   }
 
   private static getClient (subcommand: string) {
