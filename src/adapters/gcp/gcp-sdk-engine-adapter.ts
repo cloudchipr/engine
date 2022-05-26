@@ -3,13 +3,13 @@ import { Response } from '../../responses/response'
 import { EngineInterface } from '../engine-interface'
 import { CleanRequestInterface } from '../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../responses/clean-response'
-import { CredentialBody } from 'google-auth-library'
+import { CredentialBody, OAuth2ClientOptions } from 'google-auth-library'
 import { GcpClient } from './clients/gcp-client'
 
 export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
-  private readonly credentials: CredentialBody
+  private readonly credentials: CredentialBody | OAuth2ClientOptions
 
-  constructor (gcpCredentials: CredentialBody) {
+  constructor (gcpCredentials: CredentialBody | OAuth2ClientOptions) {
     this.credentials = gcpCredentials
   }
 
