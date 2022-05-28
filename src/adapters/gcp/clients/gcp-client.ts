@@ -83,17 +83,17 @@ export class GcpClient {
         'https://www.googleapis.com/auth/sqlservice.admin'
       ]
     }
-    if (GcpClient.instanceOfUserRefreshClientOptions(this.credentials)) {
-      options.clientOptions = this.credentials
-    } else {
+    if (GcpClient.instanceOfCredentialBody(this.credentials)) {
       options.credentials = this.credentials
+    } else {
+      options.clientOptions = this.credentials
     }
     const auth = new google.auth.GoogleAuth(options)
     return auth.getClient()
   }
 
-  private static instanceOfUserRefreshClientOptions (data: any): data is UserRefreshClientOptions {
-    return 'clientId' in data
+  private static instanceOfCredentialBody (data: any): data is CredentialBody {
+    return 'private_key' in data
   }
 
   private static getClient (subcommand: string) {
