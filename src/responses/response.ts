@@ -1,9 +1,10 @@
 export class Response<Type> {
   readonly items: Type[];
-  readonly errors: any[] = [];
+  readonly errors: any[];
 
-  constructor (items: Type[]) {
+  constructor (items: Type[], errors: any[] = []) {
     this.items = items
+    this.errors = errors
   }
 
   get count (): number {
