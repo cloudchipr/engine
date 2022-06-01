@@ -7,6 +7,7 @@ import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-req
 import { google } from 'googleapis'
 import { Vm } from '../../../domain/types/gcp/vm'
 import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 
 export class GcpLbClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
@@ -34,11 +35,7 @@ export class GcpLbClient {
         }
       })
     } catch (e: any) {
-      errors.push({
-        resource: GcpSubCommand.LB_SUBCOMMAND,
-        type: e?.response?.status === 403 ? 'permission' : e?.response?.statusText?.toLowerCase(),
-        message: e?.errors[0]?.message
-      })
+      errors.push(new GcpApiError(GcpSubCommand.LB_SUBCOMMAND, e))
     }
     return new Response<Type>(data, errors)
   }

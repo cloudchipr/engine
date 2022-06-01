@@ -5,6 +5,7 @@ import { google } from 'googleapis'
 import { Sql, SqlMetric } from '../../../domain/types/gcp/sql'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 
 export class GcpSqlClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
@@ -31,11 +32,7 @@ export class GcpSqlClient {
         ))
       })
     } catch (e: any) {
-      errors.push({
-        resource: GcpSubCommand.SQL_SUBCOMMAND,
-        type: e?.response?.status === 403 ? 'permission' : e?.response?.statusText?.toLowerCase(),
-        message: e?.errors[0]?.message
-      })
+      errors.push(new GcpApiError(GcpSubCommand.SQL_SUBCOMMAND, e))
     }
     return new Response<Type>(data, errors)
   }

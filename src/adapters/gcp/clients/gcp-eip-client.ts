@@ -6,6 +6,7 @@ import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-req
 import { Eip } from '../../../domain/types/gcp/eip'
 import { google } from 'googleapis'
 import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 
 export class GcpEipClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
@@ -31,11 +32,7 @@ export class GcpEipClient {
         }
       })
     } catch (e: any) {
-      errors.push({
-        resource: GcpSubCommand.EIP_SUBCOMMAND,
-        type: e?.response?.status === 403 ? 'permission' : e?.response?.statusText?.toLowerCase(),
-        message: e?.errors[0]?.message
-      })
+      errors.push(new GcpApiError(GcpSubCommand.EIP_SUBCOMMAND, e))
     }
     return new Response<Type>(data, errors)
   }

@@ -6,6 +6,7 @@ import { CleanRequestResourceInterface } from '../../../request/clean/clean-requ
 import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { google } from 'googleapis'
 import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 
 export class GcpDisksClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
@@ -33,11 +34,7 @@ export class GcpDisksClient {
         }
       })
     } catch (e: any) {
-      errors.push({
-        resource: GcpSubCommand.DISKS_SUBCOMMAND,
-        type: e?.response?.status === 403 ? 'permission' : e?.response?.statusText?.toLowerCase(),
-        message: e?.errors[0]?.message
-      })
+      errors.push(new GcpApiError(GcpSubCommand.DISKS_SUBCOMMAND, e))
     }
     return new Response<Type>(data, errors)
   }

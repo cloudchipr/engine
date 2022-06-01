@@ -9,6 +9,7 @@ import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
 import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 const { google } = require('googleapis')
 
 export class GcpVmClient {
@@ -51,11 +52,7 @@ export class GcpVmClient {
         }
       })
     } catch (e: any) {
-      errors.push({
-        resource: GcpSubCommand.VM_SUBCOMMAND,
-        type: e?.response?.status === 403 ? 'permission' : e?.response?.statusText?.toLowerCase(),
-        message: e?.errors[0]?.message
-      })
+      errors.push(new GcpApiError(GcpSubCommand.VM_SUBCOMMAND, e))
     }
     return new Response<Type>(data, errors)
   }
