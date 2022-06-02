@@ -8,6 +8,8 @@ import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-r
 import { Vm, VmMetric } from '../../../domain/types/gcp/vm'
 import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
+import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 const { google } = require('googleapis')
 
 export class GcpVmClient {
@@ -22,29 +24,37 @@ export class GcpVmClient {
 
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
     const data: any[] = []
-    const result: any = await google.compute('v1').instances.aggregatedList({ auth, project })
-    Object.keys(result.data.items).forEach(key => {
-      if ('instances' in result.data.items[key] && Array.isArray(result.data.items[key].instances)) {
-        result.data.items[key].instances?.forEach((v: any) => {
-          data.push(new Vm(
-            v.id,
-            v.name,
-            StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
-            StringHelper.splitAndGetAtIndex(v.machineType, '/', -1) || '',
-            v.disks.map((d: any) => d.deviceName),
-            0, // this will be populated during price calculation
-            0, // this will be populated during price calculation
-            v.creationTimestamp,
-            undefined,
-            undefined,
-            undefined,
-            new VmMetric(),
-            Label.createInstances(v.labels)
-          ))
-        })
-      }
-    })
-    return new Response<Type>(data)
+    const errors: any[] = []
+    try {
+      const result: any = await google.compute('v1').instances.aggregatedList({
+        auth,
+        project
+      })
+      Object.keys(result.data.items).forEach(key => {
+        if ('instances' in result.data.items[key] && Array.isArray(result.data.items[key].instances)) {
+          result.data.items[key].instances?.forEach((v: any) => {
+            data.push(new Vm(
+              v.id,
+              v.name,
+              StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
+              StringHelper.splitAndGetAtIndex(v.machineType, '/', -1) || '',
+              v.disks.map((d: any) => d.deviceName),
+              0, // this will be populated during price calculation
+              0, // this will be populated during price calculation
+              v.creationTimestamp,
+              undefined,
+              undefined,
+              undefined,
+              new VmMetric(),
+              Label.createInstances(v.labels)
+            ))
+          })
+        }
+      })
+    } catch (e: any) {
+      errors.push(new GcpApiError(GcpSubCommand.VM_SUBCOMMAND, e))
+    }
+    return new Response<Type>(data, errors)
   }
 
   static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {

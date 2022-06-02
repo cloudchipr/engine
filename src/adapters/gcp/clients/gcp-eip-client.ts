@@ -5,26 +5,36 @@ import { CleanRequestResourceInterface } from '../../../request/clean/clean-requ
 import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { Eip } from '../../../domain/types/gcp/eip'
 import { google } from 'googleapis'
+import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 
 export class GcpEipClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
     const data: any[] = []
-    const result: any = await google.compute('v1').addresses.aggregatedList({ auth, project })
-    Object.keys(result.data.items).forEach(key => {
-      if ('addresses' in result.data.items[key] && Array.isArray(result.data.items[key].addresses)) {
-        result.data.items[key].addresses?.forEach((v: any) => {
-          data.push(new Eip(
-            v.address,
-            StringHelper.splitAndGetAtIndex(v.region, '/', -1) || '',
-            v.name,
-            v.addressType?.toLowerCase() || '',
-            v.creationTimestamp,
-            Label.createInstances(v.labels)
-          ))
-        })
-      }
-    })
-    return new Response<Type>(data)
+    const errors: any[] = []
+    try {
+      const result: any = await google.compute('v1').addresses.aggregatedList({
+        auth,
+        project
+      })
+      Object.keys(result.data.items).forEach(key => {
+        if ('addresses' in result.data.items[key] && Array.isArray(result.data.items[key].addresses)) {
+          result.data.items[key].addresses?.forEach((v: any) => {
+            data.push(new Eip(
+              v.address,
+              StringHelper.splitAndGetAtIndex(v.region, '/', -1) || '',
+              v.name,
+              v.addressType?.toLowerCase() || '',
+              v.creationTimestamp,
+              Label.createInstances(v.labels)
+            ))
+          })
+        }
+      })
+    } catch (e: any) {
+      errors.push(new GcpApiError(GcpSubCommand.EIP_SUBCOMMAND, e))
+    }
+    return new Response<Type>(data, errors)
   }
 
   static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {

@@ -6,28 +6,38 @@ import { CleanRequestResourceInterface } from '../../../request/clean/clean-requ
 import { CleanGcpLbEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
 import { google } from 'googleapis'
 import { Vm } from '../../../domain/types/gcp/vm'
+import { GcpSubCommand } from '../gcp-sub-command'
+import { GcpApiError } from '../../../exceptions/gcp-api-error'
 
 export class GcpLbClient {
   static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
     const data: any[] = []
-    const result: any = await google.compute('v1').forwardingRules.aggregatedList({ auth, project })
-    Object.keys(result.data.items).forEach(key => {
-      if ('forwardingRules' in result.data.items[key] && Array.isArray(result.data.items[key].forwardingRules)) {
-        result.data.items[key].forwardingRules?.forEach((v: any) => {
-          data.push(new Lb(
-            v.name || '',
-            StringHelper.splitAndGetAtIndex(v.region || '', '/', -1) || '',
-            true,
-            v.IPProtocol || '',
-            !('region' in v),
-            v.creationTimestamp || '',
-            v.target,
-            Label.createInstances(v.labels || {})
-          ))
-        })
-      }
-    })
-    return new Response<Type>(data)
+    const errors: any[] = []
+    try {
+      const result: any = await google.compute('v1').forwardingRules.aggregatedList({
+        auth,
+        project
+      })
+      Object.keys(result.data.items).forEach(key => {
+        if ('forwardingRules' in result.data.items[key] && Array.isArray(result.data.items[key].forwardingRules)) {
+          result.data.items[key].forwardingRules?.forEach((v: any) => {
+            data.push(new Lb(
+              v.name || '',
+              StringHelper.splitAndGetAtIndex(v.region || '', '/', -1) || '',
+              true,
+              v.IPProtocol || '',
+              !('region' in v),
+              v.creationTimestamp || '',
+              v.target,
+              Label.createInstances(v.labels || {})
+            ))
+          })
+        }
+      })
+    } catch (e: any) {
+      errors.push(new GcpApiError(GcpSubCommand.LB_SUBCOMMAND, e))
+    }
+    return new Response<Type>(data, errors)
   }
 
   static async collectAllTargetPool (auth: any, project: string): Promise<{[K: string]: string[]}> {

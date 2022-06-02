@@ -44,3 +44,4 @@ export * from './aws-sub-command'
 export * from './adapters/gcp/gcp-sub-command'
 
 export * from './exceptions/custodian-error'
+export * from './exceptions/gcp-api-error'
