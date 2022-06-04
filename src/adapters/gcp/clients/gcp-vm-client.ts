@@ -10,9 +10,12 @@ import { MetricServiceClient } from '@google-cloud/monitoring'
 import moment from 'moment'
 import { GcpSubCommand } from '../gcp-sub-command'
 import { GcpApiError } from '../../../exceptions/gcp-api-error'
+import fs from 'fs'
 const { google } = require('googleapis')
 
 export class GcpVmClient {
+  static readonly METRIC_FILTER_LIMIT = 250
+  static readonly METRIC_SERIES_ALIGNER = ['ALIGN_MAX', 'ALIGN_MIN', 'ALIGN_SUM', 'ALIGN_MEAN']
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
   static readonly METRIC_NETWORK_IN_NAME: string = 'compute.googleapis.com/instance/network/received_bytes_count'
   static readonly METRIC_NETWORK_OUT_NAME: string = 'compute.googleapis.com/instance/network/sent_bytes_count'
@@ -70,7 +73,51 @@ export class GcpVmClient {
     return !!metadata.zone
   }
 
-  protected static async getMetrics<Type> (credentials: CredentialBody, response: Response<Type>): Promise<Response<Type>> {
+  static async getMetrics<Type> (auth: any, project: string, response: Response<Type>): Promise<Response<Type>> {
+    let filterString = ''
+    const filters: string[] = []
+    // @ts-ignore
+    response.items.forEach((item: Vm, index: number) => {
+      if (filterString !== '') {
+        filterString += ' OR '
+      }
+      filterString += `resource.labels.instance_id=${item.id}`
+      if ((index > 0 && index % (GcpVmClient.METRIC_FILTER_LIMIT - 1) === 0) || index === response.count - 1) {
+        filters.push(filterString)
+        filterString = ''
+      }
+    })
+    console.log(filters)
+    const promises: any[] = []
+    filters.forEach((filter: string) => {
+      // cpu
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_CPU_NAME, filter, 'ALIGN_MAX')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_CPU_NAME, filter, 'ALIGN_MIN')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_CPU_NAME, filter, 'ALIGN_SUM')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_CPU_NAME, filter, 'ALIGN_MEAN')))
+
+      // network in
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, filter, 'ALIGN_MAX')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, filter, 'ALIGN_MIN')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, filter, 'ALIGN_SUM')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, filter, 'ALIGN_MEAN')))
+
+      // network out
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, filter, 'ALIGN_MAX')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, filter, 'ALIGN_MIN')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, filter, 'ALIGN_SUM')))
+      promises.push(google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, filter, 'ALIGN_MEAN')))
+    })
+    const metricsResponse = await Promise.all(promises)
+    await fs.promises.writeFile('./aaa.json', JSON.stringify(metricsResponse), 'utf8')
+    // try {
+    //   const result: any = await google.monitoring('v3').projects.timeSeries.list(GcpVmClient.getTimeSeriesRequest(auth, project, GcpVmClient.METRIC_CPU_NAME, 'instance-1', 'ALIGN_MAX'))
+    //   await fs.promises.writeFile('./aaa.json', JSON.stringify(result), 'utf8')
+    //   console.log(moment().subtract(30, 'days').format())
+    //   console.log(moment().format())
+    // } catch (e: any) {
+    //   console.log(e.message)
+    // }
     // const client = new MetricServiceClient({ credentials })
     // const promises: any[] = []
     // // @ts-ignore
@@ -92,28 +139,15 @@ export class GcpVmClient {
     return response
   }
 
-  private static getClient (credentials: CredentialBody): InstancesClient {
-    return new InstancesClient({ credentials })
-  }
-
-  private static getTimeSeriesRequest (client: MetricServiceClient, project: string, metricName: string, id: string, seriesAligner: string) {
+  private static getTimeSeriesRequest (auth: any, project: string, metricName: string, filter: string, seriesAligner: string) {
     return {
-      name: client.projectPath(project),
-      filter: `metric.type="${metricName}" AND resource.labels.instance_id = ${id}`,
-      interval: {
-        startTime: {
-          seconds: moment().subtract(30, 'days').unix()
-        },
-        endTime: {
-          seconds: moment().unix()
-        }
-      },
-      aggregation: {
-        alignmentPeriod: {
-          seconds: 86400 // 30 days
-        },
-        perSeriesAligner: seriesAligner
-      }
+      auth,
+      name: `projects/${project}`,
+      filter: `metric.type="${metricName}" AND (${filter})`,
+      'interval.startTime': moment().subtract(30, 'days').format(),
+      'interval.endTime': moment().format(),
+      'aggregation.alignmentPeriod': '86400s',
+      'aggregation.perSeriesAligner': seriesAligner
     }
   }
 }

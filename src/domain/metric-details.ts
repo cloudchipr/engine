@@ -8,14 +8,17 @@ export class MetricDetails {
     readonly sum?: number
   ) {}
 
-  public static createInstance (timestamp: Date, value: number, target: string): MetricDetails {
+  public static createInstance (timestamp: Date, target: string, average?: number, minimum?: number, maximum?: number, sum?: number): MetricDetails {
+    let unit: string = ''
     switch (target) {
       case 'cpu':
-        return new MetricDetails(timestamp, 'Percent', undefined, undefined, value, undefined)
+        unit = 'Percent'
+        break
       case 'networkIn':
       case 'networkOut':
-        return new MetricDetails(timestamp, 'Bytes', undefined, undefined, undefined, value)
+        unit = 'Bytes'
+        break
     }
-    return new MetricDetails()
+    return new MetricDetails(timestamp, unit, average, minimum, maximum, sum)
   }
 }

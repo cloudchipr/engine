@@ -48,6 +48,8 @@ export class GcpClient {
     await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
     await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], authClient)
     await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], authClient)
+    // metrics
+    await GcpVmClient.getMetrics(authClient, this.projectId, responses[1])
     return [responses[0], responses[1], responses[2], responses[3], responses[4]] as Response<Type>[]
   }
 
@@ -80,7 +82,8 @@ export class GcpClient {
       scopes: [
         'https://www.googleapis.com/auth/compute',
         'https://www.googleapis.com/auth/cloud-billing',
-        'https://www.googleapis.com/auth/sqlservice.admin'
+        'https://www.googleapis.com/auth/sqlservice.admin',
+        'https://www.googleapis.com/auth/monitoring'
       ]
     }
     if (GcpClient.instanceOfCredentialBody(this.credentials)) {
