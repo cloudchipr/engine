@@ -39,7 +39,7 @@ export class GcpClient {
       GcpLbClient.collectAllTargetPool(authClient, this.projectId),
       GcpCatalogClient.collectAllComputing(authClient),
       GcpCatalogClient.collectAllSql(authClient),
-      // get metrics
+      // get vm metrics
       GcpVmClient.getMetricsCpuMax(authClient, this.projectId),
       GcpVmClient.getMetricsCpuMin(authClient, this.projectId),
       GcpVmClient.getMetricsCpuSum(authClient, this.projectId),
@@ -51,7 +51,16 @@ export class GcpClient {
       GcpVmClient.getMetricsNetworkOutMax(authClient, this.projectId),
       GcpVmClient.getMetricsNetworkOutMin(authClient, this.projectId),
       GcpVmClient.getMetricsNetworkOutSum(authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMean(authClient, this.projectId)
+      GcpVmClient.getMetricsNetworkOutMean(authClient, this.projectId),
+      // get sql metrics
+      GcpSqlClient.getMetricsConnectionsMax(authClient, this.projectId),
+      GcpSqlClient.getMetricsConnectionsMin(authClient, this.projectId),
+      GcpSqlClient.getMetricsConnectionsSum(authClient, this.projectId),
+      GcpSqlClient.getMetricsConnectionsMean(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsMax(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsMin(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsSum(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsMean(authClient, this.projectId)
     ])
     // set LBs attachment value
     GcpLbClient.setAttachmentValue(responses[2].items as Lb[], responses[1].items as Vm[], responses[5])
@@ -61,7 +70,7 @@ export class GcpClient {
     await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
     await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], authClient)
     await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], authClient)
-    // format metrics
+    // format VM metrics
     const vm = GcpVmClient.formatMetric(
       responses[1],
       responses[8],
@@ -77,7 +86,19 @@ export class GcpClient {
       responses[18],
       responses[19]
     )
-    return [responses[0], vm, responses[2], responses[3], responses[4]] as Response<Type>[]
+    // format SQL metrics
+    const sql = GcpSqlClient.formatMetric(
+      responses[4],
+      responses[20],
+      responses[21],
+      responses[22],
+      responses[23],
+      responses[24],
+      responses[25],
+      responses[26],
+      responses[27]
+    )
+    return [responses[0], vm, responses[2], responses[3], sql] as Response<Type>[]
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
