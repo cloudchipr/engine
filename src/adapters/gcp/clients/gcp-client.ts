@@ -38,7 +38,20 @@ export class GcpClient {
       GcpSqlClient.collectAll(authClient, this.projectId),
       GcpLbClient.collectAllTargetPool(authClient, this.projectId),
       GcpCatalogClient.collectAllComputing(authClient),
-      GcpCatalogClient.collectAllSql(authClient)
+      GcpCatalogClient.collectAllSql(authClient),
+      // get metrics
+      GcpVmClient.getMetricsCpuMax(authClient, this.projectId),
+      GcpVmClient.getMetricsCpuMin(authClient, this.projectId),
+      GcpVmClient.getMetricsCpuSum(authClient, this.projectId),
+      GcpVmClient.getMetricsCpuMean(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInMax(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInMin(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInSum(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInMean(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutMax(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutMin(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutSum(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutMean(authClient, this.projectId)
     ])
     // set LBs attachment value
     GcpLbClient.setAttachmentValue(responses[2].items as Lb[], responses[1].items as Vm[], responses[5])
@@ -48,7 +61,23 @@ export class GcpClient {
     await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
     await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], authClient)
     await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], authClient)
-    return [responses[0], responses[1], responses[2], responses[3], responses[4]] as Response<Type>[]
+    // format metrics
+    const vm = GcpVmClient.formatMetric(
+      responses[1],
+      responses[8],
+      responses[9],
+      responses[10],
+      responses[11],
+      responses[12],
+      responses[13],
+      responses[14],
+      responses[15],
+      responses[16],
+      responses[17],
+      responses[18],
+      responses[19]
+    )
+    return [responses[0], vm, responses[2], responses[3], responses[4]] as Response<Type>[]
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
@@ -80,7 +109,8 @@ export class GcpClient {
       scopes: [
         'https://www.googleapis.com/auth/compute',
         'https://www.googleapis.com/auth/cloud-billing',
-        'https://www.googleapis.com/auth/sqlservice.admin'
+        'https://www.googleapis.com/auth/sqlservice.admin',
+        'https://www.googleapis.com/auth/monitoring'
       ]
     }
     if (GcpClient.instanceOfCredentialBody(this.credentials)) {
