@@ -1,6 +1,6 @@
 {
   "name": "@cloudchipr/cloudchipr-engine",
-  "version": "0.1.40",
+  "version": "0.1.41",
   "description": "Cloudchipr engine",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -31,10 +31,6 @@
     "@aws-sdk/client-pricing": "^3.39.0",
     "@aws-sdk/client-rds": "^3.47.1",
     "@aws-sdk/credential-providers": "^3.41.0",
-    "@google-cloud/billing": "^2.3.0",
-    "@google-cloud/compute": "^3.1.2",
-    "@google-cloud/iam-credentials": "^1.1.1",
-    "@google-cloud/monitoring": "^2.3.5",
     "fs": "0.0.1-security",
     "google-auth-library": "^7.12.0",
     "googleapis": "^100.0.0",
