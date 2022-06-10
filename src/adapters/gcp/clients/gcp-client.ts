@@ -1,6 +1,7 @@
 import { Response } from '../../../responses/response'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../../responses/clean-response'
+import { CredentialBody, UserRefreshClientOptions } from 'google-auth-library'
 import { GcpDisksClient } from './gcp-disks-client'
 import { GcpLbClient } from './gcp-lb-client'
 import { GcpEipClient } from './gcp-eip-client'
@@ -10,64 +11,65 @@ import { GcpCatalogClient } from './gcp-catalog-client'
 import { GcpPriceCalculator } from '../gcp-price-calculator'
 import { Disks } from '../../../domain/types/gcp/disks'
 import { Vm } from '../../../domain/types/gcp/vm'
+import { google } from 'googleapis'
 import { Lb } from '../../../domain/types/gcp/lb'
 import { Eip } from '../../../domain/types/gcp/eip'
 import { GcpSqlClient } from './gcp-sql-client'
 import { Sql } from '../../../domain/types/gcp/sql'
 import { GcpSubCommand } from '../gcp-sub-command'
-import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
 
 export class GcpClient {
-  protected readonly authClient: AuthClient
+  protected readonly credentials: CredentialBody | UserRefreshClientOptions
   protected readonly projectId: string
 
-  constructor (authClient: AuthClient, projectId: string) {
-    this.authClient = authClient
+  constructor (gcpCredentials: CredentialBody | UserRefreshClientOptions, projectId: string) {
+    this.credentials = gcpCredentials
     this.projectId = projectId
   }
 
   async collectResources<Type> (): Promise<Response<Type>[]> {
+    const authClient = await this.getAuthClient()
     // get all needed resources
     const responses = await Promise.all([
-      GcpDisksClient.collectAll(this.authClient, this.projectId),
-      GcpVmClient.collectAll(this.authClient, this.projectId),
-      GcpLbClient.collectAll(this.authClient, this.projectId),
-      GcpEipClient.collectAll(this.authClient, this.projectId),
-      GcpSqlClient.collectAll(this.authClient, this.projectId),
-      GcpLbClient.collectAllTargetPool(this.authClient, this.projectId),
-      GcpCatalogClient.collectAllComputing(this.authClient),
-      GcpCatalogClient.collectAllSql(this.authClient),
+      GcpDisksClient.collectAll(authClient, this.projectId),
+      GcpVmClient.collectAll(authClient, this.projectId),
+      GcpLbClient.collectAll(authClient, this.projectId),
+      GcpEipClient.collectAll(authClient, this.projectId),
+      GcpSqlClient.collectAll(authClient, this.projectId),
+      GcpLbClient.collectAllTargetPool(authClient, this.projectId),
+      GcpCatalogClient.collectAllComputing(authClient),
+      GcpCatalogClient.collectAllSql(authClient),
       // get vm metrics
-      GcpVmClient.getMetricsCpuMax(this.authClient, this.projectId),
-      GcpVmClient.getMetricsCpuMin(this.authClient, this.projectId),
-      GcpVmClient.getMetricsCpuSum(this.authClient, this.projectId),
-      GcpVmClient.getMetricsCpuMean(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInMax(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInMin(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInSum(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInMean(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMax(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMin(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutSum(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMean(this.authClient, this.projectId),
+      GcpVmClient.getMetricsCpuMax(authClient, this.projectId),
+      GcpVmClient.getMetricsCpuMin(authClient, this.projectId),
+      GcpVmClient.getMetricsCpuSum(authClient, this.projectId),
+      GcpVmClient.getMetricsCpuMean(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInMax(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInMin(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInSum(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkInMean(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutMax(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutMin(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutSum(authClient, this.projectId),
+      GcpVmClient.getMetricsNetworkOutMean(authClient, this.projectId),
       // get sql metrics
-      GcpSqlClient.getMetricsConnectionsMax(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsConnectionsMin(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsConnectionsSum(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsConnectionsMean(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsMax(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsMin(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsSum(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsMean(this.authClient, this.projectId)
+      GcpSqlClient.getMetricsConnectionsMax(authClient, this.projectId),
+      GcpSqlClient.getMetricsConnectionsMin(authClient, this.projectId),
+      GcpSqlClient.getMetricsConnectionsSum(authClient, this.projectId),
+      GcpSqlClient.getMetricsConnectionsMean(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsMax(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsMin(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsSum(authClient, this.projectId),
+      GcpSqlClient.getMetricsBackendsMean(authClient, this.projectId)
     ])
     // set LBs attachment value
     GcpLbClient.setAttachmentValue(responses[2].items as Lb[], responses[1].items as Vm[], responses[5])
     // calculate prices
-    await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], this.authClient)
-    await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], this.authClient)
-    await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], this.authClient)
-    await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], this.authClient)
-    await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], this.authClient)
+    await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], authClient)
+    await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], authClient)
+    await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], authClient)
+    await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], authClient)
+    await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], authClient)
     // format VM metrics
     const vm = GcpVmClient.formatMetric(
       responses[1],
@@ -100,12 +102,13 @@ export class GcpClient {
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
+    const authClient = await this.getAuthClient()
     const response = new CleanResponse(request.subCommand.getValue())
     const promises: any[] = []
     const ids: string[] = []
     for (const resource of request.resources) {
       if (GcpClient.getClient(request.subCommand.getValue()).isCleanRequestValid(resource)) {
-        promises.push(GcpClient.getClient(request.subCommand.getValue()).clean(this.authClient, this.projectId, resource))
+        promises.push(GcpClient.getClient(request.subCommand.getValue()).clean(authClient, this.projectId, resource))
         ids.push(resource.id)
       } else {
         response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
@@ -120,6 +123,28 @@ export class GcpClient {
       }
     }
     return response
+  }
+
+  private async getAuthClient () {
+    const options: {[K: string]: any} = {
+      scopes: [
+        'https://www.googleapis.com/auth/compute',
+        'https://www.googleapis.com/auth/cloud-billing',
+        'https://www.googleapis.com/auth/sqlservice.admin',
+        'https://www.googleapis.com/auth/monitoring'
+      ]
+    }
+    if (GcpClient.instanceOfCredentialBody(this.credentials)) {
+      options.credentials = this.credentials
+    } else {
+      options.clientOptions = this.credentials
+    }
+    const auth = new google.auth.GoogleAuth(options)
+    return auth.getClient()
+  }
+
+  private static instanceOfCredentialBody (data: any): data is CredentialBody {
+    return 'private_key' in data
   }
 
   private static getClient (subcommand: string) {

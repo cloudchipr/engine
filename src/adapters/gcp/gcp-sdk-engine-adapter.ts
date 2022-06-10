@@ -3,14 +3,14 @@ import { Response } from '../../responses/response'
 import { EngineInterface } from '../engine-interface'
 import { CleanRequestInterface } from '../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../responses/clean-response'
+import { CredentialBody, UserRefreshClientOptions } from 'google-auth-library'
 import { GcpClient } from './clients/gcp-client'
-import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
 
 export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
-  private readonly authClient: AuthClient
+  private readonly credentials: CredentialBody | UserRefreshClientOptions
 
-  constructor (authClient: AuthClient) {
-    this.authClient = authClient
+  constructor (gcpCredentials: CredentialBody | UserRefreshClientOptions) {
+    this.credentials = gcpCredentials
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -19,12 +19,12 @@ export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
   }
 
   async collectAll (projectId: string): Promise<Response<Type>[]> {
-    const gcpClient = new GcpClient(this.authClient, projectId)
+    const gcpClient = new GcpClient(this.credentials, projectId)
     return gcpClient.collectResources()
   }
 
   clean (request: CleanRequestInterface, projectId: string): Promise<CleanResponse> {
-    const gcpClient = new GcpClient(this.authClient, projectId)
+    const gcpClient = new GcpClient(this.credentials, projectId)
     return gcpClient.cleanResources(request)
   }
 }
