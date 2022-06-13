@@ -12,4 +12,6 @@ export interface AwsClientInterface {
   formatCollectResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>>
 
   getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>>
+
+  getRateLimit (): number
 }

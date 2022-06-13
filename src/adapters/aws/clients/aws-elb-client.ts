@@ -40,13 +40,19 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       return new Promise((resolve, reject) => {
         this.getV3Client(request.region).send(AwsElbClient.getV3DeleteCommand(request.id))
           .then(() => resolve(request.id))
-          .catch((e) => reject(e.message))
+          .catch((e) => {
+            // eslint-disable-next-line prefer-promise-reject-errors
+            reject({ id: request.id, message: e.message, code: e.Code })
+          })
       })
     } else {
       return new Promise((resolve, reject) => {
         this.getV2Client(request.region).send(AwsElbClient.getV2DeleteCommand(metadata.loadBalancerArn as string))
           .then(() => resolve(request.id))
-          .catch((e) => reject(e.message))
+          .catch((e) => {
+            // eslint-disable-next-line prefer-promise-reject-errors
+            reject({ id: request.id, message: e.message, code: e.Code })
+          })
       })
     }
   }
