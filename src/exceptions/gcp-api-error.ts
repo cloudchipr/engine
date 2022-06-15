@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { Code } from '../responses/code'
 
 export class GcpApiError extends Error {
   readonly resource: string
@@ -10,7 +11,7 @@ export class GcpApiError extends Error {
     Object.setPrototypeOf(this, GcpApiError.prototype)
 
     this.resource = resource
-    this.type = data?.response?.status === 403 ? 'permission' : (data?.response?.statusText?.toLowerCase() ?? 'unknown')
+    this.type = data?.response?.status === 403 ? Code.PERMISSION : Code.UNKNOWN
     this.dateTime = moment().format('dddd, MMMM Do YYYY, h:mm:ss A Z')
   }
 

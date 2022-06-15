@@ -25,7 +25,10 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
       this.getClient(request.region)
         .send(AwsEipClient.getReleaseAddressCommand(id as string, metadata.domain))
         .then(() => resolve(request.id))
-        .catch((e) => reject(e.message))
+        .catch((e) => {
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject({ id: request.id, message: e.message, code: e.Code })
+        })
     })
   }
 
