@@ -11,6 +11,7 @@ import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
 import { EngineRequest } from '../../../engine-request'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
+import { Code } from '../../../responses/code'
 
 export default class AwsClient {
   private awsClientInstance: AwsClientInterface;
@@ -58,7 +59,8 @@ export default class AwsClient {
           response.addSuccess(result[i].value)
         } else {
           hasRateLimitError = hasRateLimitError || result[i].reason.code === 'RequestLimitExceeded'
-          response.addFailure(new CleanFailureResponse(result[i].reason.id, result[i].reason.message, result[i].reason.code))
+          const code = result[i].reason.code === 'RequestLimitExceeded' ? Code.LIMIT_EXCEEDED : Code.UNKNOWN
+          response.addFailure(new CleanFailureResponse(result[i].reason.id, result[i].reason.message, code))
         }
       }
       if (hasRateLimitError) {
@@ -67,7 +69,7 @@ export default class AwsClient {
     }
     if (hasRateLimitError) {
       for (let i = start; i < request.resources.length; i++) {
-        response.addFailure(new CleanFailureResponse(request.resources[i].id, 'Request limit exceeded.', 'RequestLimitExceeded'))
+        response.addFailure(new CleanFailureResponse(request.resources[i].id, 'Request limit exceeded.', Code.LIMIT_EXCEEDED))
       }
     }
     return response
