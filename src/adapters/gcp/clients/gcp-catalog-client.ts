@@ -1,41 +1,50 @@
-import { google } from 'googleapis'
+import { GcpPricing } from '../gcp-pricing'
+import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
+import { PricingInterface } from '../../pricing-interface'
+import { PricingListInterface } from '../../../domain/interfaces/gcp-pricing'
 
 export class GcpCatalogClient {
-  private static COMPUTING_SERVICE = 'services/6F81-5844-456A'
-  private static SQL_SERVICE = 'services/9662-B51E-5089'
+  public static SKU: PricingListInterface[] = []
 
-  public static COMPUTING_SKU: any[] = []
-  public static SQL_SKU: any[] = []
-
-  static async collectAllComputing (auth: any): Promise<void> {
-    if (GcpCatalogClient.COMPUTING_SKU.length) {
+  static async collectAllStockKeepingUnits (auth: AuthClient, pricingInterface?: PricingInterface): Promise<void> {
+    if (GcpCatalogClient.SKU.length > 0) {
       return
     }
-    const config: any = { parent: GcpCatalogClient.COMPUTING_SERVICE, auth }
-    while (true) {
-      const result = await google.cloudbilling('v1').services.skus.list(config)
-      GcpCatalogClient.COMPUTING_SKU = [...GcpCatalogClient.COMPUTING_SKU, ...(result?.data?.skus ?? [])]
-      if (result?.data?.nextPageToken) {
-        config.pageToken = result?.data?.nextPageToken
-      } else {
-        break
-      }
-    }
-  }
+    const pricingFallbackInterface: PricingInterface = new GcpPricing(auth)
 
-  static async collectAllSql (auth: any) {
-    if (GcpCatalogClient.SQL_SKU.length) {
+    // get stock keeping units from the provided interface by the user's account
+    try {
+      GcpCatalogClient.SKU = pricingInterface !== undefined ? await pricingInterface.getPricingList() : []
+    } catch (e) {}
+    if (GcpCatalogClient.SKU.length > 0) {
       return
     }
-    const config: any = { parent: GcpCatalogClient.SQL_SERVICE, auth }
-    while (true) {
-      const result = await google.cloudbilling('v1').services.skus.list(config)
-      GcpCatalogClient.SQL_SKU = [...GcpCatalogClient.SQL_SKU, ...(result?.data?.skus ?? [])]
-      if (result?.data?.nextPageToken) {
-        config.pageToken = result?.data?.nextPageToken
-      } else {
-        break
+
+    // get stock keeping units from the fallback interface by the user's account
+    try {
+      GcpCatalogClient.SKU = await pricingFallbackInterface.getPricingList()
+      if (pricingInterface !== undefined) {
+        await pricingInterface.setPricingList(GcpCatalogClient.SKU)
       }
+    } catch (e) {}
+    if (GcpCatalogClient.SKU.length > 0) {
+      return
     }
+
+    // get stock keeping units from the provided interface by the c8r's account
+    try {
+      GcpCatalogClient.SKU = pricingInterface !== undefined ? await pricingInterface.getFallbackPricingList() : []
+    } catch (e) {}
+    if (GcpCatalogClient.SKU.length > 0) {
+      return
+    }
+
+    // get stock keeping units from the fallback interface by the c8r's account
+    try {
+      GcpCatalogClient.SKU = await pricingFallbackInterface.getFallbackPricingList()
+      if (pricingInterface !== undefined) {
+        await pricingInterface.setFallbackPricingList(GcpCatalogClient.SKU)
+      }
+    } catch (e) {}
   }
 }

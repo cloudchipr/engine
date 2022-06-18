@@ -19,9 +19,9 @@ export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
     return new Response<Type>([])
   }
 
-  async collectAll (projectId: string, pricing?: PricingInterface): Promise<Response<Type>[]> {
+  async collectAll (projectId: string, pricingInterface?: PricingInterface): Promise<Response<Type>[]> {
     const gcpClient = new GcpClient(this.authClient, projectId)
-    return gcpClient.collectResources()
+    return gcpClient.collectResources(pricingInterface)
   }
 
   clean (request: CleanRequestInterface, projectId: string): Promise<CleanResponse> {
