@@ -11,6 +11,7 @@ import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
 import { EngineRequest } from '../../../engine-request'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
+import { Code } from '../../../responses/code'
 
 export default class AwsClient {
   private awsClientInstance: AwsClientInterface;
@@ -35,22 +36,40 @@ export default class AwsClient {
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
     const response = new CleanResponse(request.subCommand.getValue())
-    const promises: any[] = []
-    for (const resource of request.resources) {
-      if (this.awsClientInstance.isCleanRequestValid(resource)) {
-        promises.push(this.awsClientInstance.getCleanCommands(resource))
-      } else {
-        response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
+    let hasRateLimitError: boolean = false
+    let start = 0
+    while (true) {
+      const promises: any[] = []
+      const resources = request.resources.slice(start, start + this.awsClientInstance.getRateLimit())
+      start += this.awsClientInstance.getRateLimit()
+      if (resources.length === 0) {
+        break
+      }
+      for (const resource of resources) {
+        if (this.awsClientInstance.isCleanRequestValid(resource)) {
+          promises.push(this.awsClientInstance.getCleanCommands(resource))
+        } else {
+          response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided', 'InvalidData'))
+        }
+      }
+      // @ts-ignore
+      const result: {status: string, value: string, reason: {id: string, message: string, code: string}}[] = await Promise.allSettled(promises)
+      for (let i = 0; i < result.length; i++) {
+        if (result[i].status === 'fulfilled') {
+          response.addSuccess(result[i].value)
+        } else {
+          hasRateLimitError = hasRateLimitError || result[i].reason.code === 'RequestLimitExceeded'
+          const code = result[i].reason.code === 'RequestLimitExceeded' ? Code.LIMIT_EXCEEDED : Code.UNKNOWN
+          response.addFailure(new CleanFailureResponse(result[i].reason.id, result[i].reason.message, code))
+        }
+      }
+      if (hasRateLimitError) {
+        break
       }
     }
-
-    // @ts-ignore
-    const result: {status: string, value: string, reason: string}[] = await Promise.allSettled(promises)
-    for (let i = 0; i < result.length; i++) {
-      if (result[i].status === 'fulfilled') {
-        response.addSuccess(result[i].value)
-      } else {
-        response.addFailure(new CleanFailureResponse(request.resources[i].id, result[i].reason))
+    if (hasRateLimitError) {
+      for (let i = start; i < request.resources.length; i++) {
+        response.addFailure(new CleanFailureResponse(request.resources[i].id, 'Request limit exceeded.', Code.LIMIT_EXCEEDED))
       }
     }
     return response

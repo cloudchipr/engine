@@ -32,7 +32,10 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     return new Promise((resolve, reject) => {
       this.getClient(request.region).send(AwsEc2Client.getTerminateInstancesCommand(request.id))
         .then(() => resolve(request.id))
-        .catch((e) => reject(e.message))
+        .catch((e) => {
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject({ id: request.id, message: e.message, code: e.Code })
+        })
     })
   }
 

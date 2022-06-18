@@ -19,4 +19,8 @@ export default class AwsBaseClient {
   async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
     return response
   }
+
+  getRateLimit (): number {
+    return 250
+  }
 }

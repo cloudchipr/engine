@@ -25,7 +25,7 @@ export class GcpDisksClient {
               StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
               StringHelper.splitAndGetAtIndex(v.type, '/', -1) || '',
               (parseFloat(v.sizeGb) | 0) * 1073741824,
-              true,
+              v.users?.length > 0,
               v.status,
               v.creationTimestamp,
               Label.createInstances(v.labels)
