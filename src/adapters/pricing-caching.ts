@@ -1,17 +1,13 @@
-import { PricingInterface } from '../pricing-interface'
-import { PricingListInterface } from '../../domain/interfaces/pricing-list-interface'
-import { CachingInterface } from '../caching-interface'
-import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
-import { GcpPricing } from './gcp-pricing'
+import { PricingInterface } from './pricing-interface'
+import { PricingListInterface } from '../domain/interfaces/pricing-list-interface'
+import { CachingInterface } from './caching-interface'
 
-export class GcpPricingCaching implements PricingInterface {
-  private readonly auth: AuthClient
+export class PricingCaching implements PricingInterface {
   private readonly pricing: PricingInterface
   private readonly caching?: CachingInterface
 
-  constructor (auth: AuthClient, caching?: CachingInterface) {
-    this.auth = auth
-    this.pricing = new GcpPricing(auth)
+  constructor (pricing: PricingInterface, caching?: CachingInterface) {
+    this.pricing = pricing
     this.caching = caching
   }
 
