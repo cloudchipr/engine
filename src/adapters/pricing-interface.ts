@@ -1,5 +1,5 @@
-import { PricingListInterface } from '../domain/interfaces/pricing-list-interface'
+import { PricingListType } from '../domain/types/common/pricing-list-type'
 
 export interface PricingInterface {
-  getPricingList (): Promise<PricingListInterface[]>
+  getPricingList (): Promise<PricingListType[]>
 }

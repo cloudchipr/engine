@@ -1,12 +1,12 @@
 import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
 import { PricingInterface } from '../../pricing-interface'
-import { PricingListInterface } from '../../../domain/interfaces/pricing-list-interface'
 import { PricingCaching } from '../../pricing-caching'
 import { CachingInterface } from '../../caching-interface'
 import { GcpPricing } from '../gcp-pricing'
+import { PricingListType } from '../../../domain/types/common/pricing-list-type'
 
 export class GcpCatalogClient {
-  public static SKU: PricingListInterface[] = []
+  public static SKU: PricingListType[] = []
 
   static async collectAllStockKeepingUnits (
     auth: AuthClient,

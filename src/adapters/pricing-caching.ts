@@ -1,6 +1,6 @@
 import { PricingInterface } from './pricing-interface'
-import { PricingListInterface } from '../domain/interfaces/pricing-list-interface'
 import { CachingInterface } from './caching-interface'
+import { PricingListType } from '../domain/types/common/pricing-list-type'
 
 export class PricingCaching implements PricingInterface {
   private static CACHE_KEY: string = 'pricing'
@@ -13,7 +13,7 @@ export class PricingCaching implements PricingInterface {
     this.caching = caching
   }
 
-  async getPricingList (): Promise<PricingListInterface[]> {
+  async getPricingList (): Promise<PricingListType[]> {
     try {
       let result = await this.caching.get(PricingCaching.CACHE_KEY)
       if (result.length > 0) {
