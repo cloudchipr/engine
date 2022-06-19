@@ -8,18 +8,30 @@ import { GcpPricing } from '../gcp-pricing'
 export class GcpCatalogClient {
   public static SKU: PricingListInterface[] = []
 
-  static async collectAllStockKeepingUnits (auth: AuthClient, pricingCachingInterface?: CachingInterface): Promise<void> {
+  static async collectAllStockKeepingUnits (
+    auth: AuthClient,
+    pricingFallbackInterface?: PricingInterface,
+    pricingCachingInterface?: CachingInterface
+  ): Promise<void> {
     if (GcpCatalogClient.SKU.length > 0) {
       return
     }
-    const pricingCaching: PricingInterface = new PricingCaching(new GcpPricing(auth), pricingCachingInterface)
-    const result = await pricingCaching.getPricingList()
+    const pricing = GcpCatalogClient.getPricingImplementation(new GcpPricing(auth), pricingCachingInterface)
+    const result = await pricing.getPricingList()
     if (result.length > 0) {
       GcpCatalogClient.SKU = result
       return
     }
-    // @todo here we need to use the c8r's auth
-    const pricingCachingFallback: PricingInterface = new PricingCaching(new GcpPricing(auth), pricingCachingInterface)
-    GcpCatalogClient.SKU = await pricingCachingFallback.getPricingList()
+    if (pricingFallbackInterface) {
+      const pricingCachingFallback = GcpCatalogClient.getPricingImplementation(pricingFallbackInterface, pricingCachingInterface)
+      GcpCatalogClient.SKU = await pricingCachingFallback.getPricingList()
+    }
+  }
+
+  private static getPricingImplementation (pricing: PricingInterface, pricingCachingInterface?: CachingInterface): PricingInterface {
+    if (pricingCachingInterface !== undefined) {
+      return new PricingCaching(pricing, pricingCachingInterface)
+    }
+    return pricing
   }
 }
