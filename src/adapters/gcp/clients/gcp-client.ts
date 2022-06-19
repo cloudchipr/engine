@@ -16,7 +16,7 @@ import { GcpSqlClient } from './gcp-sql-client'
 import { Sql } from '../../../domain/types/gcp/sql'
 import { GcpSubCommand } from '../gcp-sub-command'
 import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
-import { PricingInterface } from '../../pricing-interface'
+import { CachingInterface } from '../../caching-interface'
 
 export class GcpClient {
   protected readonly authClient: AuthClient
@@ -27,7 +27,7 @@ export class GcpClient {
     this.projectId = projectId
   }
 
-  async collectResources<Type> (pricingInterface?: PricingInterface): Promise<Response<Type>[]> {
+  async collectResources<Type> (pricingCachingInterface?: CachingInterface): Promise<Response<Type>[]> {
     // get all needed resources
     const responses = await Promise.all([
       GcpDisksClient.collectAll(this.authClient, this.projectId),
@@ -36,7 +36,7 @@ export class GcpClient {
       GcpEipClient.collectAll(this.authClient, this.projectId),
       GcpSqlClient.collectAll(this.authClient, this.projectId),
       GcpLbClient.collectAllTargetPool(this.authClient, this.projectId),
-      GcpCatalogClient.collectAllStockKeepingUnits(this.authClient, pricingInterface),
+      GcpCatalogClient.collectAllStockKeepingUnits(this.authClient, pricingCachingInterface),
       // get vm metrics
       GcpVmClient.getMetricsCpuMax(this.authClient, this.projectId),
       GcpVmClient.getMetricsCpuMin(this.authClient, this.projectId),

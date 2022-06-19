@@ -1,11 +1,5 @@
-import { PricingListInterface as GcpPricingListInterface } from '../domain/interfaces/gcp-pricing'
+import { PricingListInterface } from '../domain/interfaces/pricing-list-interface'
 
 export interface PricingInterface {
-  getPricingList (): Promise<GcpPricingListInterface[]>
-
-  getFallbackPricingList (): Promise<GcpPricingListInterface[]>
-
-  setPricingList (list: GcpPricingListInterface[]): Promise<void>
-
-  setFallbackPricingList (list: GcpPricingListInterface[]): Promise<void>
+  getPricingList (): Promise<PricingListInterface[]>
 }

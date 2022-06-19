@@ -1,7 +1,7 @@
 import { PricingInterface } from '../pricing-interface'
 import { google } from 'googleapis'
 import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
-import { PricingListInterface } from '../../domain/interfaces/gcp-pricing'
+import { GcpPricingListInterface, PricingListInterface } from '../../domain/interfaces/pricing-list-interface'
 
 export class GcpPricing implements PricingInterface {
   private static COMPUTING_SERVICE: string = 'services/6F81-5844-456A'
@@ -84,7 +84,7 @@ export class GcpPricing implements PricingInterface {
       this.collectComputingStockKeepingUnits(),
       this.collectSqlStockKeepingUnits()
     ])
-    const result: PricingListInterface[] = []
+    const result: GcpPricingListInterface[] = []
     response.forEach((res) => {
       res.forEach((it: any) => {
         if (GcpPricing.isValidVmStockKeepingUnit(it)) {
@@ -102,16 +102,6 @@ export class GcpPricing implements PricingInterface {
     })
     return result
   }
-
-  async getFallbackPricingList (): Promise<PricingListInterface[]> {
-    return []
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setPricingList (list: PricingListInterface[]): Promise<void> {}
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setFallbackPricingList (list: PricingListInterface[]): Promise<void> {}
 
   private static isValidVmStockKeepingUnit (it: any): boolean {
     const key = it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || ''
@@ -156,7 +146,7 @@ export class GcpPricing implements PricingInterface {
       it.category?.usageType === 'OnDemand'
   }
 
-  private static mapVmStockKeepingUnit (it: any): PricingListInterface {
+  private static mapVmStockKeepingUnit (it: any): GcpPricingListInterface {
     let key = GcpPricing.VM_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     if (key.split(/^Nvidia Tesla (.*) GPU running$/g).length > 1) {
       key = 'gpu_' + key.split(/^Nvidia Tesla (.*) GPU running$/g)[1]
@@ -180,7 +170,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapDiskStockKeepingUnit (it: any): PricingListInterface {
+  private static mapDiskStockKeepingUnit (it: any): GcpPricingListInterface {
     const key = GcpPricing.DISKS_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     let price: number | undefined
     if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
@@ -196,7 +186,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapEipStockKeepingUnit (it: any): PricingListInterface {
+  private static mapEipStockKeepingUnit (it: any): GcpPricingListInterface {
     const extraRegions = []
     const key = GcpPricing.EIP_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     if (it.description === 'Static Ip Charge') {
@@ -221,7 +211,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapLbStockKeepingUnit (it: any): PricingListInterface {
+  private static mapLbStockKeepingUnit (it: any): GcpPricingListInterface {
     let key = GcpPricing.LB_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     if (it.description === 'HTTP Load Balancing: Global Forwarding Rule Minimum Service Charge') {
       key = 'global'
@@ -244,7 +234,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapSqlStockKeepingUnit (it: any): PricingListInterface {
+  private static mapSqlStockKeepingUnit (it: any): GcpPricingListInterface {
     const key = GcpPricing.SQL_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     let price: number | undefined
     if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {

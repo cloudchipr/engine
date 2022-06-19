@@ -5,7 +5,7 @@ import { CleanRequestInterface } from '../../request/clean/clean-request-interfa
 import { CleanResponse } from '../../responses/clean-response'
 import { GcpClient } from './clients/gcp-client'
 import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
-import { PricingInterface } from '../pricing-interface'
+import { CachingInterface } from '../caching-interface'
 
 export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
   private readonly authClient: AuthClient
@@ -19,9 +19,9 @@ export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
     return new Response<Type>([])
   }
 
-  async collectAll (projectId: string, pricingInterface?: PricingInterface): Promise<Response<Type>[]> {
+  async collectAll (projectId: string, pricingCachingInterface?: CachingInterface): Promise<Response<Type>[]> {
     const gcpClient = new GcpClient(this.authClient, projectId)
-    return gcpClient.collectResources(pricingInterface)
+    return gcpClient.collectResources(pricingCachingInterface)
   }
 
   clean (request: CleanRequestInterface, projectId: string): Promise<CleanResponse> {
