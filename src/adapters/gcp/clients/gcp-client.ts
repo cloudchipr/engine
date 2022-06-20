@@ -40,7 +40,7 @@ export class GcpClient {
       GcpEipClient.collectAll(this.authClient, this.projectId),
       GcpSqlClient.collectAll(this.authClient, this.projectId),
       GcpLbClient.collectAllTargetPool(this.authClient, this.projectId),
-      GcpCatalogClient.collectAllStockKeepingUnits(this.authClient, pricingFallbackInterface, pricingCachingInterface),
+      GcpCatalogClient.collectAllStockKeepingUnits(this.authClient, this.projectId, pricingFallbackInterface, pricingCachingInterface),
       // get vm metrics
       GcpVmClient.getMetricsCpuMax(this.authClient, this.projectId),
       GcpVmClient.getMetricsCpuMin(this.authClient, this.projectId),

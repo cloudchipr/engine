@@ -10,13 +10,14 @@ export class GcpCatalogClient {
 
   static async collectAllStockKeepingUnits (
     auth: AuthClient,
+    project?: string,
     pricingFallbackInterface?: PricingInterface,
     pricingCachingInterface?: CachingInterface
   ): Promise<void> {
     if (GcpCatalogClient.SKU.length > 0) {
       return
     }
-    const pricing = GcpCatalogClient.getPricingImplementation(new GcpPricing(auth), pricingCachingInterface)
+    const pricing = GcpCatalogClient.getPricingImplementation(new GcpPricing(auth), pricingCachingInterface, project)
     const result = await pricing.getPricingList()
     if (result.length > 0) {
       GcpCatalogClient.SKU = result
@@ -28,9 +29,10 @@ export class GcpCatalogClient {
     }
   }
 
-  private static getPricingImplementation (pricing: PricingInterface, pricingCachingInterface?: CachingInterface): PricingInterface {
+  private static getPricingImplementation (pricing: PricingInterface, pricingCachingInterface?: CachingInterface, project?: string): PricingInterface {
     if (pricingCachingInterface !== undefined) {
-      return new PricingCaching(pricing, pricingCachingInterface)
+      const keyPrefix = project ? `gcp_${project}` : 'gcp'
+      return new PricingCaching(pricing, pricingCachingInterface, keyPrefix)
     }
     return pricing
   }
