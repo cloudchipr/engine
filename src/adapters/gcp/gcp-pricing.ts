@@ -1,7 +1,7 @@
 import { PricingInterface } from '../pricing-interface'
 import { google } from 'googleapis'
 import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
-import { GcpPricingListInterface, PricingListInterface } from '../../domain/interfaces/pricing-list-interface'
+import { GcpPricingListType, PricingListType } from '../../domain/types/common/pricing-list-type'
 
 export class GcpPricing implements PricingInterface {
   private static COMPUTING_SERVICE: string = 'services/6F81-5844-456A'
@@ -79,27 +79,29 @@ export class GcpPricing implements PricingInterface {
     this.authClient = authClient
   }
 
-  async getPricingList (): Promise<PricingListInterface[]> {
-    const response = await Promise.all([
-      this.collectComputingStockKeepingUnits(),
-      this.collectSqlStockKeepingUnits()
-    ])
-    const result: GcpPricingListInterface[] = []
-    response.forEach((res) => {
-      res.forEach((it: any) => {
-        if (GcpPricing.isValidVmStockKeepingUnit(it)) {
-          result.push(GcpPricing.mapVmStockKeepingUnit(it))
-        } else if (GcpPricing.isValidDiskStockKeepingUnit(it)) {
-          result.push(GcpPricing.mapDiskStockKeepingUnit(it))
-        } else if (GcpPricing.isValidEipStockKeepingUnit(it)) {
-          result.push(GcpPricing.mapEipStockKeepingUnit(it))
-        } else if (GcpPricing.isValidLbStockKeepingUnit(it)) {
-          result.push(GcpPricing.mapLbStockKeepingUnit(it))
-        } else if (GcpPricing.isValidSqlStockKeepingUnit(it)) {
-          result.push(GcpPricing.mapSqlStockKeepingUnit(it))
-        }
+  async getPricingList (): Promise<PricingListType[]> {
+    const result: GcpPricingListType[] = []
+    try {
+      const response = await Promise.all([
+        this.collectComputingStockKeepingUnits(),
+        this.collectSqlStockKeepingUnits()
+      ])
+      response.forEach((res) => {
+        res.forEach((it: any) => {
+          if (GcpPricing.isValidVmStockKeepingUnit(it)) {
+            result.push(GcpPricing.mapVmStockKeepingUnit(it))
+          } else if (GcpPricing.isValidDiskStockKeepingUnit(it)) {
+            result.push(GcpPricing.mapDiskStockKeepingUnit(it))
+          } else if (GcpPricing.isValidEipStockKeepingUnit(it)) {
+            result.push(GcpPricing.mapEipStockKeepingUnit(it))
+          } else if (GcpPricing.isValidLbStockKeepingUnit(it)) {
+            result.push(GcpPricing.mapLbStockKeepingUnit(it))
+          } else if (GcpPricing.isValidSqlStockKeepingUnit(it)) {
+            result.push(GcpPricing.mapSqlStockKeepingUnit(it))
+          }
+        })
       })
-    })
+    } catch (e) {}
     return result
   }
 
@@ -146,7 +148,7 @@ export class GcpPricing implements PricingInterface {
       it.category?.usageType === 'OnDemand'
   }
 
-  private static mapVmStockKeepingUnit (it: any): GcpPricingListInterface {
+  private static mapVmStockKeepingUnit (it: any): GcpPricingListType {
     let key = GcpPricing.VM_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     if (key.split(/^Nvidia Tesla (.*) GPU running$/g).length > 1) {
       key = 'gpu_' + key.split(/^Nvidia Tesla (.*) GPU running$/g)[1]
@@ -170,7 +172,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapDiskStockKeepingUnit (it: any): GcpPricingListInterface {
+  private static mapDiskStockKeepingUnit (it: any): GcpPricingListType {
     const key = GcpPricing.DISKS_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     let price: number | undefined
     if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
@@ -186,7 +188,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapEipStockKeepingUnit (it: any): GcpPricingListInterface {
+  private static mapEipStockKeepingUnit (it: any): GcpPricingListType {
     const extraRegions = []
     const key = GcpPricing.EIP_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     if (it.description === 'Static Ip Charge') {
@@ -211,7 +213,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapLbStockKeepingUnit (it: any): GcpPricingListInterface {
+  private static mapLbStockKeepingUnit (it: any): GcpPricingListType {
     let key = GcpPricing.LB_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     if (it.description === 'HTTP Load Balancing: Global Forwarding Rule Minimum Service Charge') {
       key = 'global'
@@ -234,7 +236,7 @@ export class GcpPricing implements PricingInterface {
     }
   }
 
-  private static mapSqlStockKeepingUnit (it: any): GcpPricingListInterface {
+  private static mapSqlStockKeepingUnit (it: any): GcpPricingListType {
     const key = GcpPricing.SQL_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     let price: number | undefined
     if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {

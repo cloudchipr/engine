@@ -17,6 +17,12 @@ export * from './adapters/aws/aws-sdk-engine-adapter'
 export * from './adapters/aws/aws-configuration'
 export * from './adapters/engine-interface'
 
+export * from './adapters/gcp/gcp-pricing'
+export * from './adapters/pricing-interface'
+export * from './adapters/caching-interface'
+
+export * from './domain/types/common/caching-type'
+export * from './domain/types/common/pricing-list-type'
 export * from './domain/types/aws/ebs'
 export * from './domain/types/aws/ec2'
 export * from './domain/types/aws/elb'

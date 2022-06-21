@@ -1,7 +1,7 @@
-import { PricingListInterface } from '../domain/interfaces/pricing-list-interface'
+import { CachingType } from '../domain/types/common/caching-type'
 
 export interface CachingInterface {
-  get (key: string): Promise<PricingListInterface[]>
+  get (key: string): Promise<CachingType>
 
-  set (key: string, list: PricingListInterface[]): Promise<void>
+  set (key: string, list: CachingType): Promise<void>
 }
