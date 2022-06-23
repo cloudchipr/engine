@@ -20,6 +20,8 @@ import moment from 'moment'
 import { MetricDetails } from '../../../domain/metric-details'
 import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { AwsApiError } from '../../../exceptions/aws-api-error'
+import { AwsSubCommand } from '../../../aws-sub-command'
 
 export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
   private readonly ENGINE_WHITELIST = [
@@ -39,13 +41,27 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     'sqlserver-web'
   ]
 
-  getCollectCommands (region: string): any[] {
-    const commands = []
-    commands.push(this.getClient(region).send(AwsRdsClient.getDescribeDBInstancesCommand()))
-    return commands
+  async collectAll (regions: string[]): Promise<Response<Rds>> {
+    let data: Rds[] = []
+    const errors: any[] = []
+    try {
+      const promises: any[] = []
+      for (const region of regions) {
+        promises.push(this.getClient(region).send(AwsRdsClient.getDescribeDBInstancesCommand()))
+      }
+      const response: DescribeDBInstancesCommandOutput[] = await Promise.all(promises)
+      data = this.formatCollectResponse(response)
+      await Promise.all([
+        this.putAdditionalData(data),
+        this.awsPriceCalculator.putRdsPrices(data)
+      ])
+    } catch (e) {
+      errors.push(new AwsApiError(AwsSubCommand.RDS_SUBCOMMAND, e))
+    }
+    return new Response<Rds>(data, errors)
   }
 
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+  clean (request: CleanRequestResourceInterface): Promise<any> {
     return new Promise((resolve, reject) => {
       this.getClient(request.region).send(AwsRdsClient.getDeleteDBInstanceCommand(request.id))
         .then(() => resolve(request.id))
@@ -56,8 +72,8 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     })
   }
 
-  async formatCollectResponse<Type> (response: DescribeDBInstancesCommandOutput[]): Promise<Response<Type>> {
-    const data: any[] = []
+  private formatCollectResponse (response: DescribeDBInstancesCommandOutput[]): Rds[] {
+    const data: Rds[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.DBInstances) || res.DBInstances.length === 0) {
         return
@@ -82,25 +98,21 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
         ))
       })
     })
-    await this.awsPriceCalculator.putRdsPrices(data)
-    return new Response<Type>(data)
+    return data
   }
 
-  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+  private async putAdditionalData (data: Rds[]): Promise<void> {
     const promises: any[] = []
-    // @ts-ignore
-    response.items.forEach((rds: Rds) => {
+    data.forEach((rds: Rds) => {
       promises.push(rds.id)
       promises.push(this.getCloudWatchClient(rds.getRegion()).send(AwsRdsClient.getMetricStatisticsCommand(rds.id, 'DatabaseConnections', 'Count')))
     })
     const metricsResponse = await Promise.all(promises)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
-    // @ts-ignore
-    response.items.map((rds: Rds) => {
+    data.map((rds: Rds) => {
       rds.metrics = formattedMetrics[rds.id]
       return rds
     })
-    return response
   }
 
   private formatMetricsResponse (metricsResponse: any[]): any {

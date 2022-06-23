@@ -10,15 +10,28 @@ import { Response } from '../../../responses/response'
 import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { AwsApiError } from '../../../exceptions/aws-api-error'
+import { AwsSubCommand } from '../../../aws-sub-command'
 
 export default class AwsEbsClient extends AwsBaseClient implements AwsClientInterface {
-  getCollectCommands (region: string): any[] {
-    return [
-      this.getClient(region).send(AwsEbsClient.getDescribeVolumesCommand())
-    ]
+  async collectAll (regions: string[]): Promise<Response<Ebs>> {
+    let data: Ebs[] = []
+    const errors: any[] = []
+    try {
+      const promises: any[] = []
+      for (const region of regions) {
+        promises.push(this.getClient(region).send(AwsEbsClient.getDescribeVolumesCommand()))
+      }
+      const response: DescribeVolumesCommandOutput[] = await Promise.all(promises)
+      data = this.formatCollectResponse(response)
+      await this.awsPriceCalculator.putEbsPrices(data)
+    } catch (e) {
+      errors.push(new AwsApiError(AwsSubCommand.EBS_SUBCOMMAND, e))
+    }
+    return new Response<Ebs>(data, errors)
   }
 
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+  clean (request: CleanRequestResourceInterface): Promise<any> {
     return new Promise((resolve, reject) => {
       this.getClient(request.region).send(AwsEbsClient.getDeleteVolumeCommand(request.id))
         .then(() => resolve(request.id))
@@ -29,8 +42,8 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
     })
   }
 
-  async formatCollectResponse<Type> (response: DescribeVolumesCommandOutput[]): Promise<Response<Type>> {
-    const data: any[] = []
+  private formatCollectResponse (response: DescribeVolumesCommandOutput[]): Ebs[] {
+    const data: Ebs[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Volumes) || res.Volumes.length === 0) {
         return
@@ -49,8 +62,7 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
         ))
       })
     })
-    await this.awsPriceCalculator.putEbsPrices(data)
-    return new Response<Type>(data)
+    return data
   }
 
   private getClient (region: string): EC2Client {

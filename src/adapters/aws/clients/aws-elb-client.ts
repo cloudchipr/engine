@@ -25,16 +25,42 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanAwsElbMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { AwsApiError } from '../../../exceptions/aws-api-error'
+import { AwsSubCommand } from '../../../aws-sub-command'
+
+interface LoadBalancersGroupedByRegion {
+  loadBalancerNameByRegion: {[key: string]: string[]}
+  loadBalancerArnByRegion: {[key: string]: string[]}
+}
+
+interface TagsAndTargetGroups {
+  tags: {[key: string]: {[key: string]: string}[]}
+  loadBalancerArns: {[key: string]: string[]}
+}
 
 export default class AwsElbClient extends AwsBaseClient implements AwsClientInterface {
-  getCollectCommands (region: string): any[] {
-    const commands = []
-    commands.push(this.getV3Client(region).send(AwsElbClient.getV3Command()))
-    commands.push(this.getV2Client(region).send(AwsElbClient.getV2Command()))
-    return commands
+  async collectAll (regions: string[]): Promise<Response<Elb>> {
+    let data: Elb[] = []
+    const errors: any[] = []
+    try {
+      const promises: any[] = []
+      for (const region of regions) {
+        promises.push(this.getV3Client(region).send(AwsElbClient.getV3Command()))
+        promises.push(this.getV2Client(region).send(AwsElbClient.getV2Command()))
+      }
+      const response: V3CommandOutput[] | V2CommandOutput[] = await Promise.all(promises)
+      data = this.formatCollectResponse(response)
+      await Promise.all([
+        this.putAdditionalData(data),
+        this.awsPriceCalculator.putElbPrices(data)
+      ])
+    } catch (e) {
+      errors.push(new AwsApiError(AwsSubCommand.ELB_SUBCOMMAND, e))
+    }
+    return new Response<Elb>(data, errors)
   }
 
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+  clean (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanAwsElbMetadataInterface
     if (metadata.type === 'classic') {
       return new Promise((resolve, reject) => {
@@ -65,8 +91,8 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return metadata.type === 'classic' || (['network', 'application'].includes(metadata.type) && metadata.loadBalancerArn !== undefined)
   }
 
-  async formatCollectResponse<Type> (response: V3CommandOutput[] | V2CommandOutput[]): Promise<Response<Type>> {
-    let data: any[] = []
+  private formatCollectResponse (response: V3CommandOutput[] | V2CommandOutput[]): Elb[] {
+    let data: Elb[] = []
     response.forEach((res) => {
       if (AwsElbClient.instanceOfV3CommandOutput(res)) {
         data = [...data, ...this.formatV3Response(res)]
@@ -74,69 +100,14 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
         data = [...data, ...this.formatV2Response(res)]
       }
     })
-    await this.awsPriceCalculator.putElbPrices(data)
-    return new Response<Type>(data)
+    return data
   }
 
-  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
-    const { loadBalancerNameByRegion, loadBalancerArnByRegion } = this.groupLoadBalancersByRegion(response)
-    let promises: any[] = []
-    // Get tags for network and application LBs
-    Object.keys(loadBalancerNameByRegion).forEach((region) => {
-      // split into chunks
-      for (let i = 0; i < loadBalancerNameByRegion[region].length; i += 20) {
-        const chunk = loadBalancerNameByRegion[region].slice(i, i + 20)
-        promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(chunk)))
-      }
-    })
-    Object.keys(loadBalancerArnByRegion).forEach((region) => {
-      // split into chunks
-      for (let i = 0; i < loadBalancerArnByRegion[region].length; i += 20) {
-        const chunk = loadBalancerArnByRegion[region].slice(i, i + 20)
-        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(chunk)))
-      }
-    })
-    // Get target groups for network and application LBs
-    Object.keys(loadBalancerArnByRegion).forEach((region) => {
-      promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetGroupsCommand()))
-    })
-    const tagsAndTargetGroupsResponse = await Promise.all(promises)
-    const formattedTagsAndTargetGroupsResponse = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
-    const targetGroupsArnByRegion = this.groupTargetGroupArnsByRegion(loadBalancerArnByRegion, formattedTagsAndTargetGroupsResponse.loadBalancerArns)
-
-    // Get target health for network and application LBs
-    promises = []
-    Object.keys(targetGroupsArnByRegion).forEach((region) => {
-      targetGroupsArnByRegion[region].forEach((targetGroupArn: string) => {
-        promises.push(targetGroupArn)
-        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetHealthCommand(targetGroupArn)))
-      })
-    })
-    const targetHealthResponse = await Promise.all(promises)
-    const formattedTargetHealthResponse = this.formatTargetHealthResponse(targetHealthResponse)
-
-    // @ts-ignore
-    response.items.map((elb: Elb) => {
-      elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
-      elb.tags = TagsHelper.formatTags(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
-      if (elb.hasAttachments === undefined) {
-        let hasAttachments = false
-        const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
-        arns.forEach((arn: string) => {
-          hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
-        })
-        elb.hasAttachments = hasAttachments
-      }
-      return elb
-    })
-    return response
-  }
-
-  private formatV3Response (response: V3CommandOutput): any[] {
+  private formatV3Response (response: V3CommandOutput): Elb[] {
     if (!Array.isArray(response.LoadBalancerDescriptions) || response.LoadBalancerDescriptions.length === 0) {
       return []
     }
-    const data: any[] = []
+    const data: Elb[] = []
     response.LoadBalancerDescriptions.forEach((lb) => {
       data.push(new Elb(
         lb.LoadBalancerName || '',
@@ -151,11 +122,11 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return data
   }
 
-  private formatV2Response (response: V2CommandOutput): any[] {
+  private formatV2Response (response: V2CommandOutput): Elb[] {
     if (!Array.isArray(response.LoadBalancers) || response.LoadBalancers.length === 0) {
       return []
     }
-    const data: any[] = []
+    const data: Elb[] = []
     response.LoadBalancers.forEach((lb) => {
       data.push(new Elb(
         lb.LoadBalancerName || '',
@@ -170,8 +141,61 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return data
   }
 
-  private formatTagsAndTargetGroupsResponse (response: any[]): any {
-    const data: any = {
+  private async putAdditionalData (data: Elb[]): Promise<void> {
+    const { loadBalancerNameByRegion, loadBalancerArnByRegion } = this.groupLoadBalancersByRegion(data)
+    let promises: any[] = []
+    // Get tags for classic LBs
+    Object.keys(loadBalancerNameByRegion).forEach((region) => {
+      // split into chunks
+      for (let i = 0; i < loadBalancerNameByRegion[region].length; i += 20) {
+        const chunk = loadBalancerNameByRegion[region].slice(i, i + 20)
+        promises.push(this.getV3Client(region).send(AwsElbClient.getV3TagsCommand(chunk)))
+      }
+    })
+    // Get tags for network and application LBs
+    Object.keys(loadBalancerArnByRegion).forEach((region) => {
+      // split into chunks
+      for (let i = 0; i < loadBalancerArnByRegion[region].length; i += 20) {
+        const chunk = loadBalancerArnByRegion[region].slice(i, i + 20)
+        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TagsCommand(chunk)))
+      }
+    })
+    // Get target groups for network and application LBs
+    Object.keys(loadBalancerArnByRegion).forEach((region) => {
+      promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetGroupsCommand()))
+    })
+    const tagsAndTargetGroupsResponse = await Promise.all(promises)
+    const formattedTagsAndTargetGroupsResponse: TagsAndTargetGroups = this.formatTagsAndTargetGroupsResponse(tagsAndTargetGroupsResponse)
+    const targetGroupsArnByRegion = this.groupTargetGroupArnsByRegion(loadBalancerArnByRegion, formattedTagsAndTargetGroupsResponse.loadBalancerArns)
+
+    // Get target health for network and application LBs
+    promises = []
+    Object.keys(targetGroupsArnByRegion).forEach((region) => {
+      targetGroupsArnByRegion[region].forEach((targetGroupArn: string) => {
+        promises.push(targetGroupArn)
+        promises.push(this.getV2Client(region).send(AwsElbClient.getV2TargetHealthCommand(targetGroupArn)))
+      })
+    })
+    const targetHealthResponse = await Promise.all(promises)
+    const formattedTargetHealthResponse = this.formatTargetHealthResponse(targetHealthResponse)
+
+    data.map((elb: Elb) => {
+      elb.nameTag = TagsHelper.getNameTagValue(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
+      elb.tags = TagsHelper.formatTags(formattedTagsAndTargetGroupsResponse.tags[elb.getIdentifierForNameTag()] ?? [])
+      if (elb.hasAttachments === undefined) {
+        let hasAttachments = false
+        const arns = formattedTagsAndTargetGroupsResponse.loadBalancerArns[(elb.loadBalancerArn ?? '')] ?? []
+        arns.forEach((arn: string) => {
+          hasAttachments = hasAttachments || (arn in formattedTargetHealthResponse && formattedTargetHealthResponse[arn])
+        })
+        elb.hasAttachments = hasAttachments
+      }
+      return elb
+    })
+  }
+
+  private formatTagsAndTargetGroupsResponse (response: (V3TagsCommandOutput | V2TagsCommandOutput | V2TargetGroupsCommandOutput)[]): TagsAndTargetGroups {
+    const data: TagsAndTargetGroups = {
       tags: {},
       loadBalancerArns: {}
     }
@@ -182,15 +206,15 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
             if (!data.loadBalancerArns[l]) {
               data.loadBalancerArns[l] = []
             }
-            data.loadBalancerArns[l].push(t.TargetGroupArn)
+            data.loadBalancerArns[l].push(t.TargetGroupArn ?? '')
           })
         })
       } else {
         r.TagDescriptions?.forEach((t) => {
           if ('LoadBalancerName' in t && t.LoadBalancerName) {
-            data.tags[t.LoadBalancerName] = t.Tags
+            data.tags[t.LoadBalancerName] = t.Tags?.map((t) => { return { Key: t.Key ?? '', Value: t.Value ?? '' } }) ?? []
           } else if ('ResourceArn' in t && t.ResourceArn) {
-            data.tags[t.ResourceArn] = t.Tags
+            data.tags[t.ResourceArn] = t.Tags?.map((t) => { return { Key: t.Key ?? '', Value: t.Value ?? '' } }) ?? []
           }
         })
       }
@@ -211,30 +235,29 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
     return data
   }
 
-  private groupLoadBalancersByRegion<Type> (response: Response<Type>): any {
-    const data: any = {
+  private groupLoadBalancersByRegion (data: Elb[]): LoadBalancersGroupedByRegion {
+    const result: LoadBalancersGroupedByRegion = {
       loadBalancerNameByRegion: {},
       loadBalancerArnByRegion: {}
     }
-    // @ts-ignore
-    response.items.forEach((elb: Elb) => {
+    data.forEach((elb: Elb) => {
       if (elb.type === 'classic') {
-        if (!(elb.getRegion() in data.loadBalancerNameByRegion)) {
-          data.loadBalancerNameByRegion[elb.getRegion()] = []
+        if (!(elb.getRegion() in result.loadBalancerNameByRegion)) {
+          result.loadBalancerNameByRegion[elb.getRegion()] = []
         }
-        data.loadBalancerNameByRegion[elb.getRegion()].push(elb.loadBalancerName)
+        result.loadBalancerNameByRegion[elb.getRegion()].push(elb.loadBalancerName)
       } else {
-        if (!(elb.getRegion() in data.loadBalancerArnByRegion)) {
-          data.loadBalancerArnByRegion[elb.getRegion()] = []
+        if (!(elb.getRegion() in result.loadBalancerArnByRegion)) {
+          result.loadBalancerArnByRegion[elb.getRegion()] = []
         }
-        data.loadBalancerArnByRegion[elb.getRegion()].push(elb.loadBalancerArn)
+        result.loadBalancerArnByRegion[elb.getRegion()].push(elb.loadBalancerArn ?? '')
       }
     })
-    return data
+    return result
   }
 
-  private groupTargetGroupArnsByRegion (loadBalancerArnByRegion: any, loadBalancerArn: any): any {
-    const data: any = {}
+  private groupTargetGroupArnsByRegion (loadBalancerArnByRegion: {[key: string]: string[]}, loadBalancerArn: {[key: string]: string[]}): {[key: string]: string[]} {
+    const data: {[key: string]: string[]} = {}
     Object.keys(loadBalancerArnByRegion).forEach((region) => {
       loadBalancerArnByRegion[region].forEach((arn: string) => {
         if (!(region in data)) {

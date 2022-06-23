@@ -20,15 +20,31 @@ import moment from 'moment'
 import { AwsEc2Metric } from '../../../domain/aws-ec2-metric'
 import { MetricDetails } from '../../../domain/metric-details'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { AwsApiError } from '../../../exceptions/aws-api-error'
+import { AwsSubCommand } from '../../../aws-sub-command'
 
 export default class AwsEc2Client extends AwsBaseClient implements AwsClientInterface {
-  getCollectCommands (region: string): any[] {
-    const commands = []
-    commands.push(this.getClient(region).send(AwsEc2Client.getDescribeInstancesCommand()))
-    return commands
+  async collectAll (regions: string[]): Promise<Response<Ec2>> {
+    let data: Ec2[] = []
+    const errors: any[] = []
+    try {
+      const promises: any[] = []
+      for (const region of regions) {
+        promises.push(this.getClient(region).send(AwsEc2Client.getDescribeInstancesCommand()))
+      }
+      const response: DescribeInstancesCommandOutput[] = await Promise.all(promises)
+      data = this.formatCollectResponse(response)
+      await Promise.all([
+        this.putAdditionalData(data),
+        this.awsPriceCalculator.putEc2Prices(data)
+      ])
+    } catch (e) {
+      errors.push(new AwsApiError(AwsSubCommand.EC2_SUBCOMMAND, e))
+    }
+    return new Response<Ec2>(data, errors)
   }
 
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+  clean (request: CleanRequestResourceInterface): Promise<any> {
     return new Promise((resolve, reject) => {
       this.getClient(request.region).send(AwsEc2Client.getTerminateInstancesCommand(request.id))
         .then(() => resolve(request.id))
@@ -39,8 +55,8 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     })
   }
 
-  async formatCollectResponse<Type> (response: DescribeInstancesCommandOutput[]): Promise<Response<Type>> {
-    const data: any[] = []
+  private formatCollectResponse (response: DescribeInstancesCommandOutput[]): Ec2[] {
+    const data: Ec2[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Reservations) || res.Reservations.length === 0) {
         return
@@ -70,14 +86,12 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
         })
       })
     })
-    await this.awsPriceCalculator.putEc2Prices(data)
-    return new Response<Type>(data)
+    return data
   }
 
-  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
+  private async putAdditionalData (data: Ec2[]): Promise<void> {
     const promises: any[] = []
-    // @ts-ignore
-    response.items.forEach((ec2: Ec2) => {
+    data.forEach((ec2: Ec2) => {
       promises.push(ec2.id)
       promises.push(this.getCloudWatchClient(ec2.getRegion()).send(AwsEc2Client.getMetricStatisticsCommand(ec2.id, 'CPUUtilization', 'Percent')))
       promises.push(this.getCloudWatchClient(ec2.getRegion()).send(AwsEc2Client.getMetricStatisticsCommand(ec2.id, 'NetworkIn', 'Bytes')))
@@ -85,12 +99,10 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
     })
     const metricsResponse = await Promise.all(promises)
     const formattedMetrics = this.formatMetricsResponse(metricsResponse)
-    // @ts-ignore
-    response.items.map((ec2: Ec2) => {
+    data.map((ec2: Ec2) => {
       ec2.metrics = formattedMetrics[ec2.id]
       return ec2
     })
-    return response
   }
 
   private formatMetricsResponse (metricsResponse: any[]): any {
