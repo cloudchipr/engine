@@ -10,15 +10,28 @@ import AwsBaseClient from './aws-base-client'
 import { AwsClientInterface } from './aws-client-interface'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { CleanAwsEipMetadataInterface } from '../../../request/clean/clean-request-resource-metadata-interface'
+import { AwsApiError } from '../../../exceptions/aws-api-error'
+import { AwsSubCommand } from '../../../aws-sub-command'
 
 export default class AwsEipClient extends AwsBaseClient implements AwsClientInterface {
-  getCollectCommands (region: string): any[] {
-    const commands = []
-    commands.push(this.getClient(region).send(AwsEipClient.getDescribeAddressesCommand()))
-    return commands
+  async collectAll (regions: string[]): Promise<Response<Eip>> {
+    let data: Eip[] = []
+    const errors: any[] = []
+    try {
+      const promises: any[] = []
+      for (const region of regions) {
+        promises.push(this.getClient(region).send(AwsEipClient.getDescribeAddressesCommand()))
+      }
+      const response: DescribeAddressesCommandOutput[] = await Promise.all(promises)
+      data = this.formatCollectResponse(response)
+      await this.awsPriceCalculator.putEipPrices(data)
+    } catch (e) {
+      errors.push(new AwsApiError(AwsSubCommand.EIP_SUBCOMMAND, e))
+    }
+    return new Response<Eip>(data, errors)
   }
 
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any> {
+  clean (request: CleanRequestResourceInterface): Promise<any> {
     return new Promise((resolve, reject) => {
       const metadata = request.metadata as CleanAwsEipMetadataInterface
       const id = metadata.domain === 'classic' ? request.id : metadata.allocationId
@@ -40,8 +53,8 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
     return metadata.domain === 'classic' || (metadata.domain === 'vpc' && metadata.allocationId !== undefined)
   }
 
-  async formatCollectResponse<Type> (response: DescribeAddressesCommandOutput[]): Promise<Response<Type>> {
-    const data: any[] = []
+  private formatCollectResponse (response: DescribeAddressesCommandOutput[]): Eip[] {
+    const data: Eip[] = []
     response.forEach((res) => {
       if (!Array.isArray(res.Addresses) || res.Addresses.length === 0) {
         return
@@ -59,8 +72,7 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
         ))
       })
     })
-    await this.awsPriceCalculator.putEipPrices(data)
-    return new Response<Type>(data)
+    return data
   }
 
   private getClient (region: string): EC2Client {

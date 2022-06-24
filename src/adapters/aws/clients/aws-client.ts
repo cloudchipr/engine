@@ -9,45 +9,46 @@ import AwsRdsClient from './aws-rds-client'
 import { AwsSubCommand } from '../../../aws-sub-command'
 import { CleanResponse } from '../../../responses/clean-response'
 import { CleanFailureResponse } from '../../../responses/clean-failure-response'
-import { EngineRequest } from '../../../engine-request'
 import { CleanRequestInterface } from '../../../request/clean/clean-request-interface'
 import { Code } from '../../../responses/code'
+import { Ebs } from '../../../domain/types/aws/ebs'
+import { Ec2 } from '../../../domain/types/aws/ec2'
+import { Eip } from '../../../domain/types/aws/eip'
+import { Rds } from '../../../domain/types/aws/rds'
+import { Elb } from '../../../domain/types/aws/elb'
 
 export default class AwsClient {
-  private awsClientInstance: AwsClientInterface;
+  constructor (
+    private readonly credentialProvider: CredentialProvider
+  ) {}
 
-  constructor (subcommand: string, credentialProvider: CredentialProvider) {
-    this.awsClientInstance = AwsClient.getAwsClient(subcommand, credentialProvider)
-  }
-
-  async collectResources<Type> (request: EngineRequest, withAdditionalData: boolean = true): Promise<Response<Type>> {
-    let promises: any[] = []
-    for (const region of request.parameter.regions) {
-      promises = [...promises, ...this.awsClientInstance.getCollectCommands(region)]
-    }
-    const response = await Promise.all(promises)
-    if (withAdditionalData) {
-      const formattedResponse = await this.awsClientInstance.formatCollectResponse<Type>(response)
-      return this.awsClientInstance.getAdditionalDataForFormattedCollectResponse<Type>(formattedResponse)
-    } else {
-      return this.awsClientInstance.formatCollectResponse<Type>(response)
-    }
+  async collectResources (regions: string[]): Promise<Response<Ebs | Ec2 | Eip | Rds | Elb>[]> {
+    const responses = await Promise.all([
+      this.getAwsClient(AwsSubCommand.EC2_SUBCOMMAND).collectAll(regions),
+      this.getAwsClient(AwsSubCommand.EBS_SUBCOMMAND).collectAll(regions),
+      this.getAwsClient(AwsSubCommand.EIP_SUBCOMMAND).collectAll(regions),
+      this.getAwsClient(AwsSubCommand.ELB_SUBCOMMAND).collectAll(regions),
+      this.getAwsClient(AwsSubCommand.RDS_SUBCOMMAND).collectAll(regions)
+    ])
+    return responses as Response<Ebs | Ec2 | Eip | Rds | Elb>[]
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
-    const response = new CleanResponse(request.subCommand.getValue())
+    const subcommand = request.subCommand.getValue()
+    const client = this.getAwsClient(subcommand)
+    const response = new CleanResponse(subcommand)
     let hasRateLimitError: boolean = false
     let start = 0
     while (true) {
       const promises: any[] = []
-      const resources = request.resources.slice(start, start + this.awsClientInstance.getRateLimit())
-      start += this.awsClientInstance.getRateLimit()
+      const resources = request.resources.slice(start, start + client.getRateLimit())
+      start += client.getRateLimit()
       if (resources.length === 0) {
         break
       }
       for (const resource of resources) {
-        if (this.awsClientInstance.isCleanRequestValid(resource)) {
-          promises.push(this.awsClientInstance.getCleanCommands(resource))
+        if (client.isCleanRequestValid(resource)) {
+          promises.push(client.clean(resource))
         } else {
           response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided', 'InvalidData'))
         }
@@ -75,18 +76,18 @@ export default class AwsClient {
     return response
   }
 
-  private static getAwsClient (subcommand: string, credentialProvider: CredentialProvider): AwsClientInterface {
+  private getAwsClient (subcommand: string): AwsClientInterface {
     switch (subcommand) {
       case AwsSubCommand.EC2_SUBCOMMAND:
-        return new AwsEc2Client(credentialProvider)
+        return new AwsEc2Client(this.credentialProvider)
       case AwsSubCommand.EBS_SUBCOMMAND:
-        return new AwsEbsClient(credentialProvider)
+        return new AwsEbsClient(this.credentialProvider)
       case AwsSubCommand.ELB_SUBCOMMAND:
-        return new AwsElbClient(credentialProvider)
+        return new AwsElbClient(this.credentialProvider)
       case AwsSubCommand.EIP_SUBCOMMAND:
-        return new AwsEipClient(credentialProvider)
+        return new AwsEipClient(this.credentialProvider)
       case AwsSubCommand.RDS_SUBCOMMAND:
-        return new AwsRdsClient(credentialProvider)
+        return new AwsRdsClient(this.credentialProvider)
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }

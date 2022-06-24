@@ -7,6 +7,11 @@ import { AWSConfiguration } from './aws-configuration'
 import AwsClient from './clients/aws-client'
 import { CleanResponse } from '../../responses/clean-response'
 import { CleanRequestInterface } from '../../request/clean/clean-request-interface'
+import { Ebs } from '../../domain/types/aws/ebs'
+import { Ec2 } from '../../domain/types/aws/ec2'
+import { Eip } from '../../domain/types/aws/eip'
+import { Rds } from '../../domain/types/aws/rds'
+import { Elb } from '../../domain/types/aws/elb'
 
 export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly credentials: CredentialProvider
@@ -15,13 +20,18 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
       this.credentials = awsConfiguration?.credentialProvider ?? fromIni()
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async execute (request: EngineRequest): Promise<Response<Type>> {
-      const awsClient = new AwsClient(request.subCommand.getValue(), this.credentials)
-      return awsClient.collectResources<Type>(request)
+      return new Response<Type>([])
     }
 
-    clean (request: CleanRequestInterface): Promise<CleanResponse> {
-      const awsClient = new AwsClient(request.subCommand.getValue(), this.credentials)
+    async collectAll (regions: string[]): Promise<Response<Ebs | Ec2 | Eip | Rds | Elb>[]> {
+      const awsClient = new AwsClient(this.credentials)
+      return awsClient.collectResources(regions)
+    }
+
+    async clean (request: CleanRequestInterface): Promise<CleanResponse> {
+      const awsClient = new AwsClient(this.credentials)
       return awsClient.cleanResources(request)
     }
 }

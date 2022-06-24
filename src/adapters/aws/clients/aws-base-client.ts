@@ -1,5 +1,4 @@
 import { CredentialProvider } from '@aws-sdk/types'
-import { Response } from '../../../responses/response'
 import AwsPriceCalculator from '../aws-price-calculator'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 
@@ -13,11 +12,7 @@ export default class AwsBaseClient {
   }
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
-    return Boolean(request.id)
-  }
-
-  async getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>> {
-    return response
+    return !!request.id
   }
 
   getRateLimit (): number {

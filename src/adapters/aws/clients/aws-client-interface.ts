@@ -1,17 +1,17 @@
 import { Response } from '../../../responses/response'
-import { AwsClientCommandOutputTypeType } from '../interfaces'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
+import { Ebs } from '../../../domain/types/aws/ebs'
+import { Ec2 } from '../../../domain/types/aws/ec2'
+import { Eip } from '../../../domain/types/aws/eip'
+import { Rds } from '../../../domain/types/aws/rds'
+import { Elb } from '../../../domain/types/aws/elb'
 
 export interface AwsClientInterface {
-  getCollectCommands (region: string): any[]
+  collectAll (regions: string[]): Promise<Response<Ebs | Ec2 | Eip | Rds | Elb>>
 
-  getCleanCommands (request: CleanRequestResourceInterface): Promise<any>
+  clean (request: CleanRequestResourceInterface): Promise<any>
 
   isCleanRequestValid (request: CleanRequestResourceInterface): boolean
-
-  formatCollectResponse<Type> (response: AwsClientCommandOutputTypeType): Promise<Response<Type>>
-
-  getAdditionalDataForFormattedCollectResponse<Type> (response: Response<Type>): Promise<Response<Type>>
 
   getRateLimit (): number
 }
