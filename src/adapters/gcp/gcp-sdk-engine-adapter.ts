@@ -4,14 +4,14 @@ import { EngineInterface } from '../engine-interface'
 import { CleanRequestInterface } from '../../request/clean/clean-request-interface'
 import { CleanResponse } from '../../responses/clean-response'
 import { GcpClient } from './clients/gcp-client'
-import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
 import { CachingInterface } from '../caching-interface'
 import { PricingInterface } from '../pricing-interface'
+import { BaseExternalAccountClient } from 'google-auth-library'
 
 export class GcpSdkEngineAdapter<Type> implements EngineInterface<Type> {
-  private readonly authClient: AuthClient
+  private readonly authClient: BaseExternalAccountClient
 
-  constructor (authClient: AuthClient) {
+  constructor (authClient: BaseExternalAccountClient) {
     this.authClient = authClient
   }
 

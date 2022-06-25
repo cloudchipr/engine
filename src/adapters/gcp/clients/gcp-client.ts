@@ -15,15 +15,17 @@ import { Eip } from '../../../domain/types/gcp/eip'
 import { GcpSqlClient } from './gcp-sql-client'
 import { Sql } from '../../../domain/types/gcp/sql'
 import { GcpSubCommand } from '../gcp-sub-command'
-import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
 import { CachingInterface } from '../../caching-interface'
 import { PricingInterface } from '../../pricing-interface'
+import { BaseExternalAccountClient } from 'google-auth-library'
+import { GcpClientInterface } from './gcp-client-interface'
+import { GcpTargetPoolClient, TargetPool } from './gcp-target-pool-client'
 
 export class GcpClient {
-  protected readonly authClient: AuthClient
+  protected readonly authClient: BaseExternalAccountClient
   protected readonly projectId: string
 
-  constructor (authClient: AuthClient, projectId: string) {
+  constructor (authClient: BaseExternalAccountClient, projectId: string) {
     this.authClient = authClient
     this.projectId = projectId
   }
@@ -34,82 +36,34 @@ export class GcpClient {
   ): Promise<Response<Type>[]> {
     // get all needed resources
     const responses = await Promise.all([
-      GcpDisksClient.collectAll(this.authClient, this.projectId),
-      GcpVmClient.collectAll(this.authClient, this.projectId),
-      GcpLbClient.collectAll(this.authClient, this.projectId),
-      GcpEipClient.collectAll(this.authClient, this.projectId),
-      GcpSqlClient.collectAll(this.authClient, this.projectId),
-      GcpLbClient.collectAllTargetPool(this.authClient, this.projectId),
+      this.getClient(GcpSubCommand.VM_SUBCOMMAND).collectAll(),
+      this.getClient(GcpSubCommand.DISKS_SUBCOMMAND).collectAll(),
+      this.getClient(GcpSubCommand.EIP_SUBCOMMAND).collectAll(),
+      this.getClient(GcpSubCommand.SQL_SUBCOMMAND).collectAll(),
+      this.getClient(GcpSubCommand.LB_SUBCOMMAND).collectAll(),
+      GcpTargetPoolClient.collectAll(this.authClient, this.projectId),
       GcpCatalogClient.collectAllStockKeepingUnits(this.authClient, this.projectId, pricingFallbackInterface, pricingCachingInterface),
-      // get vm metrics
-      GcpVmClient.getMetricsCpuMax(this.authClient, this.projectId),
-      GcpVmClient.getMetricsCpuMin(this.authClient, this.projectId),
-      GcpVmClient.getMetricsCpuSum(this.authClient, this.projectId),
-      GcpVmClient.getMetricsCpuMean(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInMax(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInMin(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInSum(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkInMean(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMax(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMin(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutSum(this.authClient, this.projectId),
-      GcpVmClient.getMetricsNetworkOutMean(this.authClient, this.projectId),
-      // get sql metrics
-      GcpSqlClient.getMetricsConnectionsMax(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsConnectionsMin(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsConnectionsSum(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsConnectionsMean(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsMax(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsMin(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsSum(this.authClient, this.projectId),
-      GcpSqlClient.getMetricsBackendsMean(this.authClient, this.projectId)
     ])
     // set LBs attachment value
-    GcpLbClient.setAttachmentValue(responses[2].items as Lb[], responses[1].items as Vm[], responses[5])
+    GcpLbClient.setAttachmentValue(responses[4].items as Lb[], responses[0].items as Vm[], responses[5] as TargetPool)
     // calculate prices
     await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], this.authClient)
     await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], this.authClient)
     await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], this.authClient)
     await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], this.authClient)
     await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], this.authClient)
-    // format VM metrics
-    const vm = GcpVmClient.formatMetric(
-      responses[1],
-      responses[7],
-      responses[8],
-      responses[9],
-      responses[10],
-      responses[11],
-      responses[12],
-      responses[13],
-      responses[14],
-      responses[15],
-      responses[16],
-      responses[17],
-      responses[18]
-    )
-    // format SQL metrics
-    const sql = GcpSqlClient.formatMetric(
-      responses[4],
-      responses[19],
-      responses[20],
-      responses[21],
-      responses[22],
-      responses[23],
-      responses[24],
-      responses[25],
-      responses[26]
-    )
-    return [responses[0], vm, responses[2], responses[3], sql] as Response<Type>[]
+    return [responses[0], responses[1], responses[2], responses[3], responses[4]] as unknown as Response<Type>[]
   }
 
   async cleanResources (request: CleanRequestInterface): Promise<CleanResponse> {
+    const subcommand = request.subCommand.getValue()
+    const client = this.getClient(subcommand)
     const response = new CleanResponse(request.subCommand.getValue())
     const promises: any[] = []
     const ids: string[] = []
     for (const resource of request.resources) {
-      if (GcpClient.getClient(request.subCommand.getValue()).isCleanRequestValid(resource)) {
-        promises.push(GcpClient.getClient(request.subCommand.getValue()).clean(this.authClient, this.projectId, resource))
+      if (client.isCleanRequestValid(resource)) {
+        promises.push(client.clean(resource))
         ids.push(resource.id)
       } else {
         response.addFailure(new CleanFailureResponse(resource.id, 'Invalid data provided'))
@@ -126,18 +80,18 @@ export class GcpClient {
     return response
   }
 
-  private static getClient (subcommand: string) {
+  private getClient (subcommand: string): GcpClientInterface {
     switch (subcommand) {
       case GcpSubCommand.VM_SUBCOMMAND:
-        return GcpVmClient
+        return new GcpVmClient(this.authClient, this.projectId)
       case GcpSubCommand.LB_SUBCOMMAND:
-        return GcpLbClient
+        return new GcpLbClient(this.authClient, this.projectId)
       case GcpSubCommand.DISKS_SUBCOMMAND:
-        return GcpDisksClient
+        return new GcpDisksClient(this.authClient, this.projectId)
       case GcpSubCommand.EIP_SUBCOMMAND:
-        return GcpEipClient
+        return new GcpEipClient(this.authClient, this.projectId)
       case GcpSubCommand.SQL_SUBCOMMAND:
-        return GcpSqlClient
+        return new GcpSqlClient(this.authClient, this.projectId)
       default:
         throw new Error(`Client for subcommand ${subcommand} is not implemented!`)
     }
