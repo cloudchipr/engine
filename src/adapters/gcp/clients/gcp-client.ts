@@ -47,11 +47,11 @@ export class GcpClient {
     // set LBs attachment value
     GcpLbClient.setAttachmentValue(responses[4].items as Lb[], responses[0].items as Vm[], responses[5] as TargetPool)
     // calculate prices
-    await GcpPriceCalculator.putDisksPrices(responses[0].items as Disks[], this.authClient)
-    await GcpPriceCalculator.putVmPrices(responses[1].items as Vm[], responses[0].items as Disks[], this.authClient)
-    await GcpPriceCalculator.putLbPrices(responses[2].items as Lb[], this.authClient)
-    await GcpPriceCalculator.putEipPrices(responses[3].items as Eip[], this.authClient)
-    await GcpPriceCalculator.putSqlPrices(responses[4].items as Sql[], this.authClient)
+    await GcpPriceCalculator.putDisksPrices(responses[1].items as Disks[], this.authClient)
+    await GcpPriceCalculator.putVmPrices(responses[0].items as Vm[], responses[1].items as Disks[], this.authClient)
+    await GcpPriceCalculator.putEipPrices(responses[2].items as Eip[], this.authClient)
+    await GcpPriceCalculator.putSqlPrices(responses[3].items as Sql[], this.authClient)
+    await GcpPriceCalculator.putLbPrices(responses[4].items as Lb[], this.authClient)
     return [responses[0], responses[1], responses[2], responses[3], responses[4]] as unknown as Response<Type>[]
   }
 
