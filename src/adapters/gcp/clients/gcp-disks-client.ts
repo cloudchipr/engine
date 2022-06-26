@@ -7,48 +7,61 @@ import { CleanGcpVmDisksMetadataInterface } from '../../../request/clean/clean-r
 import { google } from 'googleapis'
 import { GcpSubCommand } from '../gcp-sub-command'
 import { GcpApiError } from '../../../exceptions/gcp-api-error'
+import { GcpBaseClient } from './gcp-base-client'
+import { GcpClientInterface } from './gcp-client-interface'
 
-export class GcpDisksClient {
-  static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
-    const data: any[] = []
+export class GcpDisksClient extends GcpBaseClient implements GcpClientInterface {
+  async collectAll (): Promise<Response<Disks>> {
+    let data: any[] = []
     const errors: any[] = []
     try {
-      const result: any = await google.compute('v1').disks.aggregatedList({
-        auth,
-        project
+      const response: any = await google.compute('v1').disks.aggregatedList({
+        auth: this.authClient,
+        project: this.projectId
       })
-      Object.keys(result.data.items).forEach(key => {
-        if ('disks' in result.data.items[key] && Array.isArray(result.data.items[key].disks)) {
-          result.data.items[key].disks?.forEach((v: any) => {
-            data.push(new Disks(
-              v.name,
-              StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
-              StringHelper.splitAndGetAtIndex(v.type, '/', -1) || '',
-              (parseFloat(v.sizeGb) | 0) * 1073741824,
-              v.users?.length > 0,
-              v.status,
-              v.creationTimestamp,
-              Label.createInstances(v.labels)
-            ))
-          })
-        }
-      })
+      data = this.formatCollectResponse(response)
     } catch (e: any) {
       errors.push(new GcpApiError(GcpSubCommand.DISKS_SUBCOMMAND, e))
     }
-    return new Response<Type>(data, errors)
+    return new Response<Disks>(data, errors)
   }
 
-  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
+  async clean (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return google.compute('v1').disks.delete({ disk: request.id, zone: metadata.zone, auth, project })
+    return await google.compute('v1').disks.delete({
+      disk: request.id,
+      zone: metadata.zone,
+      auth: this.authClient,
+      project: this.projectId
+    })
   }
 
-  static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
     if (!('metadata' in request) || !request.metadata) {
       return false
     }
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
     return !!metadata.zone
+  }
+
+  private formatCollectResponse (response: any): Disks[] {
+    const data: Disks[] = []
+    Object.keys(response.data.items).forEach(key => {
+      if ('disks' in response.data.items[key] && Array.isArray(response.data.items[key].disks)) {
+        response.data.items[key].disks?.forEach((v: any) => {
+          data.push(new Disks(
+            v.name,
+            StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
+            StringHelper.splitAndGetAtIndex(v.type, '/', -1) || '',
+            (parseFloat(v.sizeGb) | 0) * 1073741824,
+            v.users?.length > 0,
+            v.status,
+            v.creationTimestamp,
+            Label.createInstances(v.labels)
+          ))
+        })
+      }
+    })
+    return data
   }
 }

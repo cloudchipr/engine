@@ -8,9 +8,11 @@ import moment from 'moment'
 import { GcpSubCommand } from '../gcp-sub-command'
 import { GcpApiError } from '../../../exceptions/gcp-api-error'
 import { MetricDetails } from '../../../domain/metric-details'
+import { GcpBaseClient } from './gcp-base-client'
+import { GcpClientInterface } from './gcp-client-interface'
 const { google } = require('googleapis')
 
-export class GcpVmClient {
+export class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
   static readonly METRIC_CPU_NAME: string = 'compute.googleapis.com/instance/cpu/utilization'
   static readonly METRIC_NETWORK_IN_NAME: string = 'compute.googleapis.com/instance/network/received_bytes_count'
   static readonly METRIC_NETWORK_OUT_NAME: string = 'compute.googleapis.com/instance/network/sent_bytes_count'
@@ -20,47 +22,51 @@ export class GcpVmClient {
     [GcpVmClient.METRIC_NETWORK_OUT_NAME]: 'networkOut'
   }
 
-  static async collectAll<Type> (auth: any, project: string): Promise<Response<Type>> {
-    const data: any[] = []
+  static readonly SERIES_ALIGNERS = {
+    MAX: 'ALIGN_MAX',
+    MIN: 'ALIGN_MIN',
+    SUM: 'ALIGN_SUM',
+    MEAN: 'ALIGN_MEAN'
+  }
+
+  async collectAll (): Promise<Response<Vm>> {
+    let data: Vm[] = []
     const errors: any[] = []
     try {
-      const result: any = await google.compute('v1').instances.aggregatedList({
-        auth,
-        project
-      })
-      Object.keys(result.data.items).forEach(key => {
-        if ('instances' in result.data.items[key] && Array.isArray(result.data.items[key].instances)) {
-          result.data.items[key].instances?.forEach((v: any) => {
-            data.push(new Vm(
-              v.id,
-              v.name,
-              StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
-              StringHelper.splitAndGetAtIndex(v.machineType, '/', -1) || '',
-              v.disks.map((d: any) => d.deviceName),
-              0, // this will be populated during price calculation
-              0, // this will be populated during price calculation
-              v.creationTimestamp,
-              undefined,
-              undefined,
-              undefined,
-              new VmMetric(),
-              Label.createInstances(v.labels)
-            ))
-          })
-        }
-      })
+      const response = await Promise.all([
+        google.compute('v1').instances.aggregatedList({ auth: this.authClient, project: this.projectId }),
+        this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.MAX),
+        this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.MIN),
+        this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.SUM),
+        this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.MEAN),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_IN_NAME, GcpVmClient.SERIES_ALIGNERS.MAX),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_IN_NAME, GcpVmClient.SERIES_ALIGNERS.MIN),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_IN_NAME, GcpVmClient.SERIES_ALIGNERS.SUM),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_IN_NAME, GcpVmClient.SERIES_ALIGNERS.MEAN),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_OUT_NAME, GcpVmClient.SERIES_ALIGNERS.MAX),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_OUT_NAME, GcpVmClient.SERIES_ALIGNERS.MIN),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_OUT_NAME, GcpVmClient.SERIES_ALIGNERS.SUM),
+        this.getMetric(GcpVmClient.METRIC_NETWORK_OUT_NAME, GcpVmClient.SERIES_ALIGNERS.MEAN)
+      ])
+      data = this.formatCollectResponse(response[0])
+      this.formatMetric(data, response.slice(1, -1))
     } catch (e: any) {
       errors.push(new GcpApiError(GcpSubCommand.VM_SUBCOMMAND, e))
     }
-    return new Response<Type>(data, errors)
+    return new Response<Vm>(data, errors)
   }
 
-  static clean (auth: any, project: string, request: CleanRequestResourceInterface): Promise<any> {
+  async clean (request: CleanRequestResourceInterface): Promise<any> {
     const metadata = request.metadata as CleanGcpVmDisksMetadataInterface
-    return google.compute('v1').instances.delete({ instance: request.id, zone: metadata.zone, auth, project })
+    return await google.compute('v1').instances.delete({
+      instance: request.id,
+      zone: metadata.zone,
+      auth: this.authClient,
+      project: this.projectId
+    })
   }
 
-  static isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
+  isCleanRequestValid (request: CleanRequestResourceInterface): boolean {
     if (!('metadata' in request) || !request.metadata) {
       return false
     }
@@ -68,56 +74,34 @@ export class GcpVmClient {
     return !!metadata.zone
   }
 
-  static async getMetricsCpuMax (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_CPU_NAME, 'ALIGN_MAX')
+  private formatCollectResponse (response: any): Vm[] {
+    const data: Vm[] = []
+    Object.keys(response.data.items).forEach(key => {
+      if ('instances' in response.data.items[key] && Array.isArray(response.data.items[key].instances)) {
+        response.data.items[key].instances?.forEach((v: any) => {
+          data.push(new Vm(
+            v.id,
+            v.name,
+            StringHelper.splitAndGetAtIndex(v.zone, '/', -1) || '',
+            StringHelper.splitAndGetAtIndex(v.machineType, '/', -1) || '',
+            v.disks.map((d: any) => d.deviceName),
+            0, // this will be populated during price calculation
+            0, // this will be populated during price calculation
+            v.creationTimestamp,
+            undefined,
+            undefined,
+            undefined,
+            new VmMetric(),
+            Label.createInstances(v.labels)
+          ))
+        })
+      }
+    })
+    return data
   }
 
-  static async getMetricsCpuMin (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_CPU_NAME, 'ALIGN_MIN')
-  }
-
-  static async getMetricsCpuSum (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_CPU_NAME, 'ALIGN_SUM')
-  }
-
-  static async getMetricsCpuMean (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_CPU_NAME, 'ALIGN_MEAN')
-  }
-
-  static async getMetricsNetworkInMax (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, 'ALIGN_MAX')
-  }
-
-  static async getMetricsNetworkInMin (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, 'ALIGN_MIN')
-  }
-
-  static async getMetricsNetworkInSum (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, 'ALIGN_SUM')
-  }
-
-  static async getMetricsNetworkInMean (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_IN_NAME, 'ALIGN_MEAN')
-  }
-
-  static async getMetricsNetworkOutMax (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, 'ALIGN_MAX')
-  }
-
-  static async getMetricsNetworkOutMin (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, 'ALIGN_MIN')
-  }
-
-  static async getMetricsNetworkOutSum (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, 'ALIGN_SUM')
-  }
-
-  static async getMetricsNetworkOutMean (auth: any, project: string): Promise<any> {
-    return GcpVmClient.getMetric(auth, project, GcpVmClient.METRIC_NETWORK_OUT_NAME, 'ALIGN_MEAN')
-  }
-
-  static async getMetric (auth: any, project: string, metricName: string, seriesAligner: string): Promise<any> {
-    const config: any = GcpVmClient.getTimeSeriesRequest(auth, project, metricName, seriesAligner)
+  private async getMetric (metricName: string, seriesAligner: string): Promise<any> {
+    const config: any = this.getTimeSeriesRequest(metricName, seriesAligner)
     const data: any[] = []
     while (true) {
       const result = await google.monitoring('v3').projects.timeSeries.list(config)
@@ -131,7 +115,7 @@ export class GcpVmClient {
     return data
   }
 
-  static formatMetric<Type> (response: Response<Type>, ...data: any[]): Response<Type> {
+  private formatMetric (vms: Vm[], data: any[]): void {
     const formattedData: any = {}
     data.forEach((d) => {
       d.forEach((r: any) => {
@@ -161,8 +145,7 @@ export class GcpVmClient {
         })
       })
     })
-    // @ts-ignore
-    response.items.map((item: Vm) => {
+    vms.map((item: Vm) => {
       if (item.id in formattedData) {
         const metric = new VmMetric()
         Object.keys(formattedData[item.id]).forEach((metricName: string) => {
@@ -177,13 +160,12 @@ export class GcpVmClient {
       }
       return item
     })
-    return response
   }
 
-  private static getTimeSeriesRequest (auth: any, project: string, metricName: string, seriesAligner: string) {
+  private getTimeSeriesRequest (metricName: string, seriesAligner: string) {
     return {
-      auth,
-      name: `projects/${project}`,
+      auth: this.authClient,
+      name: `projects/${this.projectId}`,
       filter: `metric.type="${metricName}" AND resource.type="gce_instance"`,
       'interval.startTime': moment().subtract(30, 'days').format(),
       'interval.endTime': moment().format(),
