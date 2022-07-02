@@ -18,19 +18,17 @@ export class PricingCaching implements PricingInterface {
   }
 
   async getPricingList (resources?: Response<any>[]): Promise<PricingListType> {
+    let result: CachingType = {}
     try {
       const cacheKey = `${this.key}_${PricingCaching.CACHE_KEY_SUFFIX}`
-      let result: CachingType
       result = await this.caching.get(cacheKey)
       if (PricingCaching.isEmpty(result)) {
         return result
       }
       result = await this.pricing.getPricingList(resources)
       await this.caching.set(cacheKey, result)
-      return result
-    } catch (e) {
-      return []
-    }
+    } catch (e) {}
+    return result
   }
 
   private static instanceOfAwsPricingListType (data: any): data is AwsPricingListType {

@@ -19,6 +19,7 @@ import { Elb } from '../../../domain/types/aws/elb'
 import { PricingInterface } from '../../pricing-interface'
 import { CachingInterface } from '../../caching-interface'
 import { AwsCatalogClient } from './aws-catalog-client'
+import AwsPriceCalculator from '../aws-price-calculator'
 
 export default class AwsClient {
   constructor (
@@ -39,6 +40,12 @@ export default class AwsClient {
       this.getAwsClient(AwsSubCommand.RDS_SUBCOMMAND).collectAll(regions)
     ])) as Response<Ebs | Ec2 | Eip | Rds | Elb>[]
     await AwsCatalogClient.collectAllPricingLists(accountId, responses, this.credentialProvider, pricingFallbackInterface, pricingCachingInterface)
+    // calculate prices
+    await AwsPriceCalculator.putEc2Prices(accountId, responses[0] as Response<Ec2>, this.credentialProvider)
+    await AwsPriceCalculator.putEbsPrices(accountId, responses[0] as Response<Ebs>, this.credentialProvider)
+    await AwsPriceCalculator.putEipPrices(accountId, responses[0] as Response<Eip>, this.credentialProvider)
+    await AwsPriceCalculator.putElbPrices(accountId, responses[0] as Response<Elb>, this.credentialProvider)
+    await AwsPriceCalculator.putRdsPrices(accountId, responses[0] as Response<Rds>, this.credentialProvider)
     return responses
   }
 

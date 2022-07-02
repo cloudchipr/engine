@@ -1,11 +1,8 @@
-import AwsPricingClient from './aws-pricing-client'
 import { Ec2 } from '../../domain/types/aws/ec2'
 import { Eip } from '../../domain/types/aws/eip'
 import { Ebs } from '../../domain/types/aws/ebs'
 import { Rds } from '../../domain/types/aws/rds'
-import { Alb } from '../../domain/types/aws/alb'
 import { Elb } from '../../domain/types/aws/elb'
-import { Nlb } from '../../domain/types/aws/nlb'
 import { CredentialProvider } from '@aws-sdk/types'
 import {
   DescribeSpotPriceHistoryCommand,

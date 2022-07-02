@@ -198,7 +198,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Ebs>(ebsItems)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putEbsPrices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putEbsPrices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -246,7 +246,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Ec2>(ec2Items)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putEc2Prices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putEc2Prices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -280,7 +280,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Elb>(elbItems)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putElbPrices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putElbPrices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -314,7 +314,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Nlb>(nlbItems)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putElbPrices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putElbPrices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -348,7 +348,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Alb>(albItems)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putElbPrices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putElbPrices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -382,7 +382,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Eip>(eipItems)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putEipPrices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putEipPrices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
@@ -425,7 +425,7 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       const response = new Response<Rds>(rdsItems)
       if (response.count > 0) {
         try {
-          await AwsPriceCalculator.putRdsPrices(this.currentAccount, [response], this.credentialProvider)
+          await AwsPriceCalculator.putRdsPrices(this.currentAccount, response, this.credentialProvider)
         } catch (e) { response.addError(e) }
       }
       return response
