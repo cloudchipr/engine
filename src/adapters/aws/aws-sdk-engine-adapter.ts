@@ -12,6 +12,8 @@ import { Ec2 } from '../../domain/types/aws/ec2'
 import { Eip } from '../../domain/types/aws/eip'
 import { Rds } from '../../domain/types/aws/rds'
 import { Elb } from '../../domain/types/aws/elb'
+import { PricingInterface } from '../pricing-interface'
+import { CachingInterface } from '../caching-interface'
 
 export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly credentials: CredentialProvider
@@ -25,9 +27,14 @@ export class AWSSDKEngineAdapter<Type> implements EngineInterface<Type> {
       return new Response<Type>([])
     }
 
-    async collectAll (regions: string[]): Promise<Response<Ebs | Ec2 | Eip | Rds | Elb>[]> {
+    async collectAll (
+      accountId: string,
+      regions: string[],
+      pricingFallbackInterface?: PricingInterface,
+      pricingCachingInterface?: CachingInterface,
+    ): Promise<Response<Ebs | Ec2 | Eip | Rds | Elb>[]> {
       const awsClient = new AwsClient(this.credentials)
-      return awsClient.collectResources(regions)
+      return awsClient.collectResources(accountId, regions, pricingFallbackInterface, pricingCachingInterface)
     }
 
     async clean (request: CleanRequestInterface): Promise<CleanResponse> {

@@ -1,6 +1,8 @@
 import { PricingInterface } from './pricing-interface'
 import { CachingInterface } from './caching-interface'
-import { PricingListType } from '../domain/types/common/pricing-list-type'
+import { AwsPricingListType, GcpPricingListType, PricingListType } from '../domain/types/common/pricing-list-type'
+import { CachingType } from '../domain/types/common/caching-type'
+import { Response } from '../responses/response'
 
 export class PricingCaching implements PricingInterface {
   private static CACHE_KEY_SUFFIX: string = 'pricing'
@@ -15,19 +17,31 @@ export class PricingCaching implements PricingInterface {
     this.key = key
   }
 
-  async getPricingList (): Promise<PricingListType[]> {
+  async getPricingList (resources?: Response<any>[]): Promise<PricingListType> {
     try {
       const cacheKey = `${this.key}_${PricingCaching.CACHE_KEY_SUFFIX}`
-      let result: any[] = []
+      let result: CachingType
       result = await this.caching.get(cacheKey)
-      if (result.length > 0) {
+      if (PricingCaching.isEmpty(result)) {
         return result
       }
-      result = await this.pricing.getPricingList()
+      result = await this.pricing.getPricingList(resources)
       await this.caching.set(cacheKey, result)
       return result
     } catch (e) {
       return []
     }
+  }
+
+  private static instanceOfAwsPricingListType (data: any): data is AwsPricingListType {
+    return typeof data === 'object' && !Array.isArray(data) && data !== null
+  }
+
+  private static instanceOfGcpPricingListType (data: any): data is GcpPricingListType[] {
+    return typeof data === 'object' && Array.isArray(data)
+  }
+
+  private static isEmpty (data: any): boolean {
+    return (PricingCaching.instanceOfAwsPricingListType(data) && Object.keys(data).length === 0) || (PricingCaching.instanceOfGcpPricingListType(data) && data.length === 0)
   }
 }

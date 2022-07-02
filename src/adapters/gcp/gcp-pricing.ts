@@ -1,7 +1,7 @@
 import { PricingInterface } from '../pricing-interface'
 import { google } from 'googleapis'
 import { AuthClient } from 'google-auth-library/build/src/auth/authclient'
-import { GcpPricingListType, PricingListType } from '../../domain/types/common/pricing-list-type'
+import { GcpPricingListType } from '../../domain/types/common/pricing-list-type'
 
 export class GcpPricing implements PricingInterface {
   private static COMPUTING_SERVICE: string = 'services/6F81-5844-456A'
@@ -79,7 +79,7 @@ export class GcpPricing implements PricingInterface {
     this.authClient = authClient
   }
 
-  async getPricingList (): Promise<PricingListType[]> {
+  async getPricingList (): Promise<GcpPricingListType[]> {
     const result: GcpPricingListType[] = []
     try {
       const response = await Promise.all([

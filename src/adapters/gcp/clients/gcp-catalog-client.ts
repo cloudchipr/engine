@@ -3,10 +3,10 @@ import { PricingInterface } from '../../pricing-interface'
 import { PricingCaching } from '../../pricing-caching'
 import { CachingInterface } from '../../caching-interface'
 import { GcpPricing } from '../gcp-pricing'
-import { PricingListType } from '../../../domain/types/common/pricing-list-type'
+import { GcpPricingListType } from '../../../domain/types/common/pricing-list-type'
 
 export class GcpCatalogClient {
-  public static SKU: PricingListType[] = []
+  public static SKU: GcpPricingListType[] = []
 
   static async collectAllStockKeepingUnits (
     auth: AuthClient,
@@ -20,12 +20,12 @@ export class GcpCatalogClient {
     const pricing = GcpCatalogClient.getPricingImplementation(new GcpPricing(auth), pricingCachingInterface, project)
     const result = await pricing.getPricingList()
     if (result.length > 0) {
-      GcpCatalogClient.SKU = result
+      GcpCatalogClient.SKU = result as GcpPricingListType[]
       return
     }
     if (pricingFallbackInterface) {
       const pricingCachingFallback = GcpCatalogClient.getPricingImplementation(pricingFallbackInterface, pricingCachingInterface)
-      GcpCatalogClient.SKU = await pricingCachingFallback.getPricingList()
+      GcpCatalogClient.SKU = (await pricingCachingFallback.getPricingList()) as GcpPricingListType[]
     }
   }
 

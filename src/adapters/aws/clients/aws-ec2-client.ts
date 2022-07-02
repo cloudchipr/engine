@@ -34,10 +34,7 @@ export default class AwsEc2Client extends AwsBaseClient implements AwsClientInte
       }
       const response: DescribeInstancesCommandOutput[] = await Promise.all(promises)
       data = this.formatCollectResponse(response)
-      await Promise.all([
-        this.putAdditionalData(data),
-        this.awsPriceCalculator.putEc2Prices(data)
-      ])
+      await this.putAdditionalData(data)
     } catch (e) {
       errors.push(new AwsApiError(AwsSubCommand.EC2_SUBCOMMAND, e))
     }
