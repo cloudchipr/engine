@@ -42,10 +42,10 @@ export default class AwsClient {
     await AwsCatalogClient.collectAllPricingLists(accountId, responses, this.credentialProvider, pricingFallbackInterface, pricingCachingInterface)
     // calculate prices
     await AwsPriceCalculator.putEc2Prices(accountId, responses[0] as Response<Ec2>, this.credentialProvider)
-    await AwsPriceCalculator.putEbsPrices(accountId, responses[0] as Response<Ebs>, this.credentialProvider)
-    await AwsPriceCalculator.putEipPrices(accountId, responses[0] as Response<Eip>, this.credentialProvider)
-    await AwsPriceCalculator.putElbPrices(accountId, responses[0] as Response<Elb>, this.credentialProvider)
-    await AwsPriceCalculator.putRdsPrices(accountId, responses[0] as Response<Rds>, this.credentialProvider)
+    await AwsPriceCalculator.putEbsPrices(accountId, responses[1] as Response<Ebs>, this.credentialProvider)
+    await AwsPriceCalculator.putEipPrices(accountId, responses[2] as Response<Eip>, this.credentialProvider)
+    await AwsPriceCalculator.putElbPrices(accountId, responses[3] as Response<Elb>, this.credentialProvider)
+    await AwsPriceCalculator.putRdsPrices(accountId, responses[4] as Response<Rds>, this.credentialProvider)
     return responses
   }
 
