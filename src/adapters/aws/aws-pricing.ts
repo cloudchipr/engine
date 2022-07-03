@@ -19,7 +19,7 @@ import { GetProductsCommandInput } from '@aws-sdk/client-pricing/dist-types/comm
 import { AwsSubCommand } from '../../aws-sub-command'
 import AwsPriceCalculator from './aws-price-calculator'
 
-export default class AwsPricing implements PricingInterface {
+export class AwsPricing implements PricingInterface {
   private readonly client: Pricing;
 
   constructor (credentialProvider: CredentialProvider) {

@@ -20,15 +20,18 @@ export class PricingCaching implements PricingInterface {
   async getPricingList (resources?: Response<any>[]): Promise<PricingListType> {
     let result: CachingType = {}
     try {
-      const cacheKey = `${this.key}_${PricingCaching.CACHE_KEY_SUFFIX}`
-      result = await this.caching.get(cacheKey)
-      if (PricingCaching.isEmpty(result)) {
+      result = await this.caching.get(PricingCaching.getCacheKey(this.key))
+      if (!PricingCaching.isEmpty(result)) {
         return result
       }
       result = await this.pricing.getPricingList(resources)
-      await this.caching.set(cacheKey, result)
+      await this.caching.set(PricingCaching.getCacheKey(this.key), result)
     } catch (e) {}
     return result
+  }
+
+  static getCacheKey (key: string): string {
+    return `${key}_${PricingCaching.CACHE_KEY_SUFFIX}`
   }
 
   private static instanceOfAwsPricingListType (data: any): data is AwsPricingListType {
@@ -40,6 +43,8 @@ export class PricingCaching implements PricingInterface {
   }
 
   private static isEmpty (data: any): boolean {
-    return (PricingCaching.instanceOfAwsPricingListType(data) && Object.keys(data).length === 0) || (PricingCaching.instanceOfGcpPricingListType(data) && data.length === 0)
+    return (PricingCaching.instanceOfAwsPricingListType(data) && Object.keys(data).length === 0) ||
+      (PricingCaching.instanceOfGcpPricingListType(data) && data.length === 0) ||
+      data === null
   }
 }

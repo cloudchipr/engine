@@ -9,8 +9,8 @@ import { Ec2 } from '../../../domain/types/aws/ec2'
 import { Eip } from '../../../domain/types/aws/eip'
 import { Rds } from '../../../domain/types/aws/rds'
 import { Elb } from '../../../domain/types/aws/elb'
-import AwsPricing from '../aws-pricing'
 import AwsPriceCalculator from '../aws-price-calculator'
+import { AwsPricing } from '../aws-pricing'
 
 export class AwsCatalogClient {
   public static PRISING_LIST: AwsPricingListType = {}
@@ -41,7 +41,7 @@ export class AwsCatalogClient {
       const pricingData = (await (new AwsPricing(credentialProvider)).getPricingList(missingPricingList)) as AwsPricingListType
       AwsCatalogClient.PRISING_LIST = { ...AwsCatalogClient.PRISING_LIST, ...pricingData }
       // set the cache
-      await pricingCachingInterface.set(`aws_${accountId}`, AwsCatalogClient.PRISING_LIST)
+      await pricingCachingInterface.set(PricingCaching.getCacheKey(`aws_${accountId}`), AwsCatalogClient.PRISING_LIST)
       // check if we were able to get the all pricing list
       missingPricingList = AwsCatalogClient.getMissingPricingList(resources)
       if (AwsCatalogClient.isMissingPricingListEmpty(missingPricingList)) {
