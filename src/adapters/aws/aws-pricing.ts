@@ -6,8 +6,6 @@ import { Elb } from '../../domain/types/aws/elb'
 import { CredentialProvider } from '@aws-sdk/types'
 import {
   DescribeSpotPriceHistoryCommand,
-  DescribeSpotPriceHistoryCommandInput,
-  DescribeSpotPriceHistoryCommandOutput,
   EC2Client
 } from '@aws-sdk/client-ec2'
 import { PricingInterface } from '../pricing-interface'
@@ -21,6 +19,7 @@ import AwsPriceCalculator from './aws-price-calculator'
 
 export class AwsPricing implements PricingInterface {
   private readonly client: Pricing;
+  private readonly credentialProvider: CredentialProvider
 
   constructor (credentialProvider: CredentialProvider) {
     // @todo make region dynamic between us-east-1, ap-south-1 (these are the only possible options)
@@ -28,6 +27,7 @@ export class AwsPricing implements PricingInterface {
       region: 'us-east-1',
       credentials: credentialProvider
     })
+    this.credentialProvider = credentialProvider
   }
 
   async getPricingList (resources: Response<Ebs | Ec2 | Eip | Rds | Elb>[]): Promise<AwsPricingListType> {
@@ -90,28 +90,35 @@ export class AwsPricing implements PricingInterface {
   private async getEc2PricingList (items: Ec2[]): Promise<AwsPricingListType> {
     let result: AwsPricingListType = {}
     const filters: any = {}
+    const spotInstancesFilters: any = {}
     items.forEach((item) => {
       const platform = AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get(item.platformDetails)
       if (platform === undefined) {
         return
       }
-      // @todo check for spot instance
-      // if (item.isSpotInstance) {
-      //
-      // }
-      const tenancy = !item.tenancy || item.tenancy === 'default' ? 'Shared' : item.tenancy
-      const key = item.getRegion().concat('_', item.type, '_', platform, '_', item.usageOperation, '_', tenancy)
-      if (filters[key] === undefined) {
-        filters[key] = AwsPricing.getEc2Filter(item.getRegion(), item.type, platform, item.usageOperation, tenancy)
+      if (item.isSpotInstance) {
+        const key = item.getRegion().concat('_', item.availabilityZone, '_', item.type, '_', item.platformDetails, '_1')
+        if (spotInstancesFilters[key] === undefined) {
+          spotInstancesFilters[key] = AwsPricing.getEc2SpotInstanceFilter(item.getRegion(), item.availabilityZone, item.type, item.platformDetails)
+        }
+      } else {
+        const tenancy = !item.tenancy || item.tenancy === 'default' ? 'Shared' : item.tenancy
+        const key = item.getRegion().concat('_', item.type, '_', platform, '_', item.usageOperation, '_', tenancy, '_0')
+        if (filters[key] === undefined) {
+          filters[key] = AwsPricing.getEc2Filter(item.getRegion(), item.type, platform, item.usageOperation, tenancy)
+        }
       }
     })
     const promises: any[] = []
     for (const key of Object.keys(filters)) {
       promises.push(this.getPricingListByFilter('AmazonEC2', filters[key]))
     }
+    for (const key of Object.keys(spotInstancesFilters)) {
+      promises.push(this.getSpotInstancePrice(spotInstancesFilters[key].region, spotInstancesFilters[key].availabilityZone, spotInstancesFilters[key].instanceType, spotInstancesFilters[key].productDescription))
+    }
     const response = await Promise.all(promises)
     response.forEach((it: any) => {
-      result = { ...result, ...AwsPricing.mapEc2Product(JSON.parse(it)) }
+      result = { ...result, ...AwsPricing.mapEc2Product((typeof it === 'string' || it instanceof String) ? JSON.parse(it as string) : it) }
     })
     return result
   }
@@ -195,6 +202,19 @@ export class AwsPricing implements PricingInterface {
     return data
   }
 
+  private async getSpotInstancePrice (region: string, availabilityZone: string, instanceType: string, productDescription: string): Promise<any> {
+    try {
+      const command = new DescribeSpotPriceHistoryCommand({
+        AvailabilityZone: availabilityZone,
+        InstanceTypes: [instanceType],
+        ProductDescriptions: [productDescription],
+        StartTime: new Date()
+      })
+      const ec2Client = new EC2Client({ credentials: this.credentialProvider, region })
+      return await ec2Client.send(command)
+    } catch (error) {}
+  }
+
   private static mapEbsProduct (it: any): AwsPricingListType {
     const priceDimensions = (Object.values(it.terms?.OnDemand ?? {})[0] as any)?.priceDimensions
     const price = (Object.values(priceDimensions ?? {})[0] as any)?.pricePerUnit ?? {}
@@ -206,17 +226,30 @@ export class AwsPricing implements PricingInterface {
   }
 
   private static mapEc2Product (it: any): AwsPricingListType {
-    const priceDimensions = (Object.values(it.terms?.OnDemand ?? {})[0] as any)?.priceDimensions
-    const price = (Object.values(priceDimensions ?? {})[0] as any)?.pricePerUnit ?? {}
-    const key = AwsSubCommand.EC2_SUBCOMMAND.concat(
-      '_' + it.product?.attributes?.regionCode as unknown as string,
-      '_' + it.product?.attributes?.instanceType as unknown as string,
-      '_' + it.product?.attributes?.operatingSystem as unknown as string,
-      '_' + it.product?.attributes?.operation as unknown as string,
-      '_' + it.product?.attributes?.tenancy as unknown as string,
-      '_0' // is not spot instance
-    )
-    return AwsPricing.mapProduct(key, price)
+    if (it.SpotPriceHistory !== undefined) {
+      const price = {
+        USD: it.SpotPriceHistory[0]?.SpotPrice as unknown as string
+      }
+      const key = AwsSubCommand.EC2_SUBCOMMAND.concat(
+        '_' + it.SpotPriceHistory[0]?.AvailabilityZone as unknown as string,
+        '_' + it.SpotPriceHistory[0]?.InstanceType as unknown as string,
+        '_' + it.SpotPriceHistory[0]?.ProductDescription as unknown as string,
+        '_1' // is spot instance
+      )
+      return AwsPricing.mapProduct(key, price)
+    } else {
+      const priceDimensions = (Object.values(it.terms?.OnDemand ?? {})[0] as any)?.priceDimensions
+      const price = (Object.values(priceDimensions ?? {})[0] as any)?.pricePerUnit ?? {}
+      const key = AwsSubCommand.EC2_SUBCOMMAND.concat(
+        '_' + it.product?.attributes?.regionCode as unknown as string,
+        '_' + it.product?.attributes?.instanceType as unknown as string,
+        '_' + it.product?.attributes?.operatingSystem as unknown as string,
+        '_' + it.product?.attributes?.operation as unknown as string,
+        '_' + it.product?.attributes?.tenancy as unknown as string,
+        '_0' // is not spot instance
+      )
+      return AwsPricing.mapProduct(key, price)
+    }
   }
 
   private static mapEipProduct (it: any): AwsPricingListType {
@@ -388,6 +421,15 @@ export class AwsPricing implements PricingInterface {
         Value: 'Used'
       }
     ]
+  }
+
+  private static getEc2SpotInstanceFilter (region: string, availabilityZone: string, instanceType: string, productDescription: string): {} {
+    return {
+      region,
+      availabilityZone,
+      instanceType,
+      productDescription
+    }
   }
 
   private static getLbFilter (region: string, type: string): {}[] {

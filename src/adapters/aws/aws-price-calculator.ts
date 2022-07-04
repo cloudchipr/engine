@@ -180,14 +180,23 @@ export default class AwsPriceCalculator {
           '_' + AwsPriceCalculator.EBS_TO_PRICING_NAMES.get((item as Ebs).type)
         ).replace(/ /g, '')
       case AwsSubCommand.EC2_SUBCOMMAND:
-        return AwsSubCommand.EC2_SUBCOMMAND.concat(
-          '_' + item.getRegion(),
-          '_' + (item as Ec2).type,
-          '_' + AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get((item as Ec2).platformDetails),
-          '_' + (item as Ec2).usageOperation,
-          '_' + (!(item as Ec2).tenancy || (item as Ec2).tenancy === 'default' ? 'Shared' : (item as Ec2).tenancy),
-          '_' + ((item as Ec2).isSpotInstance ? '1' : '0')
-        ).replace(/ /g, '')
+        if ((item as Ec2).isSpotInstance) {
+          return AwsSubCommand.EC2_SUBCOMMAND.concat(
+            '_' + (item as Ec2).availabilityZone,
+            '_' + (item as Ec2).type,
+            '_' + (item as Ec2).platformDetails,
+            '_1'
+          ).replace(/ /g, '')
+        } else {
+          return AwsSubCommand.EC2_SUBCOMMAND.concat(
+            '_' + item.getRegion(),
+            '_' + (item as Ec2).type,
+            '_' + AwsPriceCalculator.EC2_PLATFORM_DETAILS_TO_PRICING_NAMES.get((item as Ec2).platformDetails),
+            '_' + (item as Ec2).usageOperation,
+            '_' + (!(item as Ec2).tenancy || (item as Ec2).tenancy === 'default' ? 'Shared' : (item as Ec2).tenancy),
+            '_0'
+          ).replace(/ /g, '')
+        }
       case AwsSubCommand.EIP_SUBCOMMAND:
         return AwsSubCommand.EIP_SUBCOMMAND.concat(
           '_' + item.getRegion()
