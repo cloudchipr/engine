@@ -219,7 +219,7 @@ export class AwsPricing implements PricingInterface {
       })
       const ec2Client = new EC2Client({ credentials: this.credentialProvider, region })
       return await ec2Client.send(command)
-    } catch (error: any) {}
+    } catch (error) {}
   }
 
   private static mapEbsProduct (it: any): AwsPricingListType {
