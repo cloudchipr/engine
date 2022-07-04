@@ -17,6 +17,7 @@ export * from './adapters/aws/aws-sdk-engine-adapter'
 export * from './adapters/aws/aws-configuration'
 export * from './adapters/engine-interface'
 
+export * from './adapters/aws/aws-pricing'
 export * from './adapters/gcp/gcp-pricing'
 export * from './adapters/pricing-interface'
 export * from './adapters/caching-interface'

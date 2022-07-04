@@ -50,10 +50,7 @@ export default class AwsElbClient extends AwsBaseClient implements AwsClientInte
       }
       const response: V3CommandOutput[] | V2CommandOutput[] = await Promise.all(promises)
       data = this.formatCollectResponse(response)
-      await Promise.all([
-        this.putAdditionalData(data),
-        this.awsPriceCalculator.putElbPrices(data)
-      ])
+      await this.putAdditionalData(data)
     } catch (e) {
       errors.push(new AwsApiError(AwsSubCommand.ELB_SUBCOMMAND, e))
     }

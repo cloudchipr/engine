@@ -24,7 +24,6 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
       }
       const response: DescribeVolumesCommandOutput[] = await Promise.all(promises)
       data = this.formatCollectResponse(response)
-      await this.awsPriceCalculator.putEbsPrices(data)
     } catch (e) {
       errors.push(new AwsApiError(AwsSubCommand.EBS_SUBCOMMAND, e))
     }

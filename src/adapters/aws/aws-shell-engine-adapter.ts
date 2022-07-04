@@ -33,18 +33,19 @@ interface TargetGroup {
 
 export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
     private readonly custodianExecutor: C7nExecutor;
-    private readonly awsPriceCalculator: AwsPriceCalculator;
     private readonly awsOrganisationClient: AwsOrganisationClient;
     private readonly awsAccountClient: AwsAccountClient;
     private readonly awsConfiguration?: AWSConfiguration;
+    private readonly credentialProvider: any;
+    private currentAccount: string = '';
 
     constructor (custodian: string, custodianOrg?: string, awsConfiguration?: AWSConfiguration) {
       const credentialProvider = awsConfiguration?.credentialProvider ?? fromIni()
 
       this.custodianExecutor = new C7nExecutor(custodian, custodianOrg)
-      this.awsPriceCalculator = new AwsPriceCalculator(credentialProvider)
       this.awsOrganisationClient = new AwsOrganisationClient(credentialProvider)
       this.awsAccountClient = new AwsAccountClient(credentialProvider)
+      this.credentialProvider = credentialProvider
       this.awsConfiguration = awsConfiguration
     }
 
@@ -162,12 +163,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
       if (requestedAccounts.length > 0 && requestedAccounts.includes('all')) {
         requestedAccounts = await this.awsOrganisationClient.getAllAccounts()
       }
+      this.currentAccount = currentAccount || ''
       return [currentAccount, requestedAccounts]
     }
 
     private async generateEbsResponse (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Ebs>> {
       const ebsItems = responseJson.map(
         (ebsResponseItemJson: {
                 VolumeId: string;
@@ -193,14 +195,18 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           )
         }
       )
-
-      await this.awsPriceCalculator.putEbsPrices(ebsItems)
-      return new Response<Type>(ebsItems)
+      const response = new Response<Ebs>(ebsItems)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putEbsPrices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateEc2Response (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Ec2>> {
       const ec2Items = responseJson.map(
         (ec2ResponseItemJson: {
                 InstanceId: string;
@@ -237,14 +243,18 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
           )
         }
       )
-
-      await this.awsPriceCalculator.putEc2Prices(ec2Items)
-      return new Response<Type>(ec2Items)
+      const response = new Response<Ec2>(ec2Items)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putEc2Prices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateElbResponse (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Elb>> {
       const elbItems = responseJson
         .map(
           (elbResponseItemJson: {
@@ -267,14 +277,18 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             )
           }
         )
-
-      await this.awsPriceCalculator.putElbPrices(elbItems)
-      return new Response<Type>(elbItems)
+      const response = new Response<Elb>(elbItems)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putElbPrices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateNlbResponse (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Nlb>> {
       const nlbItems = responseJson
         .map(
           (elbResponseItemJson: {
@@ -297,14 +311,18 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             )
           }
         )
-
-      await this.awsPriceCalculator.putElbPrices(nlbItems)
-      return new Response<Type>(nlbItems)
+      const response = new Response<Nlb>(nlbItems)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putElbPrices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateAlbResponse (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Alb>> {
       const albItems = responseJson
         .map(
           (elbResponseItemJson: {
@@ -327,14 +345,18 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             )
           }
         )
-
-      await this.awsPriceCalculator.putElbPrices(albItems)
-      return new Response<Type>(albItems)
+      const response = new Response<Alb>(albItems)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putElbPrices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateEipResponse (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Eip>> {
       const eipItems = responseJson
         .map(
           (eipResponseItemJson: {
@@ -347,24 +369,28 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             return new Eip(
               eipResponseItemJson.PublicIp,
               eipResponseItemJson.NetworkBorderGroup,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
               TagsHelper.getNameTagValue(eipResponseItemJson.Tags),
-              undefined,
-              undefined,
-              undefined,
-              undefined,
               [],
               eipResponseItemJson.C8rAccount
             )
           }
         )
-
-      await this.awsPriceCalculator.putEipPrices(eipItems)
-      return new Response<Type>(eipItems)
+      const response = new Response<Eip>(eipItems)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putEipPrices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private async generateRdsResponse (
       responseJson: any
-    ): Promise<Response<Type>> {
+    ): Promise<Response<Rds>> {
       const rdsItems = responseJson
         .map(
           (rdsResponseItemJson: {
@@ -396,9 +422,13 @@ export class AWSShellEngineAdapter<Type> implements EngineInterface<Type> {
             )
           }
         )
-
-      await this.awsPriceCalculator.putRdsPrices(rdsItems)
-      return new Response<Type>(rdsItems)
+      const response = new Response<Rds>(rdsItems)
+      if (response.count > 0) {
+        try {
+          await AwsPriceCalculator.putRdsPrices(this.currentAccount, response, this.credentialProvider)
+        } catch (e) { response.addError(e) }
+      }
+      return response
     }
 
     private getPolicy (policyName: string) {

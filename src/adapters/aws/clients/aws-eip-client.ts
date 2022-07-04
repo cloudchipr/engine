@@ -24,7 +24,6 @@ export default class AwsEipClient extends AwsBaseClient implements AwsClientInte
       }
       const response: DescribeAddressesCommandOutput[] = await Promise.all(promises)
       data = this.formatCollectResponse(response)
-      await this.awsPriceCalculator.putEipPrices(data)
     } catch (e) {
       errors.push(new AwsApiError(AwsSubCommand.EIP_SUBCOMMAND, e))
     }
