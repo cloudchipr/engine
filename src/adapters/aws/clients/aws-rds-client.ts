@@ -41,6 +41,16 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
     'sqlserver-web'
   ]
 
+  private readonly STATUS_BLACKLIST = [
+    'creating',
+    'deleting',
+    'failed',
+    'inaccessible-encryption-credentials',
+    'incompatible-network',
+    'incompatible-restore',
+    'insufficient-capacity',
+  ]
+
   async collectAll (regions: string[]): Promise<Response<Rds>> {
     let data: Rds[] = []
     const errors: any[] = []
@@ -76,7 +86,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
         return
       }
       res.DBInstances.forEach((db) => {
-        if (!this.ENGINE_WHITELIST.includes(db.Engine || '')) {
+        if (!this.ENGINE_WHITELIST.includes(db.Engine || '') || this.STATUS_BLACKLIST.includes(db.DBInstanceStatus || '')) {
           return
         }
         data.push(new Rds(
