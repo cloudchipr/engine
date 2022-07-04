@@ -22,7 +22,6 @@ import { AwsRdsMetric } from '../../../domain/aws-rds-metric'
 import { CleanRequestResourceInterface } from '../../../request/clean/clean-request-resource-interface'
 import { AwsApiError } from '../../../exceptions/aws-api-error'
 import { AwsSubCommand } from '../../../aws-sub-command'
-import fs from "fs";
 
 export default class AwsRdsClient extends AwsBaseClient implements AwsClientInterface {
   private readonly ENGINE_WHITELIST = [
@@ -61,9 +60,7 @@ export default class AwsRdsClient extends AwsBaseClient implements AwsClientInte
         promises.push(this.getClient(region).send(AwsRdsClient.getDescribeDBInstancesCommand()))
       }
       const response: DescribeDBInstancesCommandOutput[] = await Promise.all(promises)
-      await fs.promises.writeFile('./res.json', JSON.stringify(response), 'utf8')
       data = this.formatCollectResponse(response)
-      await fs.promises.writeFile('./data.json', JSON.stringify(data), 'utf8')
       await this.putAdditionalData(data)
     } catch (e) {
       errors.push(new AwsApiError(AwsSubCommand.RDS_SUBCOMMAND, e))
