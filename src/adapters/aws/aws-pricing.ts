@@ -118,7 +118,14 @@ export class AwsPricing implements PricingInterface {
     }
     const response = await Promise.all(promises)
     response.forEach((it: any) => {
-      result = { ...result, ...AwsPricing.mapEc2Product((typeof it === 'string' || it instanceof String) ? JSON.parse(it as string) : it) }
+      if (Array.isArray(it)) {
+        it.forEach((i) => {
+          result = { ...result, ...AwsPricing.mapEc2Product(JSON.parse(i as string)) }
+        })
+      }
+      if (typeof it === 'object' && !Array.isArray(it) && it !== null && it.SpotPriceHistory !== undefined) {
+        result = { ...result, ...AwsPricing.mapEc2Product(it) }
+      }
     })
     return result
   }
