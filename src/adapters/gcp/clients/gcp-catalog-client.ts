@@ -13,20 +13,17 @@ export class GcpCatalogClient {
     project?: string,
     pricingFallbackInterface?: PricingInterface,
     pricingCachingInterface?: CachingInterface
-  ): Promise<void> {
-    if (GcpCatalogClient.SKU.length > 0) {
-      return
-    }
+  ): Promise<GcpPricingListType[]> {
     const pricing = GcpCatalogClient.getPricingImplementation(new GcpPricing(auth), pricingCachingInterface, project)
     const result = await pricing.getPricingList()
     if (result.length > 0) {
-      GcpCatalogClient.SKU = result as GcpPricingListType[]
-      return
+      return result as GcpPricingListType[]
     }
     if (pricingFallbackInterface) {
       const pricingCachingFallback = GcpCatalogClient.getPricingImplementation(pricingFallbackInterface, pricingCachingInterface)
-      GcpCatalogClient.SKU = (await pricingCachingFallback.getPricingList()) as GcpPricingListType[]
+      return (await pricingCachingFallback.getPricingList()) as GcpPricingListType[]
     }
+    return []
   }
 
   private static getPricingImplementation (pricing: PricingInterface, pricingCachingInterface?: CachingInterface, project?: string): PricingInterface {
