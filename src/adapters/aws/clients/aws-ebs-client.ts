@@ -69,7 +69,7 @@ export default class AwsEbsClient extends AwsBaseClient implements AwsClientInte
   }
 
   private static getDescribeVolumesCommand (): DescribeVolumesCommand {
-    return new DescribeVolumesCommand({})
+    return new DescribeVolumesCommand({ Filters: [{ Name: 'status', Values: ['creating', 'available', 'in-use', 'error'] }] })
   }
 
   private static getDeleteVolumeCommand (volumeId: string): DeleteVolumeCommand {
