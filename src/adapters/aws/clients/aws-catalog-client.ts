@@ -22,7 +22,7 @@ export class AwsCatalogClient {
   ): Promise<AwsPricingListType> {
     // get all pricing list from cache/API
     const pricing = AwsCatalogClient.getPricingImplementation(accountId, new AwsPricing(credentialProvider), pricingCachingInterface)
-    const pricingData = (await pricing.getPricingList(resources)) as AwsPricingListType
+    let pricingData = (await pricing.getPricingList(resources)) as AwsPricingListType
     // check if we were able to get the all pricing list
     let missingPricingList = AwsCatalogClient.getMissingPricingList(resources, pricingData)
     if (AwsCatalogClient.isMissingPricingListEmpty(missingPricingList)) {
@@ -30,7 +30,8 @@ export class AwsCatalogClient {
     }
     // check if we received the pricing list from the cache, and it was not full, call the API and set the cache
     if (pricingCachingInterface !== undefined) {
-      const pricingData = (await (new AwsPricing(credentialProvider)).getPricingList(missingPricingList)) as AwsPricingListType
+      const extraPricingData = (await (new AwsPricing(credentialProvider)).getPricingList(missingPricingList)) as AwsPricingListType
+      pricingData = { ...pricingData, ...extraPricingData }
       // set the cache
       await pricingCachingInterface.set(PricingCaching.getCacheKey(`aws_${accountId}`), pricingData)
       // check if we were able to get the all pricing list
@@ -40,7 +41,8 @@ export class AwsCatalogClient {
       }
     }
     if (pricingFallbackInterface) {
-      return (await pricingFallbackInterface.getPricingList(missingPricingList)) as AwsPricingListType
+      const extraPricingDataFallback = (await pricingFallbackInterface.getPricingList(missingPricingList)) as AwsPricingListType
+      return { ...pricingData, ...extraPricingDataFallback }
     }
     return {}
   }
