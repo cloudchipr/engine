@@ -34,7 +34,7 @@ export class GcpVmClient extends GcpBaseClient implements GcpClientInterface {
     const errors: any[] = []
     try {
       const response = await Promise.all([
-        google.compute('v1').instances.aggregatedList({ auth: this.authClient, project: this.projectId }),
+        google.compute('v1').instances.aggregatedList({ auth: this.authClient, project: this.projectId, filter: 'status != TERMINATED' }),
         this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.MAX),
         this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.MIN),
         this.getMetric(GcpVmClient.METRIC_CPU_NAME, GcpVmClient.SERIES_ALIGNERS.SUM),

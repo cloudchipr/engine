@@ -17,7 +17,8 @@ export class GcpDisksClient extends GcpBaseClient implements GcpClientInterface 
     try {
       const response: any = await google.compute('v1').disks.aggregatedList({
         auth: this.authClient,
-        project: this.projectId
+        project: this.projectId,
+        filter: 'status != DELETING AND status != FAILED'
       })
       data = this.formatCollectResponse(response)
     } catch (e: any) {
