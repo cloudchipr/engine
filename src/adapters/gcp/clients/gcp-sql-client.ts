@@ -31,7 +31,7 @@ export class GcpSqlClient extends GcpBaseClient implements GcpClientInterface {
     const errors: any[] = []
     try {
       const response = await Promise.all([
-        google.sqladmin('v1beta4').instances.list({ auth: this.authClient, project: this.projectId }),
+        google.sqladmin('v1beta4').instances.list({ auth: this.authClient, project: this.projectId, filter: 'SqlInstanceState == RUNNABLE' }),
         this.getMetric(GcpSqlClient.METRIC_NETWORK_CONNECTIONS_NAME, GcpSqlClient.SERIES_ALIGNERS.MAX),
         this.getMetric(GcpSqlClient.METRIC_NETWORK_CONNECTIONS_NAME, GcpSqlClient.SERIES_ALIGNERS.MIN),
         this.getMetric(GcpSqlClient.METRIC_NETWORK_CONNECTIONS_NAME, GcpSqlClient.SERIES_ALIGNERS.SUM),

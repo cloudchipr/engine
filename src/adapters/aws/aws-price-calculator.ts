@@ -108,10 +108,10 @@ export default class AwsPriceCalculator {
   ])
 
   static async putElbPrices (accountId: string, response: Response<Elb>, credentialProvider: CredentialProvider): Promise<void> {
-    await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
+    const pricingList = await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
     response.items.map((item) => {
       const key = AwsPriceCalculator.getItemUniqueKey(AwsSubCommand.ELB_SUBCOMMAND, item)
-      const data = AwsCatalogClient.PRISING_LIST[key]
+      const data = pricingList[key]
       if (data !== undefined) {
         const price = CurrencyConverter.convertToUSD(data.currency, data.price)
         item.pricePerMonth = price * 720
@@ -121,10 +121,10 @@ export default class AwsPriceCalculator {
   }
 
   static async putRdsPrices (accountId: string, response: Response<Rds>, credentialProvider: CredentialProvider): Promise<void> {
-    await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
+    const pricingList = await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
     response.items.map((item) => {
       const key = AwsPriceCalculator.getItemUniqueKey(AwsSubCommand.RDS_SUBCOMMAND, item)
-      const data = AwsCatalogClient.PRISING_LIST[key]
+      const data = pricingList[key]
       if (data !== undefined) {
         const price = CurrencyConverter.convertToUSD(data.currency, data.price)
         item.pricePerMonth = price * 720
@@ -134,10 +134,10 @@ export default class AwsPriceCalculator {
   }
 
   static async putEbsPrices (accountId: string, response: Response<Ebs>, credentialProvider: CredentialProvider): Promise<void> {
-    await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
+    const pricingList = await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
     response.items.map((item) => {
       const key = AwsPriceCalculator.getItemUniqueKey(AwsSubCommand.EBS_SUBCOMMAND, item)
-      const data = AwsCatalogClient.PRISING_LIST[key]
+      const data = pricingList[key]
       if (data !== undefined) {
         const price = CurrencyConverter.convertToUSD(data.currency, data.price)
         item.pricePerMonth = price * item.size
@@ -147,10 +147,10 @@ export default class AwsPriceCalculator {
   }
 
   static async putEipPrices (accountId: string, response: Response<Eip>, credentialProvider: CredentialProvider): Promise<void> {
-    await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
+    const pricingList = await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
     response.items.map((item) => {
       const key = AwsPriceCalculator.getItemUniqueKey(AwsSubCommand.EIP_SUBCOMMAND, item)
-      const data = AwsCatalogClient.PRISING_LIST[key]
+      const data = pricingList[key]
       if (data !== undefined) {
         const price = CurrencyConverter.convertToUSD(data.currency, data.price)
         item.pricePerMonth = price * 720
@@ -160,10 +160,10 @@ export default class AwsPriceCalculator {
   }
 
   static async putEc2Prices (accountId: string, response: Response<Ec2>, credentialProvider: CredentialProvider): Promise<void> {
-    await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
+    const pricingList = await AwsCatalogClient.collectAllPricingLists(accountId, [response], credentialProvider)
     response.items.map((item) => {
       const key = AwsPriceCalculator.getItemUniqueKey(AwsSubCommand.EC2_SUBCOMMAND, item)
-      const data = AwsCatalogClient.PRISING_LIST[key]
+      const data = pricingList[key]
       if (data !== undefined) {
         const price = CurrencyConverter.convertToUSD(data.currency, data.price)
         item.pricePerMonth = price * 720

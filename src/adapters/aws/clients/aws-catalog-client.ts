@@ -13,45 +13,38 @@ import AwsPriceCalculator from '../aws-price-calculator'
 import { AwsPricing } from '../aws-pricing'
 
 export class AwsCatalogClient {
-  public static PRISING_LIST: AwsPricingListType = {}
-
   static async collectAllPricingLists (
     accountId: string,
     resources: Response<Ebs | Ec2 | Eip | Rds | Elb>[],
     credentialProvider: CredentialProvider,
     pricingFallbackInterface?: PricingInterface,
     pricingCachingInterface?: CachingInterface
-  ) {
-    // check if we have the all pricing list in the static variable
-    let missingPricingList = AwsCatalogClient.getMissingPricingList(resources)
-    if (AwsCatalogClient.isMissingPricingListEmpty(missingPricingList)) {
-      return
-    }
+  ): Promise<AwsPricingListType> {
     // get all pricing list from cache/API
     const pricing = AwsCatalogClient.getPricingImplementation(accountId, new AwsPricing(credentialProvider), pricingCachingInterface)
-    const pricingData = (await pricing.getPricingList(missingPricingList)) as AwsPricingListType
-    AwsCatalogClient.PRISING_LIST = { ...AwsCatalogClient.PRISING_LIST, ...pricingData }
+    let pricingData = (await pricing.getPricingList(resources)) as AwsPricingListType
     // check if we were able to get the all pricing list
-    missingPricingList = AwsCatalogClient.getMissingPricingList(resources)
+    let missingPricingList = AwsCatalogClient.getMissingPricingList(resources, pricingData)
     if (AwsCatalogClient.isMissingPricingListEmpty(missingPricingList)) {
-      return
+      return pricingData
     }
     // check if we received the pricing list from the cache, and it was not full, call the API and set the cache
     if (pricingCachingInterface !== undefined) {
-      const pricingData = (await (new AwsPricing(credentialProvider)).getPricingList(missingPricingList)) as AwsPricingListType
-      AwsCatalogClient.PRISING_LIST = { ...AwsCatalogClient.PRISING_LIST, ...pricingData }
+      const extraPricingData = (await (new AwsPricing(credentialProvider)).getPricingList(missingPricingList)) as AwsPricingListType
+      pricingData = { ...pricingData, ...extraPricingData }
       // set the cache
-      await pricingCachingInterface.set(PricingCaching.getCacheKey(`aws_${accountId}`), AwsCatalogClient.PRISING_LIST)
+      await pricingCachingInterface.set(PricingCaching.getCacheKey(`aws_${accountId}`), pricingData)
       // check if we were able to get the all pricing list
-      missingPricingList = AwsCatalogClient.getMissingPricingList(resources)
+      missingPricingList = AwsCatalogClient.getMissingPricingList(resources, pricingData)
       if (AwsCatalogClient.isMissingPricingListEmpty(missingPricingList)) {
-        return
+        return pricingData
       }
     }
     if (pricingFallbackInterface) {
-      const pricingData = (await pricingFallbackInterface.getPricingList(missingPricingList)) as AwsPricingListType
-      AwsCatalogClient.PRISING_LIST = { ...AwsCatalogClient.PRISING_LIST, ...pricingData }
+      const extraPricingDataFallback = (await pricingFallbackInterface.getPricingList(missingPricingList)) as AwsPricingListType
+      return { ...pricingData, ...extraPricingDataFallback }
     }
+    return {}
   }
 
   private static getPricingImplementation (accountId: string, pricing: PricingInterface, pricingCachingInterface?: CachingInterface): PricingInterface {
@@ -61,14 +54,17 @@ export class AwsCatalogClient {
     return pricing
   }
 
-  private static getMissingPricingList (resources: Response<Ebs | Ec2 | Eip | Rds | Elb>[]): Response<Ebs | Ec2 | Eip | Rds | Elb>[] {
+  private static getMissingPricingList (
+    resourcesToFetch: Response<Ebs | Ec2 | Eip | Rds | Elb>[],
+    fetchedResources: AwsPricingListType = {}
+  ): Response<Ebs | Ec2 | Eip | Rds | Elb>[] {
     const result: Response<Ebs | Ec2 | Eip | Rds | Elb>[] = []
-    resources.forEach((res) => {
+    resourcesToFetch.forEach((res) => {
       const items: (Ebs | Ec2 | Eip | Rds | Elb)[] = []
       res.items.forEach((item) => {
         const subCommand = item.constructor.name.toLowerCase()
         const key = AwsPriceCalculator.getItemUniqueKey(subCommand, item)
-        if (!(key in AwsCatalogClient.PRISING_LIST)) {
+        if (!(key in fetchedResources)) {
           items.push(item)
         }
       })
