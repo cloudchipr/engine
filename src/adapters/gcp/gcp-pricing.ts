@@ -176,9 +176,15 @@ export class GcpPricing implements PricingInterface {
     const key = GcpPricing.DISKS_KEY_MAP.get(it.description?.split(/^(.*) in(.*)$/g)[1] || it.description || '') || ''
     let price: number | undefined
     if (it.pricingInfo && it.pricingInfo[0].pricingExpression && it.pricingInfo[0].pricingExpression.tieredRates) {
-      const unitPrice = it.pricingInfo[0].pricingExpression.tieredRates[0].unitPrice
-      if (unitPrice?.units !== undefined) {
-        price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+      const tieredRates = it.pricingInfo[0].pricingExpression.tieredRates
+      for (const tieredRate of tieredRates) {
+        const unitPrice = tieredRate.unitPrice
+        if (unitPrice?.units !== undefined) {
+          price = parseInt(unitPrice.units as string) + ((unitPrice.nanos || 0) / 1000000000)
+        }
+        if (price) {
+          break
+        }
       }
     }
     return {
